@@ -2,33 +2,123 @@
 node_modules/
 .pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
 # Testing
 coverage/
+*.lcov
+.nyc_output
+test-results/
+playwright-report/
 
-# Production
+# Production builds
 build/
 dist/
+*.tsbuildinfo
 
-# Misc
-.DS_Store
+# Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!.env.template
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Turbo
 .turbo/
 
+# Expo
+.expo/
+.expo-shared/
+expo-env.d.ts
+web-build/
+
+# EAS
+.eas/
+eas-build-*.json
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+project.xcworkspace
+xcuserdata/
+*.hmap
+*.ipa
+ios/.xcode.env.local
+ios/Pods/
+ios/build/
+
+# Android
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+local.properties
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+android/.gradle/
+android/build/
+android/app/build/
+android/.cxx/
+android/local.properties
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
 # IDE
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+*.orig
+*.bak
+
+# Package manager locks (keep yarn.lock, ignore others)
+package-lock.json
+pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+*.pem
+*.cert
+*.key
+*.crt
+.secrets/
