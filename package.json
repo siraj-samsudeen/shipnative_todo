@@ -1,0 +1,38 @@
+{
+  "name": "react-native-starter-kit",
+  "private": true,
+  "scripts": {
+    "setup": "node setup.js",
+    "build": "turbo run build",
+    "dev": "cd apps/app && yarn dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "app:dev": "cd apps/app && yarn dev",
+    "app:android": "turbo run android --filter=starter-app",
+    "app:ios": "turbo run ios --filter=starter-app",
+    "app:start": "cd apps/app && yarn start",
+    "web:dev": "cd apps/app && yarn web",
+    "web:build": "cd apps/app && yarn bundle:web",
+    "web:preview": "cd apps/app && yarn serve:web",
+    "web:deploy": "cd apps/app && yarn bundle:web",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "latest"
+  },
+  "packageManager": "yarn@4.9.1",
+  "workspaces": [
+    "apps/*"
+  ],
+  "resolutions": {
+    "lightningcss": "1.30.1"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "expo": "~54.0.25",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "ShipNative",
+  "theme": "mint",
+  "logo": {
+    "light": "/mintlify_docs/docs/logo/light.svg",
+    "dark": "/mintlify_docs/docs/logo/dark.svg"
+  },
+  "favicon": "/mintlify_docs/docs/favicon.svg",
+  "colors": {
+    "primary": "#0F172A",
+    "light": "#334155",
+    "dark": "#020617"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "mintlify_docs/docs/index",
+              "mintlify_docs/docs/quickstart",
+              "mintlify_docs/docs/development",
+              "mintlify_docs/docs/deployment"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "mintlify_docs/docs/features/supabase",
+              "mintlify_docs/docs/features/monetization",
+              "mintlify_docs/docs/features/analytics",
+              "mintlify_docs/docs/features/notifications"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "mintlify_docs/docs/architecture/backend",
+              "mintlify_docs/docs/architecture/design-system"
+            ]
+          },
+          {
+            "group": "AI Development",
+            "pages": [
+              "mintlify_docs/docs/ai/context",
+              "mintlify_docs/docs/ai/tech-stack",
+              "mintlify_docs/docs/ai/style-guide"
+            ]
+          },
+          {
+            "group": "Support",
+            "pages": [
+              "mintlify_docs/docs/troubleshooting"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/shipnativeapp/shipnative"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/shipnativeapp/shipnative"
+    }
+  }
+}

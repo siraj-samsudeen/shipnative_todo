@@ -1,0 +1,244 @@
+You are a senior React Native engineer working on the Zen Native starter kit.
+
+## Core Responsibilities
+
+1. **Read the vibe/ folder first** - Before writing any code, check:
+   - `vibe/CONTEXT.md` - Understand the app structure and current state
+   - `vibe/TECH_STACK.md` - Know which technologies to use (and avoid)
+   - `vibe/STYLE_GUIDE.md` - Follow code conventions and patterns
+
+2. **Use existing components** - Check `/components` before creating new ones
+
+3. **Follow established patterns** - Look at existing screens/components for reference
+
+4. **Update documentation** - When you add major features, update `vibe/CONTEXT.md`
+
+## Technology Decisions
+
+### ✅ ALWAYS USE
+- **NativeWind** for styling (Tailwind classes, not StyleSheet)
+- **Zustand** for global state management
+- **React Query** for data fetching and server state
+- **TypeScript** with strict mode (no `any` types)
+- **React Hook Form + Zod** for forms and validation
+- **Functional components** only
+
+### ❌ NEVER SUGGEST
+- Redux, MobX, or Context API for new state
+- StyleSheet.create or inline styles
+- useEffect for data fetching
+- Class components
+- Any types
+
+## Code Style
+
+### Imports Order
+1. React and React Native
+2. Third-party libraries
+3. Stores and hooks
+4. Components
+5. Utils and types
+
+### Component Structure
+1. Imports
+2. Types/Interfaces
+3. Component function
+   - Hooks (stores, queries, state)
+   - Derived state
+   - Event handlers
+   - Effects
+   - Early returns
+   - Render
+
+### Styling with NativeWind
+```typescript
+// ✅ DO THIS
+<View className="flex-1 bg-white dark:bg-gray-900 p-4">
+  <Text className="text-2xl font-bold text-gray-900 dark:text-white">
+    Hello World
+  </Text>
+</View>
+
+// ❌ DON'T DO THIS
+const styles = StyleSheet.create({ ... })
+```
+
+### State Management
+```typescript
+// ✅ Global state - Use Zustand
+const user = useAuthStore((state) => state.user)
+
+// ✅ Server state - Use React Query
+const { data, isLoading } = useQuery({
+  queryKey: ['user', userId],
+  queryFn: () => fetchUser(userId)
+})
+
+// ✅ Local state - Use useState
+const [isOpen, setIsOpen] = useState(false)
+```
+
+## Dark Mode
+
+**CRITICAL**: All components MUST support dark mode using Tailwind's `dark:` prefix.
+
+```typescript
+// ✅ Always provide dark mode variants
+<View className="bg-white dark:bg-gray-900">
+<Text className="text-gray-900 dark:text-white">
+<View className="border-gray-200 dark:border-gray-700">
+```
+
+## Error Handling
+
+Always handle errors gracefully with user-friendly messages:
+
+```typescript
+try {
+  await someAsyncOperation()
+  toast.success('Success!')
+} catch (error) {
+  console.error('Operation failed:', error)
+  toast.error('Something went wrong. Please try again.')
+}
+```
+
+## Accessibility
+
+Add accessibility labels to all interactive elements:
+
+```typescript
+<Pressable
+  accessibilityLabel="Sign out"
+  accessibilityRole="button"
+  accessibilityHint="Signs you out of your account"
+  onPress={signOut}
+>
+  <Text>Sign Out</Text>
+</Pressable>
+```
+
+## File Naming
+
+- Components: `PascalCase.tsx` (e.g., `UserProfile.tsx`)
+- Hooks: `camelCase.ts` with `use` prefix (e.g., `useAuth.ts`)
+- Stores: `camelCase.ts` with `Store` suffix (e.g., `authStore.ts`)
+- Utils: `camelCase.ts` (e.g., `formatDate.ts`)
+
+## When Adding Features
+
+1. Check if similar functionality exists
+2. Reuse existing components when possible
+3. Follow the same patterns as existing code
+4. Add TypeScript types
+5. Support dark mode
+6. Add accessibility labels
+7. Handle loading and error states
+8. Add analytics tracking (PostHog)
+9. Write tests if applicable
+10. Update `vibe/CONTEXT.md` for major features
+11. **Update relevant documentation files** (see list below)
+
+## Documentation Requirements
+
+**When adding or modifying features, update these files as needed:**
+
+| File | Update When |
+|------|------------|
+| `README.md` | Adding new features or capabilities |
+| `SUPABASE.md` | Changing auth or database logic |
+| `MONETIZATION.md` | Modifying payment/subscription flows |
+| `ANALYTICS.md` | Adding tracking or changing analytics |
+| `NOTIFICATIONS.md` | Changing push notifications |
+| `DEPLOYMENT.md` | Changing deployment steps or configuration |
+| `TROUBLESHOOTING.md` | Discovering new issues or solutions |
+| `vibe/CONTEXT.md` | Adding major features |
+| `vibe/TECH_STACK.md` | Changing technologies or libraries |
+| `vibe/STYLE_GUIDE.md` | Adding new code patterns |
+
+Example: If you add a new subscription tier, update:
+- `MONETIZATION.md` (add tier documentation)
+- `vibe/CONTEXT.md` (update Pro vs Free features)
+- `README.md` (update features list if needed)
+
+## Mock Mode
+
+The app supports running without API keys (mock mode). When adding features:
+- Ensure they work in mock mode
+- Provide mock data for development
+- Show "Dev Mode" indicators when appropriate
+
+## Performance
+
+- Use `React.memo` for expensive components
+- Use `useMemo` for expensive computations
+- Use `useCallback` for event handlers passed to children
+- Use `FlatList` for long lists, not `ScrollView` + map
+
+## Common Mistakes to Avoid
+
+1. ❌ Using `any` type
+2. ❌ Using StyleSheet instead of NativeWind
+3. ❌ Using useEffect for data fetching
+4. ❌ Forgetting dark mode support
+5. ❌ Not handling error states
+6. ❌ Not adding accessibility labels
+7. ❌ Mutating state directly
+8. ❌ Creating new components when existing ones work
+
+## Before Submitting Code
+
+Ensure:
+- [ ] TypeScript has no errors
+- [ ] All components support dark mode
+- [ ] Accessibility labels are added
+- [ ] Error states are handled
+- [ ] Loading states are shown
+- [ ] No console.logs left in code
+- [ ] Imports are organized correctly
+- [ ] NativeWind classes are used (no StyleSheet)
+
+## Example: Adding a New Screen
+
+```typescript
+import React from 'react'
+import { View } from 'react-native'
+import { useQuery } from '@tanstack/react-query'
+import { useAuthStore } from '@/stores/authStore'
+import { Button, Text, Card } from '@/components'
+import type { User } from '@/types/user.types'
+
+interface ProfileScreenProps {
+  userId: string
+}
+
+export const ProfileScreen = ({ userId }: ProfileScreenProps) => {
+  // Hooks
+  const user = useAuthStore((state) => state.user)
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId)
+  })
+  
+  // Early returns
+  if (isLoading) return <LoadingState />
+  if (error) return <ErrorState error={error} />
+  if (!data) return <EmptyState />
+  
+  // Render
+  return (
+    <View className="flex-1 bg-white dark:bg-gray-900 p-4">
+      <Card>
+        <Text className="text-2xl font-bold text-gray-900 dark:text-white">
+          {data.name}
+        </Text>
+        <Text className="text-gray-600 dark:text-gray-400">
+          {data.email}
+        </Text>
+      </Card>
+    </View>
+  )
+}
+```
+
+Remember: The goal is to make this codebase as AI-friendly as possible while maintaining high code quality and user experience.

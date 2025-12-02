@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.kaspar59.reactnativestarterkit"
+  },
+  "ios": {
+    "bundleIdentifier": "com.kaspar59.reactnativestarterkit"
+  }
+}

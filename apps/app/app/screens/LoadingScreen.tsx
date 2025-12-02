@@ -1,0 +1,261 @@
+import { useEffect, useRef } from "react"
+import { View, Animated, Easing } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { StyleSheet, useUnistyles } from "react-native-unistyles"
+
+import { Text } from "@/components/Text"
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export interface LoadingScreenProps {
+  /**
+   * Optional loading message
+   */
+  message?: string
+  /**
+   * Optional detailed status
+   */
+  status?: string
+}
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+/**
+ * Full-screen loading screen with animated spinner and gradient background.
+ *
+ * @example
+ * // Basic loading screen
+ * <LoadingScreen />
+ *
+ * // With message
+ * <LoadingScreen message="Initializing app..." />
+ *
+ * // With message and status
+ * <LoadingScreen message="Loading" status="Preparing your experience..." />
+ */
+export function LoadingScreen(props: LoadingScreenProps) {
+  const { message = "Loading", status } = props
+  const { theme } = useUnistyles()
+
+  // Animation for pulsing effect
+  const pulseAnim = useRef(new Animated.Value(1)).current
+  const rotateAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    // Pulsing animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start()
+
+    // Rotation animation
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    ).start()
+  }, [pulseAnim, rotateAnim])
+
+  const rotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  })
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[theme.colors.gradientStart, theme.colors.gradientMiddle, theme.colors.gradientEnd]}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
+          {/* Animated Spinner Container */}
+          <View style={styles.spinnerContainer}>
+            {/* Outer ring */}
+            <Animated.View
+              style={[
+                styles.outerRing,
+                {
+                  transform: [{ rotate }],
+                  borderColor: theme.colors.primary,
+                },
+              ]}
+            />
+            {/* Middle ring */}
+            <Animated.View
+              style={[
+                styles.middleRing,
+                {
+                  transform: [{ rotate }, { scale: pulseAnim }],
+                  borderColor: theme.colors.accent,
+                },
+              ]}
+            />
+            {/* Inner dot */}
+            <Animated.View
+              style={[
+                styles.innerDot,
+                {
+                  transform: [{ scale: pulseAnim }],
+                  backgroundColor: theme.colors.primary,
+                },
+              ]}
+            />
+          </View>
+
+          {/* Loading Text */}
+          <View style={styles.textContainer}>
+            <Text style={styles.loadingText} weight="bold" size="2xl">
+              {message}
+            </Text>
+            {status && (
+              <Text style={styles.statusText} color="secondary" size="base">
+                {status}
+              </Text>
+            )}
+          </View>
+
+          {/* Loading dots animation */}
+          <View style={styles.dotsContainer}>
+            <LoadingDot delay={0} />
+            <LoadingDot delay={200} />
+            <LoadingDot delay={400} />
+          </View>
+        </View>
+      </LinearGradient>
+    </View>
+  )
+}
+
+// =============================================================================
+// LOADING DOT COMPONENT
+// =============================================================================
+
+function LoadingDot({ delay }: { delay: number }) {
+  const { theme } = useUnistyles()
+  const opacity = useRef(new Animated.Value(0.3)).current
+
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacity, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.3,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start()
+    }, delay)
+  }, [delay, opacity])
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          opacity,
+          backgroundColor: theme.colors.foregroundSecondary,
+        },
+      ]}
+    />
+  )
+}
+
+// =============================================================================
+// STYLES
+// =============================================================================
+
+const styles = StyleSheet.create((theme) => ({
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.lg,
+  },
+  spinnerContainer: {
+    width: 120,
+    height: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: theme.spacing.xl,
+  },
+  outerRing: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderTopColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "transparent",
+  },
+  middleRing: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderTopColor: "transparent",
+    borderLeftColor: "transparent",
+    borderBottomColor: "transparent",
+  },
+  innerDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  textContainer: {
+    alignItems: "center",
+    marginBottom: theme.spacing.lg,
+  },
+  loadingText: {
+    marginBottom: theme.spacing.xs,
+    textAlign: "center",
+  },
+  statusText: {
+    textAlign: "center",
+  },
+  dotsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: theme.spacing.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+}))
