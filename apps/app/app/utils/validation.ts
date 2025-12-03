@@ -40,7 +40,13 @@ export function validateEmail(email: string): ValidationResult {
 }
 
 /**
- * Validates password meets minimum requirements
+ * Validates password meets security requirements
+ * Requirements:
+ * - At least 8 characters
+ * - Contains uppercase letter
+ * - Contains lowercase letter
+ * - Contains number
+ * - Contains special character
  */
 export function validatePassword(password: string): ValidationResult {
   if (!password || password.trim() === "") {
@@ -54,6 +60,24 @@ export function validatePassword(password: string): ValidationResult {
     return {
       isValid: false,
       error: "Password must be at least 8 characters",
+    }
+  }
+
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /\d/.test(password)
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+
+  const missingRequirements: string[] = []
+  if (!hasUppercase) missingRequirements.push("uppercase letter")
+  if (!hasLowercase) missingRequirements.push("lowercase letter")
+  if (!hasNumber) missingRequirements.push("number")
+  if (!hasSpecialChar) missingRequirements.push("special character")
+
+  if (missingRequirements.length > 0) {
+    return {
+      isValid: false,
+      error: `Password must contain at least one ${missingRequirements.join(", ")}`,
     }
   }
 

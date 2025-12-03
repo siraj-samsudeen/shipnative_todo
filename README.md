@@ -74,11 +74,6 @@ Update `apps/app/app.json`:
 
 **Minimum for production:** Supabase (auth + database)
 
-#### 4. Configure Certificate Pinning (SECURITY - Recommended)
-Edit `apps/app/app/services/certificatePinning.ts` and add your API domain certificate hashes.
-
-See [Security Setup](#security-setup) below for details.
-
 ### Optional (But Recommended)
 
 - **RevenueCat** - For in-app purchases (can use mock mode)

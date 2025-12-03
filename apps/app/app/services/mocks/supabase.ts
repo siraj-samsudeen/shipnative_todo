@@ -15,6 +15,8 @@
 import { Platform } from "react-native"
 import * as SecureStore from "expo-secure-store"
 
+import { webSecureStorage } from "../../utils/webStorageEncryption"
+
 import type {
   User,
   Session,
@@ -83,10 +85,16 @@ const base64Utils = {
 }
 
 // Platform-aware storage adapter
+// SECURITY: On web, uses encrypted storage for sensitive data
 const storageAdapter = {
   async getItem(key: string): Promise<string | null> {
     if (Platform.OS === "web") {
       try {
+        // Use encrypted storage for sensitive keys
+        if (key.includes("auth") || key.includes("token") || key.includes("session")) {
+          return webSecureStorage.getItem(key)
+        }
+        // Use regular localStorage for non-sensitive data
         return typeof localStorage !== "undefined" ? localStorage.getItem(key) : null
       } catch {
         return null
@@ -102,6 +110,12 @@ const storageAdapter = {
   async setItem(key: string, value: string): Promise<void> {
     if (Platform.OS === "web") {
       try {
+        // Use encrypted storage for sensitive keys
+        if (key.includes("auth") || key.includes("token") || key.includes("session")) {
+          webSecureStorage.setItem(key, value)
+          return
+        }
+        // Use regular localStorage for non-sensitive data
         if (typeof localStorage !== "undefined") {
           localStorage.setItem(key, value)
         }
@@ -120,6 +134,12 @@ const storageAdapter = {
   async removeItem(key: string): Promise<void> {
     if (Platform.OS === "web") {
       try {
+        // Remove from encrypted storage if it was stored there
+        if (key.includes("auth") || key.includes("token") || key.includes("session")) {
+          webSecureStorage.removeItem(key)
+          return
+        }
+        // Remove from regular localStorage
         if (typeof localStorage !== "undefined") {
           localStorage.removeItem(key)
         }

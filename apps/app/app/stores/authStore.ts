@@ -14,6 +14,7 @@ import { persist, createJSONStorage } from "zustand/middleware"
 
 import { supabase } from "../services/supabase"
 import type { Session, User } from "../types/auth"
+import { authRateLimiter, passwordResetRateLimiter, signUpRateLimiter } from "../utils/rateLimiter"
 import { logger } from "../utils/Logger"
 import * as storage from "../utils/storage"
 
@@ -125,6 +126,18 @@ export const useAuthStore = create<AuthState>()(
 
       signIn: async (email, password) => {
         try {
+          // Rate limiting check
+          const isAllowed = await authRateLimiter.isAllowed(`signin:${email.toLowerCase()}`)
+          if (!isAllowed) {
+            const resetTime = await authRateLimiter.getResetTime(`signin:${email.toLowerCase()}`)
+            const minutesRemaining = Math.ceil(resetTime / (60 * 1000))
+            return {
+              error: new Error(
+                `Too many sign-in attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+              ),
+            }
+          }
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -133,6 +146,9 @@ export const useAuthStore = create<AuthState>()(
           if (error) {
             return { error }
           }
+
+          // Reset rate limit on successful login
+          await authRateLimiter.reset(`signin:${email.toLowerCase()}`)
 
           set({
             session: data.session,
@@ -149,6 +165,18 @@ export const useAuthStore = create<AuthState>()(
 
       signUp: async (email, password) => {
         try {
+          // Rate limiting check
+          const isAllowed = await signUpRateLimiter.isAllowed(`signup:${email.toLowerCase()}`)
+          if (!isAllowed) {
+            const resetTime = await signUpRateLimiter.getResetTime(`signup:${email.toLowerCase()}`)
+            const minutesRemaining = Math.ceil(resetTime / (60 * 1000))
+            return {
+              error: new Error(
+                `Too many sign-up attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+              ),
+            }
+          }
+
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -157,6 +185,9 @@ export const useAuthStore = create<AuthState>()(
           if (error) {
             return { error }
           }
+
+          // Reset rate limit on successful signup
+          await signUpRateLimiter.reset(`signup:${email.toLowerCase()}`)
 
           set({
             session: data.session,
@@ -184,11 +215,29 @@ export const useAuthStore = create<AuthState>()(
 
       resetPassword: async (email) => {
         try {
+          // Rate limiting check
+          const isAllowed = await passwordResetRateLimiter.isAllowed(
+            `reset:${email.toLowerCase()}`,
+          )
+          if (!isAllowed) {
+            const resetTime = await passwordResetRateLimiter.getResetTime(
+              `reset:${email.toLowerCase()}`,
+            )
+            const minutesRemaining = Math.ceil(resetTime / (60 * 1000))
+            return {
+              error: new Error(
+                `Too many password reset attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+              ),
+            }
+          }
+
           const { error } = await supabase.auth.resetPasswordForEmail(email)
 
           if (error) {
             return { error }
           }
+
+          // Don't reset rate limit on success - allow server to handle email sending rate limits
 
           return {}
         } catch (error) {

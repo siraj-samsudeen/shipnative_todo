@@ -53,18 +53,51 @@ export function parseDeepLink(url: string): {
 }
 
 /**
+ * Validate UUID format (for email verification tokens)
+ */
+function isValidUUID(token: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(token)
+}
+
+/**
+ * Validate JWT format (for password reset tokens)
+ * JWT format: header.payload.signature (base64url encoded, separated by dots)
+ */
+function isValidJWT(token: string): boolean {
+  // JWT should have 3 parts separated by dots
+  const parts = token.split(".")
+  if (parts.length !== 3) {
+    return false
+  }
+
+  // Each part should be base64url encoded (alphanumeric, -, _)
+  const base64UrlRegex = /^[A-Za-z0-9_-]+$/
+  if (!parts.every((part) => part.length > 0 && base64UrlRegex.test(part))) {
+    return false
+  }
+
+  // Reasonable length check (JWT tokens are typically 100-500 chars)
+  if (token.length < 50 || token.length > 2000) {
+    return false
+  }
+
+  return true
+}
+
+/**
  * Validate token for sensitive deep links (reset-password, verify-email)
- * SECURITY: Basic validation - full validation happens when user submits the form
+ * SECURITY: Validates token format to prevent basic injection attacks
  * 
- * Note: We perform basic checks here (format, length) but defer full validation
- * to the actual password reset/email verification flows where Supabase validates
- * the token server-side.
+ * Note: This performs format validation only. Full cryptographic validation
+ * happens server-side when the token is actually used.
  */
 async function validateDeepLinkToken(
   screen: string,
   token?: string,
 ): Promise<boolean> {
-  if (!token) {
+  if (!token || typeof token !== "string") {
     return false
   }
 
@@ -74,18 +107,22 @@ async function validateDeepLinkToken(
   }
 
   try {
-    // Basic token validation - check format and length
-    // Full validation happens in the actual reset/verify flows
+    // Trim whitespace
+    const trimmedToken = token.trim()
+    if (trimmedToken.length === 0) {
+      return false
+    }
+
     if (screen === "reset-password") {
-      // Password reset tokens are typically JWT or similar format
-      // Basic check: token should be non-empty and have reasonable length
-      return token.length > 10 && token.length < 1000
+      // Password reset tokens from Supabase are typically JWTs
+      // Validate JWT format: header.payload.signature
+      return isValidJWT(trimmedToken)
     }
 
     if (screen === "verify-email") {
-      // Email verification tokens are typically UUIDs or similar
-      // Basic check: token should be non-empty and have reasonable length
-      return token.length > 10 && token.length < 1000
+      // Email verification tokens can be UUIDs or JWTs
+      // Accept either format
+      return isValidUUID(trimmedToken) || isValidJWT(trimmedToken)
     }
 
     return false

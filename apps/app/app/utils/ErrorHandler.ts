@@ -110,6 +110,36 @@ const USER_MESSAGES: Record<ErrorCategory, string> = {
 }
 
 /**
+ * Sanitize error message to prevent information leakage
+ * Removes sensitive information like stack traces, file paths, etc.
+ */
+function sanitizeErrorMessage(message: string, isProduction: boolean): string {
+  if (!isProduction) {
+    // In development, allow more details for debugging
+    return message
+  }
+
+  // Remove file paths
+  let sanitized = message.replace(/\/[^\s]+/g, "[path]")
+
+  // Remove stack trace indicators
+  sanitized = sanitized.replace(/at\s+[^\n]+/g, "")
+
+  // Remove line numbers
+  sanitized = sanitized.replace(/:\d+:\d+/g, "")
+
+  // Remove common sensitive patterns
+  sanitized = sanitized.replace(/password|token|secret|key|api[_-]?key/gi, "[redacted]")
+
+  // Limit message length
+  if (sanitized.length > 200) {
+    sanitized = sanitized.substring(0, 200) + "..."
+  }
+
+  return sanitized.trim() || "An error occurred"
+}
+
+/**
  * Classify an error based on its message and properties
  */
 function classifyError(error: Error | string): {
@@ -187,20 +217,25 @@ class ErrorHandler {
     const originalError = typeof error === "string" ? new Error(error) : error
     const { category, severity } = classifyError(originalError)
 
+    // Sanitize error message for production
+    const isProduction = !__DEV__
+    const sanitizedMessage = sanitizeErrorMessage(originalError.message, isProduction)
+
     const appError: AppError = {
       category,
       severity,
-      message: originalError.message,
+      message: sanitizedMessage, // Use sanitized message
       userMessage: USER_MESSAGES[category],
       originalError,
       retryable: isRetryable(category),
       metadata: context,
     }
 
-    // Log the error
+    // Log the error (with full details in dev, sanitized in production)
     this.logError(appError)
 
     // Report to crash reporting if severity is high or critical
+    // Always send full error to crash reporting for debugging
     if (severity === ErrorSeverity.HIGH || severity === ErrorSeverity.CRITICAL) {
       this.reportError(appError)
     }
