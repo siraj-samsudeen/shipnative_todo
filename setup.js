@@ -449,8 +449,10 @@ const runServiceMenu = async (services, defaults) => {
 
 const configureMarketingPage = async (marketingEnv = {}) => {
   printSection("🌐 MARKETING PAGE (apps/web)", [
-    "Configure the marketing site mode and email provider key used by the waitlist form.",
+    "Configure the marketing site mode and Supabase Edge Function endpoint for the waitlist form.",
     "Updates apps/web/.env so `yarn web` and deployments pick up the right values.",
+    "",
+    "Note: Resend API key is now stored securely in Supabase Edge Function secrets, not in the frontend.",
   ])
 
   const shouldConfigure = await askYesNo("Do you want to configure the marketing page now?", true)
@@ -466,22 +468,26 @@ const configureMarketingPage = async (marketingEnv = {}) => {
     currentMode
   )
 
-  const resendInput = await askQuestion(
-    "Resend API key for waitlist emails (press Enter to keep current/skip)",
+  const currentEndpoint = marketingEnv.VITE_WAITLIST_API_ENDPOINT || ""
+  const endpointInput = await askQuestion(
+    "Supabase Edge Function endpoint for waitlist (e.g., https://your-project.supabase.co/functions/v1/waitlist)",
     null,
-    ""
+    currentEndpoint
   )
-  const resolvedResendKey = resendInput || marketingEnv.RESEND_API_KEY || ""
+  const resolvedEndpoint = endpointInput || currentEndpoint
 
   const updatedEnv = { ...marketingEnv, VITE_MODE: selectedMode }
-  if (resolvedResendKey) {
-    updatedEnv.RESEND_API_KEY = resolvedResendKey
+  if (resolvedEndpoint) {
+    updatedEnv.VITE_WAITLIST_API_ENDPOINT = resolvedEndpoint
   } else {
-    delete updatedEnv.RESEND_API_KEY
+    delete updatedEnv.VITE_WAITLIST_API_ENDPOINT
   }
 
+  // Remove RESEND_API_KEY if it exists (no longer used in frontend)
+  delete updatedEnv.RESEND_API_KEY
+
   const updated =
-    selectedMode !== currentMode || resolvedResendKey !== (marketingEnv.RESEND_API_KEY || "")
+    selectedMode !== currentMode || resolvedEndpoint !== currentEndpoint
 
   return { updated, env: updatedEnv, requested: true }
 }

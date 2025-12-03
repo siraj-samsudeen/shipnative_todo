@@ -50,6 +50,7 @@ The `supabase-schema.sql` file includes:
 - **profiles** - User profile information with preferences (dark mode, notifications, etc.)
 - **push_tokens** - Expo push notification tokens for multiple devices
 - **user_preferences** - Extended user preferences and settings
+- **waitlist** - Email addresses from marketing page waitlist form (for pre-launch email collection)
 - Automatic triggers for profile creation on signup
 - Row Level Security (RLS) policies
 - Helper functions for common operations

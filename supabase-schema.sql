@@ -9,6 +9,7 @@
 -- - User profiles with preferences
 -- - Push notification tokens
 -- - User preferences (dark mode, notifications, etc.)
+-- - Waitlist table for marketing page email collection
 -- =====================================================================
 
 -- Enable UUID extension (if not already enabled)
@@ -286,6 +287,53 @@ BEGIN
     RETURN result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================================
+-- WAITLIST TABLE
+-- =====================================================================
+-- Stores email addresses from the marketing page waitlist form
+-- Used by the Supabase Edge Function to send confirmation emails via Resend
+
+CREATE TABLE IF NOT EXISTS public.waitlist (
+    -- Primary key
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    -- Email address (unique to prevent duplicates)
+    email TEXT NOT NULL UNIQUE,
+
+    -- Optional metadata
+    source TEXT DEFAULT 'marketing_page',
+    user_agent TEXT,
+    ip_address TEXT,
+
+    -- Status
+    email_sent BOOLEAN DEFAULT false,
+    email_sent_at TIMESTAMPTZ,
+
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
+
+-- Policies for waitlist table
+-- Allow anonymous inserts (for waitlist form submissions)
+CREATE POLICY "Anyone can add to waitlist"
+    ON public.waitlist
+    FOR INSERT
+    WITH CHECK (true);
+
+-- Only authenticated users can view waitlist (for admin purposes)
+-- You can adjust this policy based on your needs
+CREATE POLICY "Authenticated users can view waitlist"
+    ON public.waitlist
+    FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS waitlist_email_idx ON public.waitlist(email);
+CREATE INDEX IF NOT EXISTS waitlist_created_at_idx ON public.waitlist(created_at DESC);
 
 -- =====================================================================
 -- INITIAL DATA (OPTIONAL)
