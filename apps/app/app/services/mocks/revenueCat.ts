@@ -7,6 +7,8 @@
 
 import { Platform } from "react-native"
 
+import * as storage from "../../utils/storage"
+
 interface CustomerInfo {
   entitlements: {
     active: Record<string, any>
@@ -58,9 +60,8 @@ function createFreeCustomerInfo(userId: string = "mock-user"): CustomerInfo {
   }
 }
 
-// Mock subscription state (module-level for singleton behavior)
-let mockIsPro = false
-let mockCustomerInfo: CustomerInfo = createFreeCustomerInfo()
+// Storage key for persisting mock subscription state
+const MOCK_STATE_KEY = "mock-revenuecat-state"
 
 // Simulate network delay
 const delay = (ms: number = 500) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -70,6 +71,51 @@ const getLogPrefix = () => {
   if (Platform.OS === "web") return "🌐 [MockRevenueCat Web]"
   return "💰 [MockRevenueCat]"
 }
+
+// Mock subscription state (module-level for singleton behavior)
+let mockIsPro = false
+let mockCustomerInfo: CustomerInfo = createFreeCustomerInfo()
+
+// Restore persisted mock state on module load
+function restoreMockState() {
+  try {
+    const persisted = storage.load(MOCK_STATE_KEY)
+    if (persisted && typeof persisted === "object") {
+      mockIsPro = persisted.isPro === true
+      if (persisted.customerInfo) {
+        mockCustomerInfo = persisted.customerInfo as CustomerInfo
+      }
+      if (__DEV__) {
+        console.log(
+          `${getLogPrefix()} Restored persisted state:`,
+          mockIsPro ? "PRO" : "FREE",
+        )
+      }
+    }
+  } catch (e) {
+    // Ignore errors - start fresh if restore fails
+    if (__DEV__) {
+      console.warn(`${getLogPrefix()} Failed to restore state:`, e)
+    }
+  }
+}
+
+// Persist mock state
+function persistMockState() {
+  try {
+    storage.save(MOCK_STATE_KEY, {
+      isPro: mockIsPro,
+      customerInfo: mockCustomerInfo,
+    })
+  } catch (e) {
+    if (__DEV__) {
+      console.warn(`${getLogPrefix()} Failed to persist state:`, e)
+    }
+  }
+}
+
+// Restore on module load
+restoreMockState()
 
 class MockRevenueCat {
   private configured = false
@@ -153,6 +199,9 @@ class MockRevenueCat {
         },
       },
     }
+
+    // Persist state after purchase
+    persistMockState()
 
     if (__DEV__) {
       console.log(`${getLogPrefix()} Purchase successful! Now PRO until:`, expirationDate)
@@ -273,6 +322,10 @@ class MockRevenueCat {
       console.log(`${getLogPrefix()} Log in:`, appUserID)
     }
 
+    // Restore persisted state for this user (if exists)
+    restoreMockState()
+
+    // Update user ID while preserving subscription state
     mockCustomerInfo.originalAppUserId = appUserID
 
     return { customerInfo: mockCustomerInfo }
@@ -288,6 +341,9 @@ class MockRevenueCat {
     // Reset to free tier
     mockIsPro = false
     mockCustomerInfo = createFreeCustomerInfo("anonymous")
+
+    // Persist reset state
+    persistMockState()
 
     return { customerInfo: mockCustomerInfo }
   }
@@ -316,6 +372,9 @@ class MockRevenueCat {
         mockCustomerInfo.activeSubscriptions = []
         mockCustomerInfo.latestExpirationDate = null
       }
+
+      // Persist state change
+      persistMockState()
     }
   }
 
@@ -340,6 +399,13 @@ class MockRevenueCat {
     mockIsPro = false
     mockCustomerInfo = createFreeCustomerInfo()
     this.configured = false
+
+    // Clear persisted state
+    try {
+      storage.remove(MOCK_STATE_KEY)
+    } catch (e) {
+      // Ignore errors
+    }
 
     if (__DEV__) {
       console.log(`${getLogPrefix()} Reset to initial state`)

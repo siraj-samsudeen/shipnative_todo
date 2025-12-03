@@ -1,15 +1,40 @@
 import { useEffect, useCallback, useState } from "react"
 import { View, Platform, ActivityIndicator } from "react-native"
-import { StyleSheet } from "react-native-unistyles"
 import { useNavigation } from "@react-navigation/native"
-import Purchases from "react-native-purchases"
-import { Paywalls } from "react-native-purchases-ui"
+import { StyleSheet } from "react-native-unistyles"
 
 import { Text, Container, Button } from "../components"
-import { useSubscriptionStore } from "../stores/subscriptionStore"
 import type { AppStackScreenProps } from "../navigators/navigationTypes"
-import type { PricingPackage } from "../types/subscription"
 import { isRevenueCatMock } from "../services/revenuecat"
+import { useSubscriptionStore } from "../stores/subscriptionStore"
+import type { PricingPackage } from "../types/subscription"
+
+// Conditionally import native RevenueCat SDKs (not available on web or in mock mode)
+// Note: isRevenueCatMock is imported from revenuecat service which handles the mock detection logic
+let Purchases: any = null
+let Paywalls: any = null
+
+// Only load native SDK if not web and not in mock mode
+// Mock mode = dev environment without API keys
+// We check isRevenueCatMock at runtime in the component, but for module-level imports
+// we need to check the same conditions
+const mobileApiKey = Platform.select({
+  ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
+  android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
+})
+// Load SDK if: not web AND (production OR has API key)
+const shouldLoadNativeSDK = Platform.OS !== "web" && (!__DEV__ || mobileApiKey)
+
+if (shouldLoadNativeSDK) {
+  try {
+    Purchases = require("react-native-purchases").default
+    Paywalls = require("react-native-purchases-ui").Paywalls
+  } catch (e) {
+    if (__DEV__) {
+      console.warn("Failed to load react-native-purchases", e)
+    }
+  }
+}
 
 // =============================================================================
 // COMPONENT
@@ -23,8 +48,10 @@ export const PaywallScreen = () => {
   const purchasePackage = useSubscriptionStore((state) => state.purchasePackage)
   const subscriptionLoading = useSubscriptionStore((state) => state.loading)
   const isWeb = Platform.OS === "web"
+  const isMock = isRevenueCatMock
+  const isMockMode = isMock || !Purchases || !Paywalls
   const webPackages = packages as PricingPackage[]
-  const isMockWebBilling = isWeb && isRevenueCatMock
+  const isMockWebBilling = isWeb && isMock
   const [isPresenting, setIsPresenting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasAutoPresented, setHasAutoPresented] = useState(false)
@@ -44,27 +71,37 @@ export const PaywallScreen = () => {
 
   // Present RevenueCat Paywall
   const presentPaywall = useCallback(async () => {
-    if (isWeb) {
+    // Web path or Mock mode - use subscription store packages
+    if (isWeb || isMockMode) {
       try {
         setIsPresenting(true)
         setError(null)
 
-        // Ensure web offerings are loaded
+        // Ensure packages are loaded
         if (!useSubscriptionStore.getState().packages.length) {
           await fetchPackages()
         }
 
         if (!useSubscriptionStore.getState().packages.length) {
           throw new Error(
-            "No web offering found. Add a Web Billing offering in RevenueCat and try again.",
+            isWeb
+              ? "No web offering found. Add a Web Billing offering in RevenueCat and try again."
+              : "No packages available. Configure RevenueCat or add API keys.",
           )
         }
       } catch (err: any) {
-        console.error("Failed to load web paywall:", err)
+        console.error("Failed to load paywall:", err)
         setError(err?.message || "Failed to load paywall. Please try again.")
       } finally {
         setIsPresenting(false)
       }
+      return
+    }
+
+    // Native path (iOS/Android) with real RevenueCat SDK
+    if (!Purchases || !Paywalls) {
+      console.error("RevenueCat native SDK not available")
+      setError("RevenueCat SDK not available on this platform.")
       return
     }
 
@@ -77,7 +114,9 @@ export const PaywallScreen = () => {
       const currentOffering = offerings.current
 
       if (!currentOffering) {
-        throw new Error("No offering available. Please configure an offering in RevenueCat dashboard.")
+        throw new Error(
+          "No offering available. Please configure an offering in RevenueCat dashboard.",
+        )
       }
 
       // Present the paywall configured in RevenueCat dashboard
@@ -106,10 +145,10 @@ export const PaywallScreen = () => {
     } finally {
       setIsPresenting(false)
     }
-  }, [fetchPackages, isFromOnboarding, isWeb, navigateToMain])
+  }, [fetchPackages, isFromOnboarding, isWeb, isMockMode, navigateToMain])
 
-  // Handle web purchase flow
-  const handleWebPurchase = useCallback(
+  // Handle purchase flow (web or mock mode)
+  const handlePackagePurchase = useCallback(
     async (pkg: PricingPackage) => {
       try {
         setError(null)
@@ -124,7 +163,7 @@ export const PaywallScreen = () => {
           navigateToMain()
         }
       } catch (err: any) {
-        console.error("Web purchase failed:", err)
+        console.error("Purchase failed:", err)
         setError(err?.message || "Payment failed. Please try again.")
       }
     },
@@ -168,9 +207,7 @@ export const PaywallScreen = () => {
             <Text preset="heading" style={styles.title}>
               Welcome to Pro! 🎉
             </Text>
-            <Text style={styles.description}>
-              You&apos;re all set. Enjoy all premium features!
-            </Text>
+            <Text style={styles.description}>You&apos;re all set. Enjoy all premium features!</Text>
           </View>
         ) : isPresenting ? (
           // Loading state while presenting paywall
@@ -178,47 +215,56 @@ export const PaywallScreen = () => {
             <ActivityIndicator size="large" color="#007AFF" />
             <Text style={styles.loadingText}>Loading paywall...</Text>
           </View>
-        ) : isWeb ? (
-          // Web billing uses packages + checkout links instead of native paywall
+        ) : isWeb || isMockMode ? (
+          // Web billing or Mock mode - use packages + custom UI instead of native paywall
           <View style={styles.content}>
             <Text preset="heading" style={styles.title}>
               Upgrade to Pro
             </Text>
             <Text style={styles.description}>
-              {isMockWebBilling
-                ? "Mock checkout is enabled because no RevenueCat Web key is set. Add a key to use real billing."
-                : "Secure checkout is handled by RevenueCat Web Billing."}
+              {isMock
+                ? isWeb
+                  ? "Mock checkout is enabled because no RevenueCat Web key is set. Add a key to use real billing."
+                  : "Mock mode is enabled because no RevenueCat API keys are set. Add keys to use real billing."
+                : "Secure checkout is handled by RevenueCat."}
             </Text>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.packageList}>
-              {webPackages.length === 0 ? (
+              {packages.length === 0 ? (
                 <Text style={styles.errorText}>
-                  No web offering found. Add a Web Billing offering in RevenueCat and try again.
+                  {isWeb
+                    ? "No web offering found. Add a Web Billing offering in RevenueCat and try again."
+                    : "No packages available. Configure RevenueCat or add API keys."}
                 </Text>
               ) : (
-                webPackages.map((pkg) => (
-                  <View key={pkg.identifier} style={styles.packageCard}>
-                    <View style={styles.packageHeader}>
-                      <Text style={styles.packageTitle}>{pkg.title}</Text>
-                      <Text style={styles.packagePrice}>
-                        {pkg.priceString || `$${pkg.price.toFixed(2)}`}
-                      </Text>
+                packages.map((pkg) => {
+                  const pricingPkg = pkg as PricingPackage
+                  return (
+                    <View key={pricingPkg.identifier} style={styles.packageCard}>
+                      <View style={styles.packageHeader}>
+                        <Text style={styles.packageTitle}>{pricingPkg.title}</Text>
+                        <Text style={styles.packagePrice}>
+                          {pricingPkg.priceString || `$${pricingPkg.price.toFixed(2)}`}
+                        </Text>
+                      </View>
+                      {pricingPkg.description ? (
+                        <Text style={styles.packageDescription}>{pricingPkg.description}</Text>
+                      ) : null}
+                      <Button
+                        text={
+                          subscriptionLoading || isPresenting ? "Processing..." : "Select plan"
+                        }
+                        onPress={() => handlePackagePurchase(pricingPkg)}
+                        variant="filled"
+                        loading={subscriptionLoading || isPresenting}
+                        disabled={subscriptionLoading || isPresenting}
+                        style={styles.presentButton}
+                      />
                     </View>
-                    {pkg.description ? (
-                      <Text style={styles.packageDescription}>{pkg.description}</Text>
-                    ) : null}
-                    <Button
-                      text={subscriptionLoading || isPresenting ? "Processing..." : "Select plan"}
-                      onPress={() => handleWebPurchase(pkg)}
-                      variant="filled"
-                      loading={subscriptionLoading || isPresenting}
-                      disabled={subscriptionLoading || isPresenting}
-                      style={styles.presentButton}
-                    />
-                  </View>
-                ))
+                  )
+                })
               )}
             </View>
 
@@ -262,9 +308,7 @@ export const PaywallScreen = () => {
             <Text preset="heading" style={styles.title}>
               Upgrade to Pro
             </Text>
-            <Text style={styles.description}>
-              Unlock all features and remove limits.
-            </Text>
+            <Text style={styles.description}>Unlock all features and remove limits.</Text>
             <Button
               text="View Plans"
               onPress={handlePresentPaywall}
