@@ -315,7 +315,20 @@ const askQuestion = async (question, validator, defaultValue, isSecret = false) 
       validate: (input) => {
         const value = input.trim() || defaultValue || ""
         if (validator && !validator(value)) {
-          return chalk.red("❌ Invalid input. Please try again.")
+          // Provide helpful error messages based on the question
+          if (message.toLowerCase().includes("bundle identifier")) {
+            return chalk.red("❌ Bundle identifier must be in format: com.company.appname (lowercase, dots, no spaces)")
+          }
+          if (message.toLowerCase().includes("scheme")) {
+            return chalk.red("❌ App scheme must be lowercase letters/numbers only (no spaces or special characters)")
+          }
+          if (message.toLowerCase().includes("project name")) {
+            return chalk.red("❌ Project name must be lowercase, numbers, and dashes only (e.g., my-awesome-app)")
+          }
+          if (message.toLowerCase().includes("url")) {
+            return chalk.red("❌ Please enter a valid URL starting with https://")
+          }
+          return chalk.red("❌ Invalid input. Please check the format and try again.")
         }
         return true
       },
@@ -589,48 +602,75 @@ const generateSetupSummary = (config, services, metadataConfigured, servicesConf
 // ========================================
 const configureMetadata = async (config, defaults = {}) => {
   printSection("📱 PROJECT METADATA", [
-    "These values define how your app appears to users and app stores.",
-    "• App Display Name: short, friendly text under the icon and in store listings.",
-    "• Project Name (slug): developer-facing ID used in folders/URLs; lowercase with dashes.",
-    "• Bundle Identifier: reverse-domain ID required by Apple/Google (e.g., com.acme.shipnative).",
-    "• App Scheme: lowercase token for deep links and OAuth callbacks (e.g., shipnativeapp).",
-    "Values in parentheses come from existing config when available.",
+    "Let's set up your app's basic information. Don't worry - you can change these later!",
+    "",
+    "💡 Tip: You can press Enter to use the suggested default values.",
   ])
 
-  console.log("\nℹ️  App Display Name shows on users' home screens. Keep it short and readable.")
+  console.log(chalk.cyan("\n📱 App Display Name"))
+  console.log(chalk.dim("   This is the name that appears under your app icon on users' phones."))
+  console.log(chalk.dim("   Example: 'My Awesome App' or 'Fitness Tracker'"))
   const defaultDisplayName = defaults.displayName || "My Shipnative App"
-  config.displayName = await askQuestion("What is your app's display name? (shown to users)", validateNotEmpty, defaultDisplayName)
+  config.displayName = await askQuestion("What should your app be called? (shown to users)", validateNotEmpty, defaultDisplayName)
 
-  console.log("\nℹ️  Project Name is a URL-safe slug used in build folders and links. Lowercase, numbers, and dashes only.")
+  console.log(chalk.cyan("\n📁 Project Name"))
+  console.log(chalk.dim("   This is an internal name used for folders and files."))
+  console.log(chalk.dim("   We'll create this automatically from your app name - just press Enter!"))
   const derivedProjectName = config.displayName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
   const defaultProjectName = defaults.projectName || derivedProjectName
-  config.projectName = await askQuestion("What is your project name? (lowercase, no spaces)", (name) => /^[a-z0-9-]+$/.test(name), defaultProjectName)
+  config.projectName = await askQuestion("Project name (lowercase, no spaces) - press Enter to use suggested", (name) => {
+    if (!name || name.trim() === "") return true // Allow empty to use default
+    return /^[a-z0-9-]+$/.test(name)
+  }, defaultProjectName)
 
-  console.log("\nℹ️  Bundle Identifier uniquely identifies your app in the stores. Use a domain you control (e.g., com.yourcompany.app).")
+  console.log(chalk.cyan("\n🆔 Bundle Identifier"))
+  console.log(chalk.dim("   This is like a unique ID for your app in the App Store and Play Store."))
+  console.log(chalk.dim("   Format: com.yourcompany.appname (like com.apple.music)"))
+  console.log(chalk.dim("   💡 Don't have a company? Use com.yourname.appname"))
   const defaultBundleId = defaults.bundleId || `com.shipnative.${config.projectName.replace(/-/g, "")}`
-  config.bundleId = await askQuestion("What is your bundle identifier? (e.g., com.company.app)", validateBundleId, defaultBundleId)
+  config.bundleId = await askQuestion("Bundle identifier (e.g., com.mycompany.myapp)", validateBundleId, defaultBundleId)
 
-  console.log("\nℹ️  App Scheme powers deep links and sign-in redirects. Keep it short, lowercase, and unique (e.g., shipnativeapp).")
+  console.log(chalk.cyan("\n🔗 App Scheme"))
+  console.log(chalk.dim("   This lets your app open links like 'myapp://profile'"))
+  console.log(chalk.dim("   We'll create this automatically - just press Enter!"))
   const defaultScheme = defaults.scheme || config.projectName.replace(/-/g, "")
-  config.scheme = await askQuestion("What is your app scheme? (for deep linking, e.g., myapp)", validateScheme, defaultScheme)
+  config.scheme = await askQuestion("App scheme (for opening links) - press Enter to use suggested", validateScheme, defaultScheme)
 
   return true
 }
 
 const configureSupabase = async (services, defaults = {}, options = {}) => {
   printSection("🔹 SUPABASE (Backend & Auth)", [
-    "Supabase provides database, authentication, and real-time features.",
-    "Use your project URL and a publishable key (sb_publishable_...) that is safe to ship in mobile/desktop apps.",
-    "Secret/Service Role keys must stay on servers only.",
-    "Create a project at: https://supabase.com/dashboard/projects",
+    "Supabase powers your app's database, user accounts, and real-time features.",
+    "",
+    "💡 Don't have a Supabase account yet?",
+    "   1. Go to https://supabase.com and sign up (it's free!)",
+    "   2. Create a new project",
+    "   3. Copy your project URL and API key from Settings > API",
+    "",
+    "⏭️  You can skip this now and set it up later - your app will work in 'mock mode'.",
   ])
 
   const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Supabase now?", true))
-  if (!shouldConfigure) return false
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. Your app will use mock data. You can add Supabase later!"))
+    return false
+  }
 
+  console.log(chalk.cyan("\n📍 Step 1: Project URL"))
+  console.log(chalk.dim("   Find this in Supabase: Settings > API > Project URL"))
+  console.log(chalk.dim("   Looks like: https://xxxxxxxxxxxxx.supabase.co"))
   services.EXPO_PUBLIC_SUPABASE_URL = await askQuestion("Enter your Supabase Project URL", validateUrl, defaults.EXPO_PUBLIC_SUPABASE_URL)
+
+  console.log(chalk.cyan("\n🔑 Step 2: Publishable Key"))
+  console.log(chalk.dim("   Find this in Supabase: Settings > API > API Keys"))
+  console.log(chalk.dim("   • For new keys: API Keys tab → Publishable key section"))
+  console.log(chalk.dim("   • For legacy keys: Legacy API Keys tab → anon key"))
+  console.log(chalk.dim("   💡 New format: sb_publishable_xxx (recommended)"))
+  console.log(chalk.dim("   💡 Legacy format: eyJ... (still works)"))
+  console.log(chalk.dim("   ⚠️  Never use the 'service_role' key here - that's secret!"))
   services.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = await askQuestion(
-    "Enter your Supabase publishable key (starts with sb_publishable_... and safe to embed)",
+    "Enter your Supabase publishable key (safe to use in mobile apps)",
     validateSupabaseKey,
     defaults.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     true // Secret input
@@ -648,76 +688,188 @@ const configureSupabase = async (services, defaults = {}, options = {}) => {
 }
 
 const configureGoogleOAuth = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 GOOGLE OAUTH (Social Login)", ["Enable Google sign-in for your users.", "Setup at: https://console.cloud.google.com/apis/credentials"])
+  printSection("🔹 GOOGLE OAUTH (Social Login)", [
+    "Let users sign in with their Google account (one-click login).",
+    "",
+    "💡 Setup guide:",
+    "   1. Go to https://console.cloud.google.com/apis/credentials",
+    "   2. Create OAuth 2.0 Client ID",
+    "   3. Copy the Client ID and Secret",
+    "",
+    "⏭️  You can skip this - users can still sign up with email.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Google OAuth?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Google sign-in?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. Users will use email sign-up instead."))
+    return false
+  }
 
+  console.log(chalk.cyan("\n🔑 Google OAuth Client ID"))
+  console.log(chalk.dim("   Find this in Google Cloud Console: APIs & Services > Credentials"))
   services.EXPO_PUBLIC_GOOGLE_CLIENT_ID = await askQuestion("Enter your Google OAuth Client ID", (id) => id.length > 10, defaults.EXPO_PUBLIC_GOOGLE_CLIENT_ID)
+  
+  console.log(chalk.cyan("\n🔐 Google OAuth Client Secret"))
+  console.log(chalk.dim("   Found in the same place as your Client ID"))
   services.EXPO_PUBLIC_GOOGLE_CLIENT_SECRET = await askQuestion("Enter your Google OAuth Client Secret", (secret) => secret.length > 10, defaults.EXPO_PUBLIC_GOOGLE_CLIENT_SECRET, true)
 
   return true
 }
 
 const configureAppleSignIn = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 APPLE SIGN-IN (Social Login)", ["Enable Apple sign-in for iOS users.", "Setup at: https://developer.apple.com/account/resources/identifiers/list"])
+  printSection("🔹 APPLE SIGN-IN (Social Login)", [
+    "Let iOS users sign in with their Apple ID (one-click login on iPhones/iPads).",
+    "",
+    "💡 Setup guide:",
+    "   1. Go to https://developer.apple.com/account/resources/identifiers/list",
+    "   2. Create a Services ID",
+    "   3. Create a Key for Sign in with Apple",
+    "   4. Copy the required values",
+    "",
+    "⏭️  You can skip this - users can still sign up with email.",
+    "⏭️  Only needed if you're releasing on iOS.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Apple Sign-In?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Apple sign-in?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. Users will use email sign-up instead."))
+    return false
+  }
 
+  console.log(chalk.cyan("\n📋 Apple Services ID"))
+  console.log(chalk.dim("   Find this in Apple Developer: Certificates, Identifiers & Profiles > Identifiers"))
+  console.log(chalk.dim("   Format: com.yourcompany.appname"))
   services.EXPO_PUBLIC_APPLE_SERVICES_ID = await askQuestion("Enter your Apple Services ID", (id) => id.includes("."), defaults.EXPO_PUBLIC_APPLE_SERVICES_ID)
-  services.EXPO_PUBLIC_APPLE_TEAM_ID = await askQuestion("Enter your Apple Team ID (10 characters)", (id) => /^[A-Z0-9]{10}$/.test(id), defaults.EXPO_PUBLIC_APPLE_TEAM_ID)
-  services.EXPO_PUBLIC_APPLE_PRIVATE_KEY = await askQuestion("Enter your Apple Private Key", (key) => key.startsWith("-----BEGIN PRIVATE KEY-----"), defaults.EXPO_PUBLIC_APPLE_PRIVATE_KEY, true)
-  services.EXPO_PUBLIC_APPLE_KEY_ID = await askQuestion("Enter your Apple Key ID (10 characters)", (id) => /^[A-Z0-9]{10}$/.test(id), defaults.EXPO_PUBLIC_APPLE_KEY_ID)
+  
+  console.log(chalk.cyan("\n👥 Apple Team ID"))
+  console.log(chalk.dim("   Find this in Apple Developer: Membership (top right corner)"))
+  console.log(chalk.dim("   Format: 10 uppercase letters/numbers (e.g., ABC123DEF4)"))
+  services.EXPO_PUBLIC_APPLE_TEAM_ID = await askQuestion("Enter your Apple Team ID (10 characters)", (id) => {
+    if (!id) return false
+    return /^[A-Z0-9]{10}$/.test(id.toUpperCase())
+  }, defaults.EXPO_PUBLIC_APPLE_TEAM_ID)
+  
+  console.log(chalk.cyan("\n🔑 Apple Private Key"))
+  console.log(chalk.dim("   Download this from Apple Developer: Keys > Create a new key"))
+  console.log(chalk.dim("   Download the .p8 file and copy its contents"))
+  console.log(chalk.dim("   Should start with: -----BEGIN PRIVATE KEY-----"))
+  services.EXPO_PUBLIC_APPLE_PRIVATE_KEY = await askQuestion("Enter your Apple Private Key (paste the full key)", (key) => key.startsWith("-----BEGIN PRIVATE KEY-----"), defaults.EXPO_PUBLIC_APPLE_PRIVATE_KEY, true)
+  
+  console.log(chalk.cyan("\n🆔 Apple Key ID"))
+  console.log(chalk.dim("   Found in the same place as your Private Key"))
+  console.log(chalk.dim("   Format: 10 uppercase letters/numbers"))
+  services.EXPO_PUBLIC_APPLE_KEY_ID = await askQuestion("Enter your Apple Key ID (10 characters)", (id) => {
+    if (!id) return false
+    return /^[A-Z0-9]{10}$/.test(id.toUpperCase())
+  }, defaults.EXPO_PUBLIC_APPLE_KEY_ID)
 
   return true
 }
 
 const configurePostHog = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 POSTHOG (Analytics)", ["Track user behavior with analytics, session recording, and feature flags.", "Create a project at: https://us.posthog.com/project/settings"])
+  printSection("🔹 POSTHOG (Analytics)", [
+    "Track how users use your app - see which features are popular, where users get stuck, etc.",
+    "",
+    "💡 Free tier available! Sign up at https://us.posthog.com",
+    "",
+    "⏭️  You can skip this and add analytics later.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up PostHog?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up analytics tracking with PostHog?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. You can add analytics later if needed."))
+    return false
+  }
 
+  console.log(chalk.cyan("\n🔑 PostHog API Key"))
+  console.log(chalk.dim("   Find this in PostHog: Project Settings > Project API Key"))
   services.EXPO_PUBLIC_POSTHOG_API_KEY = await askQuestion("Enter your PostHog API Key", validatePostHogKey, defaults.EXPO_PUBLIC_POSTHOG_API_KEY, true)
-  services.EXPO_PUBLIC_POSTHOG_HOST = await askQuestion("Enter your PostHog Host", validateUrl, defaults.EXPO_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com")
+  
+  console.log(chalk.cyan("\n🌐 PostHog Host"))
+  console.log(chalk.dim("   Usually: https://us.i.posthog.com (or https://eu.i.posthog.com for EU)"))
+  services.EXPO_PUBLIC_POSTHOG_HOST = await askQuestion("Enter your PostHog Host (or press Enter for default)", validateUrl, defaults.EXPO_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com")
 
   return true
 }
 
 const configureRevenueCat = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 REVENUECAT (In-App Purchases)", ["Implement subscriptions and in-app purchases across iOS, Android, and Web.", "Create a project at: https://app.revenuecat.com/"])
+  printSection("🔹 REVENUECAT (In-App Purchases)", [
+    "Sell subscriptions and one-time purchases in your app.",
+    "",
+    "💡 Free tier available! Sign up at https://app.revenuecat.com",
+    "",
+    "⏭️  You can skip this if you're not selling anything yet.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up RevenueCat?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up in-app purchases?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. You can add payments later when ready to monetize."))
+    return false
+  }
 
-  services.EXPO_PUBLIC_REVENUECAT_IOS_KEY = await askQuestion("Enter your RevenueCat iOS Public API Key (optional)", null, defaults.EXPO_PUBLIC_REVENUECAT_IOS_KEY, true)
-  services.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY = await askQuestion("Enter your RevenueCat Android Public API Key (optional)", null, defaults.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY, true)
-  services.EXPO_PUBLIC_REVENUECAT_WEB_KEY = await askQuestion("Enter your RevenueCat Web Public API Key (optional, for Web Billing)", null, defaults.EXPO_PUBLIC_REVENUECAT_WEB_KEY, true)
+  console.log(chalk.cyan("\n📱 Platform Keys"))
+  console.log(chalk.dim("   Find these in RevenueCat: Project Settings > API Keys"))
+  console.log(chalk.dim("   💡 Tip: You only need to add keys for platforms you're releasing on"))
+  console.log(chalk.dim("   💡 Tip: Press Enter to skip any platform you're not using"))
+  
+  services.EXPO_PUBLIC_REVENUECAT_IOS_KEY = await askQuestion("iOS Public API Key (optional - press Enter to skip)", null, defaults.EXPO_PUBLIC_REVENUECAT_IOS_KEY, true)
+  services.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY = await askQuestion("Android Public API Key (optional - press Enter to skip)", null, defaults.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY, true)
+  services.EXPO_PUBLIC_REVENUECAT_WEB_KEY = await askQuestion("Web Public API Key (optional - for web version, press Enter to skip)", null, defaults.EXPO_PUBLIC_REVENUECAT_WEB_KEY, true)
 
   return true
 }
 
 const configureSentry = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 SENTRY (Error Tracking)", ["Track app crashes and performance issues.", "Create a project at: https://sentry.io/projects/new/"])
+  printSection("🔹 SENTRY (Error Tracking)", [
+    "Get notified when your app crashes or has errors. Super helpful for debugging!",
+    "",
+    "💡 Free tier available! Sign up at https://sentry.io",
+    "",
+    "⏭️  You can skip this and add error tracking later.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Sentry?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up error tracking with Sentry?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. You can add error tracking later."))
+    return false
+  }
 
+  console.log(chalk.cyan("\n🔗 Sentry DSN"))
+  console.log(chalk.dim("   Find this in Sentry: Settings > Projects > [Your Project] > Client Keys (DSN)"))
+  console.log(chalk.dim("   Looks like: https://xxxxx@xxxxx.ingest.sentry.io/xxxxx"))
   services.EXPO_PUBLIC_SENTRY_DSN = await askQuestion("Enter your Sentry DSN", validateSentryDSN, defaults.EXPO_PUBLIC_SENTRY_DSN)
 
   return true
 }
 
 const configureFCM = async (services, defaults = {}, options = {}) => {
-  printSection("🔹 FIREBASE CLOUD MESSAGING (Push Notifications)", ["Enable push notifications for Android (iOS uses APNs automatically).", "Setup at: https://console.firebase.google.com/"])
+  printSection("🔹 FIREBASE CLOUD MESSAGING (Push Notifications)", [
+    "Send push notifications to Android users (iOS uses Apple's system automatically).",
+    "",
+    "💡 Setup guide:",
+    "   1. Go to https://console.firebase.google.com/",
+    "   2. Create a project or use existing one",
+    "   3. Go to Project Settings > Cloud Messaging",
+    "   4. Copy the Server Key",
+    "",
+    "⏭️  You can skip this - notifications will still work on iOS.",
+    "⏭️  Only needed if you're releasing on Android.",
+  ])
 
-  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Firebase Cloud Messaging?", false))
-  if (!shouldConfigure) return false
+  const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up push notifications for Android?", false))
+  if (!shouldConfigure) {
+    console.log(chalk.dim("\n   ✅ Skipped. Push notifications will work on iOS automatically."))
+    return false
+  }
 
+  console.log(chalk.cyan("\n🔑 Firebase Cloud Messaging Server Key"))
+  console.log(chalk.dim("   Find this in Firebase: Project Settings > Cloud Messaging > Server Key"))
   services.EXPO_PUBLIC_FCM_SERVER_KEY = await askQuestion("Enter your Firebase Cloud Messaging Server Key", (key) => key.length > 20, defaults.EXPO_PUBLIC_FCM_SERVER_KEY, true)
-  console.log("\n💡 Don't forget to download google-services.json for Android!")
-  console.log("   Place it in: apps/app/android/app/google-services.json")
+  
+  console.log(chalk.yellow("\n📥 Important Next Step:"))
+  console.log(chalk.dim("   After setup, download google-services.json from Firebase"))
+  console.log(chalk.dim("   Place it in: apps/app/android/app/google-services.json"))
+  console.log(chalk.dim("   (We'll remind you about this at the end!)"))
 
   return true
 }
@@ -760,6 +912,15 @@ const configureServicesSequentially = async (services, defaults, options = {}) =
   let configuredCount = 0
   let skipRemaining = false
 
+  // Ask upfront if they want to configure all services or skip optional ones
+  if (!isNonInteractive && !options.skipConfirm) {
+    console.log(chalk.cyan("\n💡 Quick Setup Tip:"))
+    console.log(chalk.dim("   We'll go through each service one by one."))
+    console.log(chalk.dim("   You can skip any service and add it later - your app will work fine!"))
+    console.log(chalk.dim("   Only Supabase is recommended for a complete setup."))
+    console.log("")
+  }
+
   for (let i = 0; i < servicesCatalog.length; i++) {
     if (skipRemaining) break
 
@@ -770,9 +931,10 @@ const configureServicesSequentially = async (services, defaults, options = {}) =
     // Ask about skipping remaining services after each service (except the last one)
     if (!isNonInteractive && i < servicesCatalog.length - 1 && !skipRemaining) {
       const remaining = servicesCatalog.length - i - 1
-      const skipAll = await askYesNo(`\nSkip remaining ${remaining} service(s)?`, false)
+      const skipAll = await askYesNo(chalk.dim(`\nSkip remaining ${remaining} service(s) and finish setup?`), false)
       if (skipAll) {
         skipRemaining = true
+        console.log(chalk.green("\n✅ Great! You can always add these services later by running 'yarn setup' again."))
         break
       }
     }
@@ -855,11 +1017,13 @@ async function setup() {
 
     // Welcome banner
     const welcomeBanner = boxen(
-      chalk.bold.cyan("🚀 Shipnative Setup") +
+      chalk.bold.cyan("🚀 Welcome to Shipnative Setup!") +
         "\n\n" +
-        chalk.dim("Choose how you want to configure your project.") +
+        chalk.dim("We'll help you configure your app step-by-step.") +
         "\n" +
-        chalk.dim("You can run the full wizard, or jump straight into individual services."),
+        chalk.dim("💡 Don't worry - you can skip anything and add it later!") +
+        "\n" +
+        chalk.dim("💡 Press Enter to use suggested default values."),
       {
         padding: 1,
         borderColor: "cyan",
@@ -893,20 +1057,21 @@ async function setup() {
       console.log("🔍 DRY RUN MODE: No changes will be applied\n")
     }
 
-    const mode = await askChoice("Setup mode:", [
+    console.log(chalk.cyan("\n🎯 Choose Your Setup Path:\n"))
+    const mode = await askChoice("How would you like to set up your app?", [
       {
         value: "wizard",
-        label: "Guided setup wizard (metadata + recommended service walkthrough)",
+        label: "✨ Guided Wizard (Recommended) - We'll walk you through everything step-by-step",
       },
       {
         value: "service-menu",
-        label: "Service configurator (pick and edit services individually)",
+        label: "⚙️  Service Configurator - Pick and configure services one at a time",
       },
       {
         value: "metadata-only",
-        label: "Update app metadata only (skip services)",
+        label: "📱 Just Update App Info - Change app name, bundle ID, etc. (skip services)",
       },
-      { value: "exit", label: "Exit without making changes" },
+      { value: "exit", label: "❌ Exit - I'll set this up later" },
     ])
 
     if (mode === "exit") {
@@ -918,12 +1083,18 @@ async function setup() {
     let servicesConfigured = 0
 
     if (mode === "wizard") {
+      console.log(chalk.green("\n✨ Great choice! Let's set up your app together.\n"))
+      console.log(chalk.dim("We'll start with basic app information, then go through optional services."))
+      console.log(chalk.dim("Remember: You can skip any service and add it later!\n"))
       metadataConfigured = await configureMetadata(config, metadataDefaults)
       servicesConfigured = await configureServicesSequentially(services, serviceDefaults)
     } else if (mode === "service-menu") {
-      console.log("\nOpening the service configurator. Use it to edit one service at a time.\n")
+      console.log(chalk.cyan("\n⚙️  Service Configurator"))
+      console.log(chalk.dim("Pick which service you'd like to configure. You can come back anytime!\n"))
       servicesConfigured = await runServiceMenu(services, serviceDefaults)
     } else if (mode === "metadata-only") {
+      console.log(chalk.cyan("\n📱 App Metadata Setup"))
+      console.log(chalk.dim("Let's update your app's basic information.\n"))
       metadataConfigured = await configureMetadata(config, metadataDefaults)
     }
 
