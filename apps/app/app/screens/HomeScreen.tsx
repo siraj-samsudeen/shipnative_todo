@@ -217,12 +217,14 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
             onPress={handleNavigateToComponents}
             delay={ANIMATION.STAGGER_DELAY * 4}
           >
-            <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.primary100 }]}>
-              <Ionicons name="cube-outline" size={24} color={theme.colors.palette.primary600} />
-            </View>
             <View style={styles.actionContent}>
-              <Text weight="semiBold">UI Components</Text>
-              <Text size="sm" color="secondary">
+              <View style={styles.actionTitleRow}>
+                <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.primary100 }]}>
+                  <Ionicons name="cube-outline" size={24} color={theme.colors.palette.primary600} />
+                </View>
+                <Text weight="semiBold" style={styles.actionTitle}>UI Components</Text>
+              </View>
+              <Text size="sm" color="secondary" style={styles.actionDescription}>
                 View all pre-built components
               </Text>
             </View>
@@ -234,12 +236,14 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
             onPress={() => navigation.navigate("Profile")}
             delay={ANIMATION.STAGGER_DELAY * 4.5}
           >
-            <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.secondary100 }]}>
-              <Ionicons name="person-outline" size={24} color={theme.colors.palette.secondary600} />
-            </View>
             <View style={styles.actionContent}>
-              <Text weight="semiBold">My Profile</Text>
-              <Text size="sm" color="secondary">
+              <View style={styles.actionTitleRow}>
+                <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.secondary100 }]}>
+                  <Ionicons name="person-outline" size={24} color={theme.colors.palette.secondary600} />
+                </View>
+                <Text weight="semiBold" style={styles.actionTitle}>My Profile</Text>
+              </View>
+              <Text size="sm" color="secondary" style={styles.actionDescription}>
                 Manage account and settings
               </Text>
             </View>
@@ -251,12 +255,14 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
             onPress={() => navigation.navigate("Paywall")}
             delay={ANIMATION.STAGGER_DELAY * 5}
           >
-            <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.accent100 }]}>
-              <Ionicons name="star-outline" size={24} color={theme.colors.palette.accent600} />
-            </View>
             <View style={styles.actionContent}>
-              <Text weight="semiBold">Premium Features</Text>
-              <Text size="sm" color="secondary">
+              <View style={styles.actionTitleRow}>
+                <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.accent100 }]}>
+                  <Ionicons name="star-outline" size={24} color={theme.colors.palette.accent600} />
+                </View>
+                <Text weight="semiBold" style={styles.actionTitle}>Premium Features</Text>
+              </View>
+              <Text size="sm" color="secondary" style={styles.actionDescription}>
                 Upgrade to unlock more
               </Text>
             </View>
@@ -396,15 +402,25 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.sm,
   },
   iconBox: {
-    width: 48,
-    height: 48,
+    width: 32,
+    height: 32,
     borderRadius: theme.radius.md,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: theme.spacing.md,
   },
   actionContent: {
     flex: 1,
-    gap: 2,
+    gap: theme.spacing.xs,
+  },
+  actionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  actionTitle: {
+    flex: 1,
+  },
+  actionDescription: {
+    marginLeft: 0,
   },
 }))
