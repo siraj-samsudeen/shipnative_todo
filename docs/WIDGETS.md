@@ -255,3 +255,5 @@ validateWidgetData<T>(data: T | null, validator?: (data: T) => boolean): boolean
 - Check mintlify docs for detailed examples
 
 
+
+
