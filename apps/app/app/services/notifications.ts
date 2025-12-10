@@ -1,5 +1,5 @@
-import Constants from "expo-constants"
 import { Platform } from "react-native"
+import Constants from "expo-constants"
 
 import { logger } from "../utils/Logger"
 
@@ -165,7 +165,7 @@ export async function requestPermission(): Promise<{
 
 /**
  * Register for push notifications and get Expo push token
- * 
+ *
  * Note: On web, expo-notifications push tokens are not supported.
  * Web push notifications would require implementing the Web Push API (Service Workers).
  * This function returns null on web to avoid the warning about push token listeners.

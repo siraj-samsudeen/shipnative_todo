@@ -1,9 +1,9 @@
 import { FC, useState } from "react"
 import { Modal, Pressable, View, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import CountryFlag from "react-native-country-flag"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
-import CountryFlag from "react-native-country-flag"
 
 import {
   changeLanguage,
@@ -115,10 +115,7 @@ export const LanguageSelector: FC<LanguageSelectorProps> = ({ visible, onClose }
                     >
                       <View style={styles.languageContent}>
                         <View style={styles.flagContainer}>
-                          <CountryFlag
-                            isoCode={metadata.countryCode}
-                            size={32}
-                          />
+                          <CountryFlag isoCode={metadata.countryCode} size={32} />
                         </View>
                         <View style={styles.languageInfo}>
                           <Text
@@ -223,7 +220,7 @@ const styles = StyleSheet.create((theme) => ({
     marginBottom: theme.spacing.xs,
   },
   languageItemSelected: {
-    backgroundColor: theme.colors.primaryBackground,
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.primary,
   },

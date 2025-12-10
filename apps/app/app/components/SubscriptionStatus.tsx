@@ -98,7 +98,8 @@ export const SubscriptionStatus: FC<SubscriptionStatusProps> = ({
           <Text style={styles.expirationText}>
             {willRenew
               ? translate("subscriptionStatus:renews")
-              : translate("subscriptionStatus:expires")}{" "}
+              : translate("subscriptionStatus:expires")}
+            {" "}
             {translate("subscriptionStatus:on")} {formatDate(expirationDate)}
           </Text>
         )}

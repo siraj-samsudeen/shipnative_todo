@@ -79,20 +79,30 @@ const hi: Translations = {
     language: "भाषा",
     languageAutoDetect: "भाषा आपकी डिवाइस सेटिंग्स से स्वचालित रूप से पता लगाई जाती है",
   },
+  badge: {},
+  tabs: {},
+  onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {
     invalidEmail: "अमान्य ईमेल पता।",
   },
   loginScreen: {
-    logIn: "लॉग इन करें",
-    enterDetails:
+    title: "लॉग इन करें",
+    subtitle:
       "सर्वश्रेष्ठ रहस्य पता करने के लिए नीचे अपना विवरण दर्ज करें। आप कभी अनुमान नहीं लगा पाएंगे कि हमारे पास क्या इंतजार कर रहा है। या शायद आप कर सकते हैं; यह रॉकेट साइंस नहीं है।",
-    emailFieldLabel: "ईमेल",
-    passwordFieldLabel: "पासवर्ड",
-    emailFieldPlaceholder: "अपना ईमेल पता दर्ज करें",
-    passwordFieldPlaceholder: "सुपर सीक्रेट पासवर्ड यहाँ",
-    tapToLogIn: "लॉग इन करने के लिए टैप करें!",
-    hint: "संकेत: आप किसी भी ईमेल पते और अपने पसंदीदा पासवर्ड का उपयोग कर सकते हैं :)",
+    emailLabel: "ईमेल",
+    emailPlaceholder: "अपना ईमेल पता दर्ज करें",
+    passwordLabel: "पासवर्ड",
+    passwordPlaceholder: "सुपर सीक्रेट पासवर्ड यहाँ",
+    signIn: "लॉग इन करने के लिए टैप करें!",
+    forgotPassword: "पासवर्ड भूल गए?",
+    orContinueWith: "या जारी रखें",
+    apple: "Apple",
+    google: "Google",
+    noAccount: "क्या आपका खाता नहीं है?",
+    signUp: "साइन अप करें",
+    appleSignInFailed: "Apple से साइन इन विफल रहा",
+    googleSignInFailed: "Google से साइन इन विफल रहा",
   },
   demoNavigator: {
     componentsTab: "कंपोनेंट्स",

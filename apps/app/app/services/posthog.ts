@@ -42,22 +42,25 @@ if (Platform.OS === "web") {
       // Fallback: use the module itself
       PostHogJS = posthogModule
     }
-  } catch (e) {
+  } catch (error) {
     // SDK loading failed - will be logged during initialization
     // Using console here since logger might not be ready during module load
     if (__DEV__) {
-      console.warn("Failed to load posthog-js. Will use mock if API key is missing.")
+      console.warn("Failed to load posthog-js. Will use mock if API key is missing.", error)
     }
   }
 } else {
   try {
     const module = require("posthog-react-native")
     PostHogRN = module.default || module.PostHog
-  } catch (e) {
+  } catch (error) {
     // SDK loading failed - will be logged during initialization
     // Using console here since logger might not be ready during module load
     if (__DEV__) {
-      console.warn("Failed to load posthog-react-native. Will use mock if API key is missing.")
+      console.warn(
+        "Failed to load posthog-react-native. Will use mock if API key is missing.",
+        error,
+      )
     }
   }
 }
@@ -90,7 +93,10 @@ class PostHogService implements AnalyticsService {
       return
     }
     if (Platform.OS !== "web" && !PostHogRN) {
-      logger.error("PostHog React Native SDK not available. Make sure posthog-react-native is installed", {})
+      logger.error(
+        "PostHog React Native SDK not available. Make sure posthog-react-native is installed",
+        {},
+      )
       return
     }
 
@@ -351,7 +357,7 @@ export const initPosthog = async () => {
   }
 
   await posthog.initialize({ apiKey, host })
-  
+
   // Log mock mode status during initialization (when logger is ready)
   if (useMock && __DEV__) {
     logger.warn("⚠️  PostHog running in mock mode")

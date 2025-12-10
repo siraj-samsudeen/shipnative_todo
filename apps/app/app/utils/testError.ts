@@ -1,11 +1,11 @@
 /**
  * Test Error Utilities
- * 
+ *
  * Functions to test Sentry error tracking in development
  */
 
-import { captureException, captureMessage } from "./crashReporting"
 import { trackError } from "./analytics"
+import { captureException, captureMessage } from "./crashReporting"
 
 /**
  * Test different types of errors to verify Sentry is working
@@ -103,7 +103,3 @@ export const testErrors = {
     })
   },
 }
-
-
-
-

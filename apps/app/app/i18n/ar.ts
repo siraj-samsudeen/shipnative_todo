@@ -79,20 +79,30 @@ const ar: Translations = {
     language: "اللغة",
     languageAutoDetect: "يتم اكتشاف اللغة تلقائياً من إعدادات جهازك",
   },
+  badge: {},
+  tabs: {},
+  onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {
     invalidEmail: "عنوان البريد الالكتروني غير صالح",
   },
   loginScreen: {
-    logIn: "تسجيل الدخول",
-    enterDetails:
+    title: "تسجيل الدخول",
+    subtitle:
       ".ادخل التفاصيل الخاصة بك ادناه لفتح معلومات سرية للغاية. لن تخمن ابداً ما الذي ننتظره. او ربما ستفعل انها انها ليست علم الصواريخ",
-    emailFieldLabel: "البريد الالكتروني",
-    passwordFieldLabel: "كلمة السر",
-    emailFieldPlaceholder: "ادخل بريدك الالكتروني",
-    passwordFieldPlaceholder: "كلمة السر هنا فائقة السر",
-    tapToLogIn: "انقر لتسجيل الدخول!",
-    hint: "(: تلميح: يمكنك استخدام اي عنوان بريد الكتروني وكلمة السر المفضلة لديك",
+    emailLabel: "البريد الالكتروني",
+    emailPlaceholder: "ادخل بريدك الالكتروني",
+    passwordLabel: "كلمة السر",
+    passwordPlaceholder: "كلمة السر هنا فائقة السر",
+    signIn: "انقر لتسجيل الدخول!",
+    forgotPassword: "Forgot Password?",
+    orContinueWith: "أو المتابعة باستخدام",
+    apple: "Apple",
+    google: "Google",
+    noAccount: "Don't have an account?",
+    signUp: "Sign Up",
+    appleSignInFailed: "Failed to sign in with Apple",
+    googleSignInFailed: "Failed to sign in with Google",
   },
   demoNavigator: {
     componentsTab: "عناصر",

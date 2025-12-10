@@ -1,13 +1,7 @@
+import "tsx/cjs"
+
 import { ExpoConfig, ConfigContext } from "@expo/config"
 import withWidgetAppGroup from "./plugins/withWidgetAppGroup"
-
-/**
- * Use tsx/cjs here so we can use TypeScript for our Config Plugins
- * and not have to compile them to JavaScript.
- *
- * See https://docs.expo.dev/config-plugins/plugins/#add-typescript-support-and-convert-to-dynamic-app-config
- */
-import "tsx/cjs"
 
 /**
  * @param config ExpoConfig coming from the static config app.json if it exists
@@ -15,17 +9,21 @@ import "tsx/cjs"
  * You can read more about Expo's Configuration Resolution Rules here:
  * https://docs.expo.dev/workflow/configuration/#configuration-resolution-rules
  */
-module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
-  const existingPlugins = config.plugins ?? []
+module.exports = ({ config }: ConfigContext): ExpoConfig => {
+  const baseConfig = config as ExpoConfig & { bundleIdentifier?: string }
+  const existingPlugins = (baseConfig.plugins ?? []) as NonNullable<ExpoConfig["plugins"]>
 
   // Check if widgets are enabled via feature flag
   const enableWidgets = process.env.EXPO_PUBLIC_ENABLE_WIDGETS === "true"
   const bundleIdentifier =
-    config.ios?.bundleIdentifier || config.bundleIdentifier || "com.kaspar59.reactnativestarterkit"
+    baseConfig.ios?.bundleIdentifier ||
+    baseConfig.bundleIdentifier ||
+    baseConfig.android?.package ||
+    "com.shipnative.app"
   const appGroupIdentifier = process.env.APP_GROUP_IDENTIFIER || `group.${bundleIdentifier}`
 
   // Conditionally add widget plugin
-  const plugins = [...existingPlugins]
+  const plugins: NonNullable<ExpoConfig["plugins"]> = [...existingPlugins]
   if (enableWidgets) {
     plugins.push([
       "@bittingz/expo-widgets",
@@ -48,16 +46,18 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
       },
     ])
 
-    plugins.push([
-      withWidgetAppGroup,
-      {
-        appGroupIdentifier,
-      },
-    ])
+    plugins.push(
+      [
+        withWidgetAppGroup,
+        {
+          appGroupIdentifier,
+        },
+      ] as unknown as NonNullable<ExpoConfig["plugins"]>[number],
+    )
   }
 
   return {
-    ...config,
+    ...baseConfig,
     // Ensure icon is preserved from app.json
     icon: config.icon || "./assets/images/app-icon-all.png",
     ios: {

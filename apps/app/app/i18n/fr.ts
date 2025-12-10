@@ -82,20 +82,30 @@ const fr: Translations = {
     languageAutoDetect:
       "La langue est automatiquement détectée depuis les paramètres de votre appareil",
   },
+  badge: {},
+  tabs: {},
+  onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {
     invalidEmail: "Adresse e-mail invalide.",
   },
   loginScreen: {
-    logIn: "Se connecter",
-    enterDetails:
+    title: "Se connecter",
+    subtitle:
       "Entrez vos informations ci-dessous pour débloquer des informations top secrètes. Vous ne devinerez jamais ce que nous avons en attente. Ou peut-être que vous le ferez ; ce n'est pas de la science spatiale ici.",
-    emailFieldLabel: "E-mail",
-    passwordFieldLabel: "Mot de passe",
-    emailFieldPlaceholder: "Entrez votre adresse e-mail",
-    passwordFieldPlaceholder: "Mot de passe super secret ici",
-    tapToLogIn: "Appuyez pour vous connecter!",
-    hint: "Astuce : vous pouvez utiliser n'importe quelle adresse e-mail et votre mot de passe préféré :)",
+    emailLabel: "E-mail",
+    emailPlaceholder: "Entrez votre adresse e-mail",
+    passwordLabel: "Mot de passe",
+    passwordPlaceholder: "Mot de passe super secret ici",
+    signIn: "Appuyez pour vous connecter!",
+    forgotPassword: "Mot de passe oublié ?",
+    orContinueWith: "ou continuer avec",
+    apple: "Apple",
+    google: "Google",
+    noAccount: "Pas de compte ?",
+    signUp: "S'inscrire",
+    appleSignInFailed: "Échec de la connexion avec Apple",
+    googleSignInFailed: "Échec de la connexion avec Google",
   },
   demoNavigator: {
     componentsTab: "Composants",

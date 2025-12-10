@@ -24,7 +24,7 @@ n
 RESPONSES
 
 # Run setup with test input
-node setup.js < /tmp/setup-test-input.txt
+yarn setup < /tmp/setup-test-input.txt
 
 # Clean up
 rm /tmp/setup-test-input.txt

@@ -8,11 +8,17 @@ type PluginProps = {
  * Ensures the iOS app has the App Group entitlement required for widgets.
  */
 const withWidgetAppGroup: ConfigPlugin<PluginProps> = (config, props = {}) => {
-  const bundleIdentifier = config.ios?.bundleIdentifier ?? "com.reactnativestarterkit"
+  const bundleIdentifier =
+    config.ios?.bundleIdentifier ??
+    (config as any).bundleIdentifier ??
+    config.android?.package ??
+    "com.shipnative.app"
   const appGroupIdentifier = props.appGroupIdentifier ?? `group.${bundleIdentifier}`
 
   let next = withEntitlementsPlist(config, (config) => {
-    const entitlements = config.modResults["com.apple.security.application-groups"] as string[] | undefined
+    const entitlements = config.modResults["com.apple.security.application-groups"] as
+      | string[]
+      | undefined
     const groups = new Set(entitlements ?? [])
     groups.add(appGroupIdentifier)
     config.modResults["com.apple.security.application-groups"] = Array.from(groups)

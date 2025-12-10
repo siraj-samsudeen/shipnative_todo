@@ -11,9 +11,9 @@ import { Spinner } from "@/components/Spinner"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
+import { useAuth } from "@/hooks/useAuth"
 import { translate } from "@/i18n"
 import { AppStackParamList } from "@/navigators/navigationTypes"
-import { useAuth } from "@/hooks/useAuth"
 import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
 import { validateEmail, validatePassword } from "@/utils/validation"
@@ -200,7 +200,9 @@ export const LoginScreen = () => {
                 disabled={oauthLoading}
               >
                 <Ionicons name="logo-apple" size={24} color={theme.colors.foreground} />
-                <Text weight="semiBold" tx="loginScreen:apple">Apple</Text>
+                <Text weight="semiBold" tx="loginScreen:apple">
+                  Apple
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -212,7 +214,9 @@ export const LoginScreen = () => {
                 disabled={oauthLoading}
               >
                 <Ionicons name="logo-google" size={24} color={theme.colors.foreground} />
-                <Text weight="semiBold" tx="loginScreen:google">Google</Text>
+                <Text weight="semiBold" tx="loginScreen:google">
+                  Google
+                </Text>
               </TouchableOpacity>
             )}
           </View>

@@ -596,8 +596,3 @@ export class MockSupabaseAuth {
     // No-op for mock
   }
 }
-
-
-
-
-

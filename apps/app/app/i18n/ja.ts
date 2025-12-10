@@ -80,20 +80,30 @@ const ja: Translations = {
     language: "言語",
     languageAutoDetect: "言語はデバイスの設定から自動的に検出されます",
   },
+  badge: {},
+  tabs: {},
+  onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {
     invalidEmail: "有効なメールアドレスを入力してください.",
   },
   loginScreen: {
-    logIn: "ログイン",
-    enterDetails:
+    title: "ログイン",
+    subtitle:
       "ここにあなたの情報を入力してトップシークレットをアンロックしましょう。何が待ち構えているか予想もつかないはずです。はたまたそうでも無いかも - ロケットサイエンスほど複雑なものではありません。",
-    emailFieldLabel: "メールアドレス",
-    passwordFieldLabel: "パスワード",
-    emailFieldPlaceholder: "メールアドレスを入力してください",
-    passwordFieldPlaceholder: "パスワードを入力してください",
-    tapToLogIn: "タップしてログインしよう！",
-    hint: "ヒント: お好みのメールアドレスとパスワードを使ってください :)",
+    emailLabel: "メールアドレス",
+    emailPlaceholder: "メールアドレスを入力してください",
+    passwordLabel: "パスワード",
+    passwordPlaceholder: "パスワードを入力してください",
+    signIn: "タップしてログインしよう！",
+    forgotPassword: "パスワードをお忘れですか？",
+    orContinueWith: "または次で続行",
+    apple: "Apple",
+    google: "Google",
+    noAccount: "アカウントをお持ちでないですか？",
+    signUp: "サインアップ",
+    appleSignInFailed: "Appleでのサインインに失敗しました",
+    googleSignInFailed: "Googleでのサインインに失敗しました",
   },
   demoNavigator: {
     componentsTab: "コンポーネント",

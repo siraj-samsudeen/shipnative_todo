@@ -357,11 +357,22 @@ export async function resendConfirmationEmailAction(email: string): Promise<{ er
  */
 export async function verifyEmailAction(code: string, set: SetState): Promise<{ error?: Error }> {
   try {
-    // Verify email with the code from the confirmation link
-    const { data, error } = await (supabase.auth.verifyOtp as any)({
-      token: code,
-      type: "email",
-    })
+    // Supabase confirmation links provide token_hash; try signup first, then email as fallback.
+    const tryVerify = async (type: "signup" | "email") => {
+      return (supabase.auth.verifyOtp as any)({
+        token_hash: code,
+        type,
+      })
+    }
+
+    let response = await tryVerify("signup")
+
+    // Fallback to "email" for older templates or email-change flows
+    if (response.error) {
+      response = await tryVerify("email")
+    }
+
+    const { data, error } = response
 
     if (error) {
       return { error }

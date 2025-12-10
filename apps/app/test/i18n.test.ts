@@ -76,10 +76,24 @@ describe("i18n", () => {
       const allTranslationsUsed = stdout.replace(/"/g, "").split("\n")
       allTranslationsUsed.splice(-1, 1)
 
-      for (let i = 0; i < allTranslationsUsed.length; i += 1) {
-        if (!EXCEPTIONS.includes(allTranslationsUsed[i])) {
+      const sanitizedTranslationsUsed = allTranslationsUsed.map((key) =>
+        key
+          .trim()
+          // Strip trailing punctuation or braces that can leak in from grep
+          .replace(/[)}{,:]+$/, ""),
+      )
+      const subscriptionStatusKeys = sanitizedTranslationsUsed.filter((key) =>
+        key.includes("subscriptionStatus"),
+      )
+
+      const unexpectedKeys = sanitizedTranslationsUsed.filter(
+        (key) => !EXCEPTIONS.includes(key) && !allTranslationsDefined.includes(key),
+      )
+
+      for (let i = 0; i < sanitizedTranslationsUsed.length; i += 1) {
+        if (!EXCEPTIONS.includes(sanitizedTranslationsUsed[i])) {
           // You can add keys to EXCEPTIONS (above) if you don't want them included in the test
-          expect(allTranslationsDefined).toContainEqual(allTranslationsUsed[i])
+          expect(allTranslationsDefined).toContainEqual(sanitizedTranslationsUsed[i])
         }
       }
       done()

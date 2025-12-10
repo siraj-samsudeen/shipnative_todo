@@ -61,8 +61,9 @@ struct ExampleWidgetProvider: TimelineProvider {
             }
         }
 
-        // Fallback to template value
-        return "group.com.reactnativestarterkit"
+        // Fallback: derive from main app bundle if available, otherwise use neutral default
+        let mainBundleId = Bundle.main.object(forInfoDictionaryKey: "CFBundleIdentifier") as? String ?? "com.shipnative.app"
+        return "group.\(mainBundleId)"
     }()
     
     // Supabase configuration keys stored in UserDefaults

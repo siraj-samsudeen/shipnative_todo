@@ -26,11 +26,11 @@ let SentryRN: any = null // React Native
 // Note: Errors during SDK loading are logged in initialize() method, not at module load time
 try {
   SentryRN = require("@sentry/react-native")
-} catch (e) {
+} catch (error) {
   // SDK loading failed - will be logged during initialization
   // Using console here since logger might not be ready during module load
   if (__DEV__) {
-    console.warn("Failed to load @sentry/react-native. Will use mock if DSN is missing.")
+    console.warn("Failed to load @sentry/react-native. Will use mock if DSN is missing.", error)
   }
 }
 
@@ -59,13 +59,16 @@ class SentryService implements ErrorTrackingService {
     // @sentry/react-native works on web via React Native Web, but for production web-only apps,
     // consider using @sentry/react for better web-specific features
     if (!SentryRN) {
-      logger.error("Sentry React Native SDK not available. Make sure @sentry/react-native is installed", {})
+      logger.error(
+        "Sentry React Native SDK not available. Make sure @sentry/react-native is installed",
+        {},
+      )
       return
     }
 
     try {
       const isWeb = Platform.OS === "web"
-      
+
       SentryRN.init({
         dsn: sentryDsn,
         environment: config.environment || (__DEV__ ? "development" : "production"),
@@ -273,7 +276,7 @@ export const initSentry = () => {
     environment: __DEV__ ? "development" : "production",
     enableInDevelopment: false,
   })
-  
+
   // Log mock mode status during initialization (when logger is ready)
   if (useMock && __DEV__) {
     logger.warn("⚠️  Sentry running in mock mode")

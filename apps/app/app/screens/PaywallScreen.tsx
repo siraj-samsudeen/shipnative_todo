@@ -126,7 +126,16 @@ export const PaywallScreen = () => {
         offering: currentOffering,
       })
 
-      // Refresh subscription status after paywall is dismissed
+      // Normalize result shape from SDK
+      const resultValue = typeof result === "string" ? result : result?.result
+
+      // If the SDK returned fresh customer info (e.g., "Test Valid Purchase"/restore),
+      // apply it immediately so the Pro state updates without waiting on a fetch.
+      if (result && typeof result === "object" && "customerInfo" in result && result.customerInfo) {
+        useSubscriptionStore.getState().setCustomerInfo(result.customerInfo as any)
+      }
+
+      // Refresh subscription status after paywall is dismissed (authoritative fetch)
       const service = useSubscriptionStore.getState().getActiveService()
       const subscriptionInfo = await service.getSubscriptionInfo()
       const { platform } = useSubscriptionStore.getState()
@@ -137,9 +146,17 @@ export const PaywallScreen = () => {
         useSubscriptionStore.getState().setCustomerInfo(subscriptionInfo as any)
       }
 
-      // If user purchased, navigate to Main (if from onboarding)
-      if (result === "PURCHASED" && isFromOnboarding) {
+      // If user purchased or restored, navigate to Main (if from onboarding)
+      if (
+        (resultValue === "PURCHASED" || resultValue === "RESTORED") &&
+        isFromOnboarding
+      ) {
         navigateToMain()
+      }
+
+      // Log unexpected results for debugging
+      if (resultValue && resultValue !== "PURCHASED" && resultValue !== "RESTORED") {
+        console.info("[Paywall] Unexpected paywall result", resultValue)
       }
     } catch (err: any) {
       console.error("Failed to present paywall:", err)

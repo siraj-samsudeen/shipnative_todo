@@ -1,13 +1,30 @@
 #!/usr/bin/env node
 
-/* eslint-env node */
-const fs = require("fs")
-const path = require("path")
-const { execSync } = require("child_process")
-const inquirer = require("inquirer")
-const ora = require("ora")
-const chalk = require("chalk")
-const boxen = require("boxen")
+import fs from "fs"
+import path from "path"
+import https from "https"
+import { execSync } from "child_process"
+import inquirer from "inquirer"
+import ora from "ora"
+import chalk from "chalk"
+import boxen from "boxen"
+
+type EnvVars = Record<string, string>
+type EnvFileComment = { line: number; content: string }
+type EnvFileData = { vars: EnvVars; comments: EnvFileComment[]; lines: string[]; originalContent?: string }
+type PrerequisiteCheck = {
+  name: string
+  command: string
+  minVersion: string
+  check: (version: string) => boolean
+}
+type SetupOptions = { skipConfirm?: boolean }
+type MetadataConfig = {
+  displayName: string
+  projectName: string
+  bundleId: string
+  scheme: string
+}
 
 // ========================================
 // CONSTANTS
@@ -15,6 +32,26 @@ const boxen = require("boxen")
 const MIN_NODE_VERSION = "20.0.0"
 const MIN_YARN_VERSION = "4.0.0"
 const BACKUP_DIR = path.join(__dirname, ".setup-backups")
+
+// ========================================
+// VERSION HELPERS
+// ========================================
+const parseSemver = (value: string): [number, number, number] | null => {
+  const match = value.match(/v?(\d+)\.(\d+)\.(\d+)/)
+  if (!match) return null
+  return [Number.parseInt(match[1], 10), Number.parseInt(match[2], 10), Number.parseInt(match[3], 10)]
+}
+
+const isVersionAtLeast = (value: string, minimum: string): boolean => {
+  const current = parseSemver(value)
+  const target = parseSemver(minimum)
+  if (!current || !target) return false
+  for (let i = 0; i < 3; i += 1) {
+    if (current[i] > target[i]) return true
+    if (current[i] < target[i]) return false
+  }
+  return true
+}
 
 // ========================================
 // HELPER FUNCTIONS
@@ -56,35 +93,25 @@ For more information, visit: https://docs.shipnative.app
 // ========================================
 // PREREQUISITES CHECK
 // ========================================
-const checkPrerequisites = async (skipCheck = false) => {
+const checkPrerequisites = async (skipCheck = false): Promise<boolean> => {
   if (skipCheck || process.argv.includes("--skip-prereqs")) {
     return true
   }
 
   const spinner = ora("Checking prerequisites").start()
 
-  const checks = [
+  const checks: PrerequisiteCheck[] = [
     {
       name: "Node.js",
       command: "node --version",
       minVersion: MIN_NODE_VERSION,
-      check: (version) => {
-        const match = version.match(/v?(\d+)\.(\d+)\.(\d+)/)
-        if (!match) return false
-        const [major, minor] = [parseInt(match[1]), parseInt(match[2])]
-        return major > 20 || (major === 20 && minor >= 0)
-      },
+      check: (version) => isVersionAtLeast(version, MIN_NODE_VERSION),
     },
     {
       name: "Yarn",
       command: "yarn --version",
       minVersion: MIN_YARN_VERSION,
-      check: (version) => {
-        const match = version.match(/(\d+)\.(\d+)\.(\d+))/)
-        if (!match) return false
-        const major = parseInt(match[1])
-        return major >= 4
-      },
+      check: (version) => isVersionAtLeast(version, MIN_YARN_VERSION),
     },
   ]
 
@@ -134,13 +161,13 @@ const checkPrerequisites = async (skipCheck = false) => {
 // ========================================
 // BACKUP FUNCTIONALITY
 // ========================================
-const ensureBackupDir = () => {
+const ensureBackupDir = (): void => {
   if (!fs.existsSync(BACKUP_DIR)) {
     fs.mkdirSync(BACKUP_DIR, { recursive: true })
   }
 }
 
-const backupFile = (filePath, skipBackup = false) => {
+const backupFile = (filePath: string, skipBackup = false): string | null => {
   if (skipBackup || process.argv.includes("--skip-backup")) {
     return null
   }
@@ -166,7 +193,7 @@ const backupFile = (filePath, skipBackup = false) => {
 // ========================================
 // PROGRESS INDICATORS
 // ========================================
-const createSpinner = (message) => {
+const createSpinner = (message: string): ((success?: boolean) => void) => {
   if (isNonInteractive) {
     process.stdout.write(`${message}... `)
     return (success = true) => {
@@ -187,7 +214,10 @@ const createSpinner = (message) => {
 // ========================================
 // ERROR HANDLING
 // ========================================
-const handleError = (error, context = {}) => {
+const handleError = (
+  error: { code?: string; name?: string; message?: string; stack?: string },
+  context: { file?: string; step?: string; suggestion?: string } = {}
+) => {
   const errorMessages = {
     ENOENT: `File not found: ${context.file || "unknown"}. Make sure you're running from the project root.`,
     EACCES: `Permission denied: ${context.file || "unknown"}. Check file permissions.`,
@@ -209,7 +239,7 @@ const handleError = (error, context = {}) => {
 // ========================================
 // ENV FILE HANDLING (WITH COMMENTS)
 // ========================================
-const loadEnvFileWithComments = (filePath) => {
+const loadEnvFileWithComments = (filePath: string): EnvFileData => {
   if (!fs.existsSync(filePath)) {
     return { vars: {}, comments: [], lines: [] }
   }
@@ -236,7 +266,7 @@ const loadEnvFileWithComments = (filePath) => {
   return { vars, comments, lines, originalContent: content }
 }
 
-const writeEnvFileWithComments = (filePath, values, originalData = null) => {
+const writeEnvFileWithComments = (filePath: string, values: EnvVars, originalData: EnvFileData | null = null) => {
   const lines = originalData?.lines || []
   const newLines = []
 
@@ -281,11 +311,11 @@ const writeEnvFileWithComments = (filePath, values, originalData = null) => {
 }
 
 // Legacy function for backward compatibility
-const loadEnvFile = (filePath) => {
+const loadEnvFile = (filePath: string): EnvVars => {
   return loadEnvFileWithComments(filePath).vars
 }
 
-const writeEnvFile = (filePath, values) => {
+const writeEnvFile = (filePath: string, values: EnvVars) => {
   const originalData = loadEnvFileWithComments(filePath)
   writeEnvFileWithComments(filePath, values, originalData)
 }
@@ -293,7 +323,12 @@ const writeEnvFile = (filePath, values) => {
 // ========================================
 // INPUT HELPERS (Using Inquirer)
 // ========================================
-const askQuestion = async (question, validator, defaultValue, isSecret = false) => {
+const askQuestion = async (
+  question: string,
+  validator?: (value: string) => boolean,
+  defaultValue?: string,
+  isSecret = false
+): Promise<string> => {
   if (isNonInteractive) {
     // In non-interactive mode, try to get from env or use default
     const envKey = question.toUpperCase().replace(/[^A-Z0-9]/g, "_")
@@ -338,7 +373,7 @@ const askQuestion = async (question, validator, defaultValue, isSecret = false) 
   return answer.value.trim() || defaultValue || ""
 }
 
-const askYesNo = async (question, defaultValue = true) => {
+const askYesNo = async (question: string, defaultValue = true): Promise<boolean> => {
   if (isNonInteractive) {
     const envKey = question.toUpperCase().replace(/[^A-Z0-9]/g, "_")
     const envValue = process.env[envKey]
@@ -360,7 +395,11 @@ const askYesNo = async (question, defaultValue = true) => {
   return answer.value
 }
 
-const askChoice = async (question, options, defaultValue) => {
+const askChoice = async (
+  question: string,
+  options: Array<{ value: string; label: string }>,
+  defaultValue?: string
+): Promise<string> => {
   if (isNonInteractive) {
     return defaultValue || options[0]?.value
   }
@@ -387,9 +426,9 @@ const askChoice = async (question, options, defaultValue) => {
 // ========================================
 // VALIDATORS (IMPROVED)
 // ========================================
-const validateBundleId = (bundleId) => /^[a-zA-Z0-9-.]+$/.test(bundleId)
-const validateScheme = (scheme) => /^[a-z0-9]+$/.test(scheme)
-const validateUrl = (url) => {
+const validateBundleId = (bundleId: string) => /^[a-zA-Z0-9-.]+$/.test(bundleId)
+const validateScheme = (scheme: string) => /^[a-z0-9]+$/.test(scheme)
+const validateUrl = (url: string) => {
   if (!url) return false
   try {
     const parsed = new URL(url)
@@ -398,8 +437,8 @@ const validateUrl = (url) => {
     return false
   }
 }
-const validateNotEmpty = (value) => value.length > 0
-const validateSupabaseKey = (key) => {
+const validateNotEmpty = (value: string) => value.length > 0
+const validateSupabaseKey = (key: string) => {
   if (!key) return false
   // New format: sb_publishable_...
   if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return true
@@ -408,12 +447,12 @@ const validateSupabaseKey = (key) => {
   // Fallback: at least 20 characters
   return key.length >= 20
 }
-const validatePostHogKey = (key) => {
+const validatePostHogKey = (key: string) => {
   if (!key) return false
   // PostHog keys are typically 32+ character alphanumeric strings
   return /^[A-Za-z0-9_-]{20,}$/.test(key)
 }
-const validateSentryDSN = (dsn) => {
+const validateSentryDSN = (dsn: string) => {
   if (!dsn) return false
   // Sentry DSN format: https://[key]@[host]/[project-id]
   return /^https:\/\/[A-Za-z0-9]+@[A-Za-z0-9.-]+\/[0-9]+$/.test(dsn)
@@ -422,7 +461,7 @@ const validateSentryDSN = (dsn) => {
 // ========================================
 // SECURITY WARNINGS
 // ========================================
-const checkGitIgnore = (filePath) => {
+const checkGitIgnore = (filePath: string) => {
   const gitignorePath = path.join(__dirname, ".gitignore")
   if (!fs.existsSync(gitignorePath)) {
     return false
@@ -433,7 +472,7 @@ const checkGitIgnore = (filePath) => {
   return gitignore.includes(relativePath) || gitignore.includes(path.basename(filePath))
 }
 
-const warnAboutEnvSecurity = (envPath) => {
+const warnAboutEnvSecurity = (envPath: string) => {
   if (isNonInteractive) return
 
   console.log(chalk.yellow("\n🔒 Security Reminder:"))
@@ -450,11 +489,9 @@ const warnAboutEnvSecurity = (envPath) => {
 // ========================================
 // SERVICE VALIDATION
 // ========================================
-const validateSupabaseConnection = async (url, key) => {
+const validateSupabaseConnection = async (url: string, key: string): Promise<boolean> => {
   try {
     const stopSpinner = createSpinner("Testing Supabase connection")
-    // Use https module instead of fetch (Node.js built-in)
-    const https = require("https")
     const urlObj = new URL(url)
     
     return new Promise((resolve) => {
@@ -496,8 +533,8 @@ const validateSupabaseConnection = async (url, key) => {
 // ========================================
 // UTILITY HELPERS
 // ========================================
-const repeatLine = (char = "━") => char.repeat(70)
-const printSection = (title, descriptionLines = []) => {
+const repeatLine = (char = "━"): string => char.repeat(70)
+const printSection = (title: string, descriptionLines: string[] = []) => {
   console.log("")
   const boxContent = [
     chalk.bold.cyan(title),
@@ -507,7 +544,7 @@ const printSection = (title, descriptionLines = []) => {
   console.log("")
 }
 
-const getMetadataDefaults = () => {
+const getMetadataDefaults = (): Partial<MetadataConfig> => {
   const appJsonPath = path.join(__dirname, "apps/app/app.json")
   if (!fs.existsSync(appJsonPath)) return {}
 
@@ -535,9 +572,17 @@ const serviceLabels = {
   sentry: "Sentry",
   fcm: "Firebase Cloud Messaging",
   widgets: "Native Widgets",
+} as const
+
+type ServiceKey = keyof typeof serviceLabels
+type ServiceStatus = Record<ServiceKey, boolean>
+type ServiceCatalogEntry = {
+  key: ServiceKey
+  label: string
+  handler: (services: EnvVars, defaults: Partial<EnvVars>, options?: SetupOptions) => Promise<boolean>
 }
 
-const getServiceStatus = (services) => ({
+const getServiceStatus = (services: EnvVars): ServiceStatus => ({
   supabase: Boolean(
     services.EXPO_PUBLIC_SUPABASE_URL || services.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   ),
@@ -559,7 +604,7 @@ const getServiceStatus = (services) => ({
   widgets: Boolean(services.EXPO_PUBLIC_ENABLE_WIDGETS === "true"),
 })
 
-const formatServiceList = (status, target = true) =>
+const formatServiceList = (status: ServiceStatus, target = true): string[] =>
   Object.entries(status)
     .filter(([, isConfigured]) => isConfigured === target)
     .map(([key]) => serviceLabels[key])
@@ -568,10 +613,20 @@ const formatServiceList = (status, target = true) =>
 // ========================================
 // CONFIGURATION SUMMARY
 // ========================================
-const generateSetupSummary = (config, services, metadataConfigured, servicesConfigured) => {
+const generateSetupSummary = (
+  config: Partial<MetadataConfig>,
+  services: EnvVars,
+  metadataConfigured: boolean,
+  servicesConfigured: number
+): string | null => {
+  const packageJsonPath = path.join(__dirname, "package.json")
+  const version = fs.existsSync(packageJsonPath)
+    ? (JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version as string)
+    : "unknown"
+
   const summary = {
     timestamp: new Date().toISOString(),
-    version: require("./package.json").version,
+    version,
     metadata: {
       displayName: config.displayName,
       projectName: config.projectName,
@@ -600,7 +655,10 @@ const generateSetupSummary = (config, services, metadataConfigured, servicesConf
 // ========================================
 // CONFIGURATION STEPS
 // ========================================
-const configureMetadata = async (config, defaults = {}) => {
+const configureMetadata = async (
+  config: Partial<MetadataConfig>,
+  defaults: Partial<MetadataConfig> = {}
+): Promise<boolean> => {
   printSection("📱 PROJECT METADATA", [
     "Let's set up your app's basic information. Don't worry - you can change these later!",
     "",
@@ -639,7 +697,11 @@ const configureMetadata = async (config, defaults = {}) => {
   return true
 }
 
-const configureSupabase = async (services, defaults = {}, options = {}) => {
+const configureSupabase = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 SUPABASE (Backend & Auth)", [
     "Supabase powers your app's database, user accounts, and real-time features.",
     "",
@@ -687,7 +749,11 @@ const configureSupabase = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureGoogleOAuth = async (services, defaults = {}, options = {}) => {
+const configureGoogleOAuth = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 GOOGLE OAUTH (Social Login)", [
     "Let users sign in with their Google account (one-click login).",
     "",
@@ -716,7 +782,11 @@ const configureGoogleOAuth = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureAppleSignIn = async (services, defaults = {}, options = {}) => {
+const configureAppleSignIn = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 APPLE SIGN-IN (Social Login)", [
     "Let iOS users sign in with their Apple ID (one-click login on iPhones/iPads).",
     "",
@@ -766,7 +836,11 @@ const configureAppleSignIn = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configurePostHog = async (services, defaults = {}, options = {}) => {
+const configurePostHog = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 POSTHOG (Analytics)", [
     "Track how users use your app - see which features are popular, where users get stuck, etc.",
     "",
@@ -792,7 +866,11 @@ const configurePostHog = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureRevenueCat = async (services, defaults = {}, options = {}) => {
+const configureRevenueCat = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 REVENUECAT (In-App Purchases)", [
     "Sell subscriptions and one-time purchases in your app.",
     "",
@@ -819,7 +897,11 @@ const configureRevenueCat = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureSentry = async (services, defaults = {}, options = {}) => {
+const configureSentry = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 SENTRY (Error Tracking)", [
     "Get notified when your app crashes or has errors. Super helpful for debugging!",
     "",
@@ -842,7 +924,11 @@ const configureSentry = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureFCM = async (services, defaults = {}, options = {}) => {
+const configureFCM = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 FIREBASE CLOUD MESSAGING (Push Notifications)", [
     "Send push notifications to Android users (iOS uses Apple's system automatically).",
     "",
@@ -874,7 +960,11 @@ const configureFCM = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const configureWidgets = async (services, defaults = {}, options = {}) => {
+const configureWidgets = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars> = {},
+  options: SetupOptions = {}
+): Promise<boolean> => {
   printSection("🔹 NATIVE WIDGETS (iOS & Android)", [
     "Enable native home screen widgets for iOS and Android.",
     "Widgets can display data from Supabase and update automatically.",
@@ -907,7 +997,7 @@ const configureWidgets = async (services, defaults = {}, options = {}) => {
   return true
 }
 
-const servicesCatalog = [
+const servicesCatalog: ServiceCatalogEntry[] = [
   { key: "supabase", label: "Supabase (Backend & Auth)", handler: configureSupabase },
   { key: "google", label: "Google OAuth (Social Login)", handler: configureGoogleOAuth },
   { key: "apple", label: "Apple Sign-In (Social Login)", handler: configureAppleSignIn },
@@ -918,7 +1008,11 @@ const servicesCatalog = [
   { key: "widgets", label: "Native Widgets (iOS & Android)", handler: configureWidgets },
 ]
 
-const configureServicesSequentially = async (services, defaults, options = {}) => {
+const configureServicesSequentially = async (
+  services: EnvVars,
+  defaults: Partial<EnvVars>,
+  options: SetupOptions = {}
+): Promise<number> => {
   let configuredCount = 0
   let skipRemaining = false
 
@@ -953,7 +1047,7 @@ const configureServicesSequentially = async (services, defaults, options = {}) =
   return configuredCount
 }
 
-const runServiceMenu = async (services, defaults) => {
+const runServiceMenu = async (services: EnvVars, defaults: Partial<EnvVars>): Promise<number> => {
   let configuredCount = 0
   while (true) {
     const choice = await askChoice("Which service would you like to configure next?", [
@@ -977,7 +1071,9 @@ const runServiceMenu = async (services, defaults) => {
   return configuredCount
 }
 
-const configureMarketingPage = async (marketingEnv = {}) => {
+const configureMarketingPage = async (
+  marketingEnv: EnvVars = {}
+): Promise<{ updated: boolean; env: EnvVars; requested: boolean }> => {
   printSection("🌐 MARKETING PAGE (apps/web)", [
     "Configure the marketing site mode and Supabase Edge Function endpoint for the waitlist form.",
     "Updates apps/web/.env so `yarn web` and deployments pick up the right values.",
@@ -1020,7 +1116,7 @@ const configureMarketingPage = async (marketingEnv = {}) => {
 // ========================================
 // MAIN SETUP
 // ========================================
-async function setup() {
+async function setup(): Promise<void> {
   try {
     // Check prerequisites
     await checkPrerequisites()
@@ -1050,17 +1146,17 @@ async function setup() {
     const marketingEnvPath = path.join(__dirname, "apps/web/.env")
     const marketingEnvExists = fs.existsSync(marketingEnvPath)
     const marketingEnvData = loadEnvFileWithComments(marketingEnvPath)
-    const marketingEnv = marketingEnvData.vars
+    const marketingEnv: EnvVars = marketingEnvData.vars
     const metadataDefaults = getMetadataDefaults()
-    const config = {}
-    const services = { ...existingAppEnv }
+    const config: Partial<MetadataConfig> = {}
+    const services: EnvVars = { ...existingAppEnv }
 
     // Migrate legacy anon key input to publishable key and drop the old variable name
     if (services.EXPO_PUBLIC_SUPABASE_ANON_KEY && !services.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
       services.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = services.EXPO_PUBLIC_SUPABASE_ANON_KEY
     }
     delete services.EXPO_PUBLIC_SUPABASE_ANON_KEY
-    const serviceDefaults = { ...services }
+    const serviceDefaults: Partial<EnvVars> = { ...services }
 
     const isDryRun = process.argv.includes("--dry-run")
     if (isDryRun) {
@@ -1234,6 +1330,26 @@ async function setup() {
         console.log(`   • ${key}=${masked}`)
       })
       console.log("\n💡 Run without --dry-run to apply these changes")
+    }
+
+    // Offer to regenerate native projects when metadata changed
+    const shouldOfferPrebuild = metadataConfigured && !isDryRun
+    if (shouldOfferPrebuild) {
+      const runPrebuild = await askYesNo(
+        "\nRun `yarn prebuild:clean` now to regenerate native projects with the updated name/bundle IDs?",
+        false
+      )
+      if (runPrebuild) {
+        const stopSpinner = createSpinner("Running yarn prebuild:clean")
+        try {
+          execSync("yarn prebuild:clean", { stdio: "inherit" })
+          stopSpinner(true)
+        } catch (error) {
+          stopSpinner(false)
+          console.error("   ❌ Failed to run `yarn prebuild:clean`")
+          console.error("   Please run `yarn prebuild:clean` manually before the next build.")
+        }
+      }
     }
 
     // Offer to install dependencies only when configuration was performed

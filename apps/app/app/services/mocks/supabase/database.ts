@@ -373,8 +373,3 @@ export class MockDatabaseTable {
     }
   }
 }
-
-
-
-
-

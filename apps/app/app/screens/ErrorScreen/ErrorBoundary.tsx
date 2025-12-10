@@ -11,10 +11,10 @@ interface Props {
 /**
  * ErrorBoundary component using Sentry's built-in ErrorBoundary
  * with custom fallback UI (ErrorDetails component).
- * 
+ *
  * Sentry.ErrorBoundary automatically captures errors to Sentry,
  * so we don't need to manually call captureException.
- * 
+ *
  * @see [Sentry ErrorBoundary]{@link https://docs.sentry.io/platforms/react-native/features/react-error-boundary/}
  */
 export function ErrorBoundary({ children, catchErrors }: Props) {
@@ -24,25 +24,25 @@ export function ErrorBoundary({ children, catchErrors }: Props) {
     (catchErrors === "dev" && __DEV__) ||
     (catchErrors === "prod" && !__DEV__)
 
-  if (!isEnabled || catchErrors === "never") {
+  if (!isEnabled) {
     return <>{children}</>
   }
 
   return (
     <Sentry.ErrorBoundary
       fallback={({ error, resetError }) => (
-        <ErrorDetails
-          error={error}
-          errorInfo={null}
-          onReset={resetError}
-        />
+        <ErrorDetails error={error as Error} errorInfo={null} onReset={resetError} />
       )}
-      beforeCapture={(scope, error, errorInfo) => {
+      beforeCapture={(scope, _error, errorInfo) => {
         // Add custom tags for error boundary errors
         scope.setTag("errorBoundary", "true")
         scope.setTag("errorType", "react_component_error")
-        if (errorInfo?.componentStack) {
-          scope.setExtra("componentStack", errorInfo.componentStack)
+        const componentStack =
+          typeof errorInfo === "object" && errorInfo !== null && "componentStack" in errorInfo
+            ? (errorInfo as { componentStack?: string }).componentStack
+            : undefined
+        if (componentStack) {
+          scope.setExtra("componentStack", componentStack)
         }
       }}
     >

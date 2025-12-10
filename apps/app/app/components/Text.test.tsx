@@ -182,12 +182,12 @@ describe("Text", () => {
     const { getByText } = render(
       <ThemeProvider>
         <NavigationContainer>
-          <Text tx="common.welcome" />
+          <Text tx="common:ok" />
         </NavigationContainer>
       </ThemeProvider>,
     )
-    // The mock returns "translated:common.welcome"
-    expect(getByText(/translated:common\.welcome/)).toBeDefined()
+    // The mock returns "translated:common:ok"
+    expect(getByText(/translated:common:ok/)).toBeDefined()
   })
 
   it("applies custom style override", () => {

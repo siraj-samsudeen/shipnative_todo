@@ -167,11 +167,15 @@ describe("AuthStore", () => {
         data: { user: mockUser, session: mockSession },
         error: null,
       })
-      await result.current.signIn("test@example.com", "password123")
+      await act(async () => {
+        await result.current.signIn("test@example.com", "password123")
+      })
 
       // Then sign out
       ;(supabaseService.supabase.auth.signOut as jest.Mock).mockResolvedValue({})
-      await result.current.signOut()
+      await act(async () => {
+        await result.current.signOut()
+      })
 
       expect(result.current.user).toBeNull()
       expect(result.current.isAuthenticated).toBe(false)

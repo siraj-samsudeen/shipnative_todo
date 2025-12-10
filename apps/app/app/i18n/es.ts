@@ -81,20 +81,30 @@ const es: Translations = {
     languageAutoDetect:
       "El idioma se detecta automáticamente desde la configuración de tu dispositivo",
   },
+  badge: {},
+  tabs: {},
+  onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {
     invalidEmail: "Email inválido.",
   },
   loginScreen: {
-    logIn: "Iniciar sesión",
-    enterDetails:
+    title: "Iniciar sesión",
+    subtitle:
       "Ingresa tus datos a continuación para desbloquear información ultra secreta. Nunca vas a adivinar lo que te espera al otro lado. O quizás si lo harás; la verdad no hay mucha ciencia alrededor.",
-    emailFieldLabel: "Email",
-    passwordFieldLabel: "Contraseña",
-    emailFieldPlaceholder: "Ingresa tu email",
-    passwordFieldPlaceholder: "Contraseña super secreta aquí",
-    tapToLogIn: "¡Presiona acá para iniciar sesión!",
-    hint: "Consejo: puedes usar cualquier email y tu contraseña preferida :)",
+    emailLabel: "Email",
+    emailPlaceholder: "Ingresa tu email",
+    passwordLabel: "Contraseña",
+    passwordPlaceholder: "Contraseña super secreta aquí",
+    signIn: "¡Presiona acá para iniciar sesión!",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    orContinueWith: "o continúa con",
+    apple: "Apple",
+    google: "Google",
+    noAccount: "¿No tienes una cuenta?",
+    signUp: "Regístrate",
+    appleSignInFailed: "No se pudo iniciar sesión con Apple",
+    googleSignInFailed: "No se pudo iniciar sesión con Google",
   },
   demoNavigator: {
     componentsTab: "Componentes",
