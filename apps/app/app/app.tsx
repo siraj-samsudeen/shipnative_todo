@@ -20,8 +20,8 @@ import "./utils/gestureHandler"
 
 import "./styles"
 
-import { useEffect, useState, type ReactElement } from "react"
-import { Platform, ViewStyle } from "react-native"
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react"
+import { InteractionManager, Platform, ViewStyle } from "react-native"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -59,6 +59,12 @@ if (Platform.OS !== "web") {
 }
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
+const APP_START_TIME = Date.now()
+
+const logStartup = (label: string) => {
+  const elapsed = Date.now() - APP_START_TIME
+  logger.info(`[perf] ${label} (${elapsed}ms since start)`)
+}
 
 // Web linking configuration
 const prefix = Linking.createURL("/")
@@ -97,78 +103,63 @@ export function App() {
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
   const [isStoresInitialized, setIsStoresInitialized] = useState(false)
+  const hasLoggedReadyRef = useRef(false)
+
+  const handleInitialEmailLink = useCallback(async () => {
+    // Handle email confirmation code from deep link (non-blocking)
+    try {
+      const initialUrl = await Linking.getInitialURL()
+      if (!initialUrl) return
+
+      const url = new URL(initialUrl)
+      const code = url.searchParams.get("code")
+      const type = url.searchParams.get("type")
+
+      if (code && (type === "signup" || type === "email")) {
+        if (__DEV__) {
+          logger.debug("Email confirmation code detected, verifying...")
+        }
+        await useAuthStore.getState().verifyEmail(code)
+      }
+    } catch {
+      if (__DEV__) {
+        logger.debug("No email confirmation code in initial URL")
+      }
+    }
+  }, [])
 
   useEffect(() => {
+    let isMounted = true
     const initialize = async () => {
       try {
-        if (__DEV__) {
-          logger.debug("App initialize started")
-        }
+        logStartup("App initialize started")
 
-        // Log environment validation and mock services status (after logger is ready)
-        logEnvValidation()
-        logMockServicesStatus()
-
-        // Initialize security features
-        certificatePinning.initialize()
-        securityCheck.log()
-
-        // Initialize i18n
-        await initI18n()
-        if (__DEV__) {
-          logger.debug("i18n initialized")
-        }
-        // Initialize language from persisted preference or device locale
-        await initializeLanguage()
-        if (__DEV__) {
-          logger.debug("language initialized")
-        }
-        setIsI18nInitialized(true)
-
-        // Initialize services
-        initSentry()
-        initPosthog()
-        // Initialize RevenueCat BEFORE stores (subscription store depends on it)
-        await initRevenueCat()
-        if (__DEV__) {
-          logger.debug("services initialized")
-        }
-
-        // Handle email confirmation code from deep link
-        // Check if app was opened with a code parameter (email confirmation)
-        const initialUrl = await Linking.getInitialURL()
-        if (initialUrl) {
-          try {
-            const url = new URL(initialUrl)
-            const code = url.searchParams.get("code")
-            const type = url.searchParams.get("type")
-
-            if (code && (type === "signup" || type === "email")) {
-              // Email confirmation code detected - verify it
-              if (__DEV__) {
-                logger.debug("Email confirmation code detected, verifying...")
-              }
-              await useAuthStore.getState().verifyEmail(code)
-            }
-          } catch {
-            // Not a valid URL or not an email confirmation link - ignore
-            if (__DEV__) {
-              logger.debug("No email confirmation code in initial URL")
-            }
+        const i18nPromise = (async () => {
+          await initI18n()
+          await initializeLanguage()
+          if (__DEV__) {
+            logger.debug("i18n and language initialized")
           }
-        }
+        })()
 
-        // Initialize Zustand stores
-        if (__DEV__) {
-          logger.debug("initializing auth store...")
-        }
-        await useAuthStore.getState().initialize()
-        if (__DEV__) {
-          logger.debug("auth store initialized")
+        const authPromise = (async () => {
+          if (__DEV__) {
+            logger.debug("initializing auth store...")
+          }
+          await useAuthStore.getState().initialize()
+          if (__DEV__) {
+            logger.debug("auth store initialized")
+          }
+        })()
+
+        await Promise.all([i18nPromise, authPromise])
+
+        if (isMounted) {
+          setIsI18nInitialized(true)
+          setIsStoresInitialized(true)
         }
 
         // Initialize subscription store in background (non-blocking)
-        // This allows the app to render while subscription data loads
         if (__DEV__) {
           logger.debug("initializing subscription store...")
         }
@@ -179,25 +170,54 @@ export function App() {
             logger.error("Subscription initialization failed", {}, error as Error)
           })
 
-        // Don't wait for subscription store - it can load in background
-        // The app can render with cached/default subscription values
-        setIsStoresInitialized(true)
-        if (__DEV__) {
-          logger.debug("App initialize completed")
-        }
+        // Handle email confirmation link without blocking initial render
+        void handleInitialEmailLink()
       } catch (e) {
         logger.error("App initialize failed", {}, e as Error)
       }
     }
 
+    const deferredInitialization = InteractionManager.runAfterInteractions(() => {
+      try {
+        logEnvValidation()
+        logMockServicesStatus()
+        certificatePinning.initialize()
+        securityCheck.log()
+        initSentry()
+        initPosthog()
+        void initRevenueCat().catch((error) => {
+          logger.error("RevenueCat initialization failed", {}, error as Error)
+        })
+        logStartup("Deferred services initialized")
+      } catch (error) {
+        logger.error("Deferred initialization failed", {}, error as Error)
+      }
+    })
+
     initialize()
-  }, [])
+
+    return () => {
+      isMounted = false
+      deferredInitialization.cancel()
+    }
+  }, [handleInitialEmailLink])
 
   const isLoading =
     !isNavigationStateRestored ||
     !isI18nInitialized ||
     !isStoresInitialized ||
     (!areFontsLoaded && !fontLoadError)
+
+  useEffect(() => {
+    if (!isLoading && !hasLoggedReadyRef.current) {
+      hasLoggedReadyRef.current = true
+      logStartup("App shell ready")
+    }
+  }, [isLoading])
+
+  const handleNavigatorReady = useCallback(() => {
+    logStartup("First navigation ready")
+  }, [])
 
   const linking = {
     prefixes: [prefix],
@@ -240,6 +260,7 @@ export function App() {
         linking={linking}
         initialState={initialNavigationState}
         onStateChange={onNavigationStateChange}
+        onReady={handleNavigatorReady}
       />
     )
   }
