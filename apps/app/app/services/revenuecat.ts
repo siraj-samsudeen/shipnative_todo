@@ -29,6 +29,7 @@ const useMock =
 // SDK instances
 let MobilePurchases: any = null
 let WebPurchases: any = null
+let loadWebPurchasesPromise: Promise<any | null> | null = null
 
 // Track initialization state to prevent double configuration (e.g., on hot reload)
 let isMobileConfigured = false
@@ -43,12 +44,24 @@ if (Platform.OS !== "web" && !useMock) {
   }
 }
 
-if (Platform.OS === "web" && !useMock) {
-  try {
-    WebPurchases = require("@revenuecat/purchases-js")
-  } catch {
-    // Failed to load @revenuecat/purchases-js - will use mock
-  }
+// Lazy-load RevenueCat web SDK to keep initial web bundle smaller
+async function loadWebPurchasesSdk(): Promise<any | null> {
+  if (WebPurchases) return WebPurchases
+  if (loadWebPurchasesPromise) return loadWebPurchasesPromise
+
+  loadWebPurchasesPromise = import("@revenuecat/purchases-js")
+    .then((mod) => {
+      WebPurchases = mod
+      return WebPurchases
+    })
+    .catch((error) => {
+      if (__DEV__) {
+        logger.warn("Failed to load @revenuecat/purchases-js, will fall back to mock", { error })
+      }
+      return null
+    })
+
+  return loadWebPurchasesPromise
 }
 
 // Web SDK instance (singleton)
@@ -402,8 +415,13 @@ const revenueCatWeb: SubscriptionService = {
       return { subscriptionInfo: toSubscriptionInfo(result.customerInfo, "revenuecat-web") }
     }
 
-    if (!WebPurchases || !webApiKey) {
+    if (!webApiKey) {
       logger.warn("RevenueCat Web SDK not available")
+      return { subscriptionInfo: toSubscriptionInfo(null, "revenuecat-web") }
+    }
+
+    WebPurchases = await loadWebPurchasesSdk()
+    if (!WebPurchases) {
       return { subscriptionInfo: toSubscriptionInfo(null, "revenuecat-web") }
     }
 

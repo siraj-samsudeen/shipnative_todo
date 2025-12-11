@@ -21,41 +21,14 @@ import { logger } from "../utils/Logger"
 // PostHog SDKs (platform-specific)
 let PostHogRN: any = null // React Native
 let PostHogJS: any = null // Web
+let loadPostHogWebPromise: Promise<any | null> | null = null
 
-// Load appropriate SDK based on platform
-// Note: Errors during SDK loading are logged in initialize() method, not at module load time
-if (Platform.OS === "web") {
-  try {
-    // posthog-js can be imported in different ways depending on the build
-    const posthogModule = require("posthog-js")
-    // Try different export patterns
-    if (posthogModule.default) {
-      // ES module default export
-      PostHogJS = posthogModule.default
-    } else if (typeof posthogModule.init === "function") {
-      // CommonJS export with init method
-      PostHogJS = posthogModule
-    } else if (posthogModule.posthog) {
-      // Sometimes wrapped in a posthog property
-      PostHogJS = posthogModule.posthog
-    } else {
-      // Fallback: use the module itself
-      PostHogJS = posthogModule
-    }
-  } catch (error) {
-    // SDK loading failed - will be logged during initialization
-    // Using console here since logger might not be ready during module load
-    if (__DEV__) {
-      console.warn("Failed to load posthog-js. Will use mock if API key is missing.", error)
-    }
-  }
-} else {
+// Load React Native SDK eagerly (native only)
+if (Platform.OS !== "web") {
   try {
     const module = require("posthog-react-native")
     PostHogRN = module.default || module.PostHog
   } catch (error) {
-    // SDK loading failed - will be logged during initialization
-    // Using console here since logger might not be ready during module load
     if (__DEV__) {
       console.warn(
         "Failed to load posthog-react-native. Will use mock if API key is missing.",
@@ -63,6 +36,27 @@ if (Platform.OS === "web") {
       )
     }
   }
+}
+
+// Lazy-load PostHog web SDK to keep the initial web bundle lighter
+async function loadPostHogWebSdk(): Promise<any | null> {
+  if (PostHogJS) return PostHogJS
+  if (loadPostHogWebPromise) return loadPostHogWebPromise
+
+  loadPostHogWebPromise = import("posthog-js")
+    .then((mod) => {
+      const candidate = (mod as any).posthog || (mod as any).default || (mod as any)
+      PostHogJS = candidate
+      return PostHogJS
+    })
+    .catch((error) => {
+      if (__DEV__) {
+        console.warn("Failed to dynamically load posthog-js. Falling back to mock.", error)
+      }
+      return null
+    })
+
+  return loadPostHogWebPromise
 }
 
 const apiKey = process.env.EXPO_PUBLIC_POSTHOG_API_KEY || ""
@@ -85,6 +79,10 @@ class PostHogService implements AnalyticsService {
     if (!key) {
       logger.warn("PostHog API key not provided")
       return
+    }
+
+    if (Platform.OS === "web") {
+      PostHogJS = await loadPostHogWebSdk()
     }
 
     // Log SDK loading errors during initialization (when logger is ready)

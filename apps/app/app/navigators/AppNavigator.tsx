@@ -16,6 +16,7 @@ import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { useAuthStore } from "@/stores"
 import { useAppTheme } from "@/theme/context"
 import { logger } from "@/utils/Logger"
+import { webDimension } from "@/types/webStyles"
 
 import { MainTabNavigator } from "./MainTabNavigator"
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
@@ -104,10 +105,10 @@ const AppStack = () => {
           flex: 1,
           backgroundColor: colors.background,
           ...(isWeb && {
-            minHeight: "100vh" as unknown as number,
-            height: "100vh" as unknown as number,
-            width: "100vw" as unknown as number,
-            maxWidth: "100vw" as unknown as number,
+            minHeight: webDimension("100vh"),
+            height: webDimension("100vh"),
+            width: webDimension("100vw"),
+            maxWidth: webDimension("100vw"),
           }),
         },
         animation: "default",

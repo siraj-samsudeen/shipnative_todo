@@ -17,6 +17,10 @@ if (Platform.OS === "web" && typeof document !== "undefined") {
       padding: 0;
       /* Allow scrolling - child elements control their own overflow */
       overflow: auto;
+      overscroll-behavior: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     /* React Native Web renders into #root */
@@ -25,6 +29,7 @@ if (Platform.OS === "web" && typeof document !== "undefined") {
       height: 100%;
       display: flex;
       flex-direction: column;
+      width: 100%;
     }
   `
   document.head.appendChild(style)
