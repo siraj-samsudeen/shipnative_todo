@@ -1,15 +1,11 @@
 import { Fragment, ReactNode } from "react"
 import { View, ViewStyle } from "react-native"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated"
+import { GestureDetector } from "react-native-gesture-handler"
+import Animated from "react-native-reanimated"
 import { StyleSheet } from "react-native-unistyles"
 
-import { haptics } from "@/utils/haptics"
+import { usePressableGesture } from "@/hooks/usePressableGesture"
+import { SPRING_CONFIG_SOFT } from "@/utils/animations"
 
 import { Text, TextProps } from "./Text"
 
@@ -119,13 +115,6 @@ export interface CardProps {
   testID?: string
 }
 
-// Spring config
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 200,
-  mass: 0.5,
-}
-
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -184,9 +173,6 @@ export function Card(props: CardProps) {
     testID,
   } = props
 
-  // Animation values
-  const scale = useSharedValue(1)
-
   const isPressable = !!onPress || !!onLongPress
   const isHeadingPresent = !!(HeadingComponent || heading || headingTx)
   const isContentPresent = !!(ContentComponent || content || contentTx)
@@ -196,46 +182,16 @@ export function Card(props: CardProps) {
   const presetForStyles = preset === "default" ? undefined : preset
   styles.useVariants({ preset: presetForStyles, verticalAlignment })
 
-  // Gesture handlers
-  const tapGesture = Gesture.Tap()
-    .enabled(!!onPress)
-    .onBegin(() => {
-      scale.value = withSpring(0.98, SPRING_CONFIG)
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-    })
-    .onEnd(() => {
-      if (haptic) {
-        runOnJS(haptics.cardPress)()
-      }
-      if (onPress) {
-        runOnJS(onPress)()
-      }
-    })
-
-  const longPressGesture = Gesture.LongPress()
-    .enabled(!!onLongPress)
-    .minDuration(500)
-    .onStart(() => {
-      scale.value = withSpring(0.96, SPRING_CONFIG)
-      if (haptic) {
-        runOnJS(haptics.longPress)()
-      }
-      if (onLongPress) {
-        runOnJS(onLongPress)()
-      }
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-    })
-
-  const composedGesture = Gesture.Race(tapGesture, longPressGesture)
-
-  // Animated styles
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }))
+  // Use shared pressable gesture hook with softer spring config for cards
+  const { gesture, animatedStyle } = usePressableGesture({
+    onPress,
+    onLongPress,
+    haptic,
+    hapticType: "cardPress",
+    pressScale: 0.98,
+    longPressScale: 0.96,
+    springConfig: SPRING_CONFIG_SOFT,
+  })
 
   const HeaderContentWrapper = verticalAlignment === "force-footer-bottom" ? View : Fragment
 
@@ -293,7 +249,7 @@ export function Card(props: CardProps) {
 
   if (isPressable) {
     return (
-      <GestureDetector gesture={composedGesture}>
+      <GestureDetector gesture={gesture}>
         <Animated.View
           style={[styles.container, animatedStyle, style]}
           testID={testID}

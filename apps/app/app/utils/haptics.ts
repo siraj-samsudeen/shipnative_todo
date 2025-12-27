@@ -145,6 +145,21 @@ export const hapticSelection = () => {
 
 /**
  * Pre-configured haptic presets for common interactions
+ *
+ * Haptic Feedback Strategy:
+ * - buttonPress: Medium impact for standard buttons (primary actions)
+ * - buttonPressLight: Light impact for icon buttons and secondary actions
+ * - buttonPressHeavy: Heavy impact for critical actions (delete, confirm)
+ * - cardPress: Light impact for card interactions (subtle feedback)
+ * - listItemPress: Light impact for list item selections
+ * - longPress: Heavy impact for long press gestures (context menus, etc.)
+ *
+ * When to use each:
+ * - Use buttonPress for primary Button components
+ * - Use buttonPressLight for IconButton components
+ * - Use cardPress for Card components with onPress
+ * - Use listItemPress for ListItem components
+ * - Use longPress for all long press handlers
  */
 export const haptics = {
   // Button presses

@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Offline-first data patterns and caching presets
 - More CI/CD recipes (GitHub Actions) and automated QA
 
+## [1.0.0-rc2] - 2025-12-27
+
+This update introduces the **AGENTS.md Standard**, a significant step forward in AI-assisted development of Shipnative. It improves context locality and reduces redundancy for AI agents.
+
+### Added
+- **AI Context**: Full adoption of the **AGENTS.md Standard**.
+- **Nested Discovery**: Explicit instructions for agents to discover localized `AGENTS.md` files in `apps/app`, `landing_page`, and `mintlify_docs`.
+- **Claude Integration**: Updated `CLAUDE.md` with `@AGENTS.md` import syntax for Claude Code compatibility.
+
+### Changed
+- **Marketing**: Rebranded all "vibe folder" mentions to "AGENTS.md Standard" on the landing page and throughout the documentation.
+
 ## [1.0.0-rc1] - 2025-12-26
 
 New update with many improvements and reliability fixes. It's recommended to use this new version of the boilerplate for future developments or pull these changes in if you've recently started!

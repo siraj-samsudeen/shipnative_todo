@@ -10,6 +10,8 @@ import Animated, {
 } from "react-native-reanimated"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
+import { SPRING_CONFIG_PROGRESS } from "@/utils/animations"
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -87,10 +89,7 @@ export function Progress(props: ProgressProps) {
 
   useEffect(() => {
     if (!indeterminate && value !== undefined) {
-      progressWidth.value = withSpring(Math.min(Math.max(value, 0), 100), {
-        damping: 20,
-        stiffness: 90,
-      })
+      progressWidth.value = withSpring(Math.min(Math.max(value, 0), 100), SPRING_CONFIG_PROGRESS)
     }
   }, [value, indeterminate, progressWidth])
 

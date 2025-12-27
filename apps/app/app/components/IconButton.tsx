@@ -1,16 +1,10 @@
 import { ViewStyle } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated"
+import { GestureDetector } from "react-native-gesture-handler"
+import Animated from "react-native-reanimated"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { haptics } from "@/utils/haptics"
+import { usePressableGesture } from "@/hooks/usePressableGesture"
 
 // =============================================================================
 // TYPES
@@ -62,13 +56,6 @@ export interface IconButtonProps {
   testID?: string
 }
 
-// Spring config for snappy animations
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 400,
-  mass: 0.5,
-}
-
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -106,10 +93,6 @@ export function IconButton(props: IconButtonProps) {
 
   const { theme } = useUnistyles()
 
-  // Animation values
-  const scale = useSharedValue(1)
-  const opacity = useSharedValue(1)
-
   // Apply variants
   styles.useVariants({ variant, size })
 
@@ -125,52 +108,20 @@ export function IconButton(props: IconButtonProps) {
     lg: theme.sizes.icon.lg,
   }[size]
 
-  // Gesture handlers
-  const tapGesture = Gesture.Tap()
-    .enabled(!disabled)
-    .onBegin(() => {
-      scale.value = withSpring(0.9, SPRING_CONFIG)
-      opacity.value = withTiming(0.8, { duration: 50 })
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-      opacity.value = withTiming(1, { duration: 100 })
-    })
-    .onEnd(() => {
-      if (haptic) {
-        runOnJS(haptics.buttonPressLight)()
-      }
-      if (onPress) {
-        runOnJS(onPress)()
-      }
-    })
-
-  const longPressGesture = Gesture.LongPress()
-    .enabled(!disabled && !!onLongPress)
-    .minDuration(500)
-    .onStart(() => {
-      scale.value = withSpring(0.85, SPRING_CONFIG)
-      if (haptic) {
-        runOnJS(haptics.longPress)()
-      }
-      if (onLongPress) {
-        runOnJS(onLongPress)()
-      }
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-    })
-
-  const composedGesture = Gesture.Race(tapGesture, longPressGesture)
-
-  // Animated styles
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }))
+  // Use shared pressable gesture hook
+  const { gesture, animatedStyle } = usePressableGesture({
+    onPress,
+    onLongPress,
+    disabled,
+    haptic,
+    hapticType: "buttonPressLight",
+    pressScale: 0.9,
+    longPressScale: 0.85,
+    animateOpacity: true,
+  })
 
   return (
-    <GestureDetector gesture={composedGesture}>
+    <GestureDetector gesture={gesture}>
       <Animated.View
         style={[styles.container, disabled && styles.disabled, animatedStyle, style]}
         testID={testID}

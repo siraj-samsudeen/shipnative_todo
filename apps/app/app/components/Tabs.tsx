@@ -6,6 +6,7 @@ import { StyleSheet } from "react-native-unistyles"
 
 import { TxKeyPath } from "@/i18n"
 import { haptics } from "@/utils/haptics"
+import { SPRING_CONFIG_SOFT } from "@/utils/animations"
 
 import { Text } from "./Text"
 
@@ -63,11 +64,8 @@ export interface TabsProps {
 // CONSTANTS
 // =============================================================================
 
-const SPRING_CONFIG = {
-  damping: 20,
-  stiffness: 200,
-  mass: 0.5,
-}
+// Use softer spring config for tab indicator animations
+const SPRING_CONFIG = SPRING_CONFIG_SOFT
 
 // =============================================================================
 // COMPONENT

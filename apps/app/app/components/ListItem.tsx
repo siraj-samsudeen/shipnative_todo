@@ -1,15 +1,11 @@
 import { forwardRef, ReactElement } from "react"
 import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated"
+import { GestureDetector } from "react-native-gesture-handler"
+import Animated from "react-native-reanimated"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { haptics } from "@/utils/haptics"
+import { usePressableGesture } from "@/hooks/usePressableGesture"
+import { SPRING_CONFIG_SOFT } from "@/utils/animations"
 
 import { Icon, IconTypes } from "./Icon"
 import { Text, TextProps } from "./Text"
@@ -119,13 +115,6 @@ interface ListItemActionProps {
   side: "left" | "right"
 }
 
-// Spring config
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 200,
-  mass: 0.5,
-}
-
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -181,55 +170,18 @@ export const ListItem = forwardRef<View, ListItemProps>(function ListItem(
     testID,
   } = props
 
-  // Animation values
-  const scale = useSharedValue(1)
-  const backgroundColor = useSharedValue(0)
-
   const isTouchable = !!onPress || !!onLongPress
 
-  // Gesture handlers
-  const tapGesture = Gesture.Tap()
-    .enabled(!!onPress)
-    .onBegin(() => {
-      scale.value = withSpring(0.98, SPRING_CONFIG)
-      backgroundColor.value = withSpring(1, SPRING_CONFIG)
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-      backgroundColor.value = withSpring(0, SPRING_CONFIG)
-    })
-    .onEnd(() => {
-      if (haptic) {
-        runOnJS(haptics.listItemPress)()
-      }
-      if (onPress) {
-        runOnJS(onPress)()
-      }
-    })
-
-  const longPressGesture = Gesture.LongPress()
-    .enabled(!!onLongPress)
-    .minDuration(500)
-    .onStart(() => {
-      scale.value = withSpring(0.96, SPRING_CONFIG)
-      if (haptic) {
-        runOnJS(haptics.longPress)()
-      }
-      if (onLongPress) {
-        runOnJS(onLongPress)()
-      }
-    })
-    .onFinalize(() => {
-      scale.value = withSpring(1, SPRING_CONFIG)
-      backgroundColor.value = withSpring(0, SPRING_CONFIG)
-    })
-
-  const composedGesture = Gesture.Race(tapGesture, longPressGesture)
-
-  // Animated styles
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }))
+  // Use shared pressable gesture hook with softer spring config for list items
+  const { gesture, animatedStyle } = usePressableGesture({
+    onPress,
+    onLongPress,
+    haptic,
+    hapticType: "listItemPress",
+    pressScale: 0.98,
+    longPressScale: 0.96,
+    springConfig: SPRING_CONFIG_SOFT,
+  })
 
   const $containerStyles = [
     topSeparator && styles.separatorTop,
@@ -270,7 +222,7 @@ export const ListItem = forwardRef<View, ListItemProps>(function ListItem(
   if (isTouchable) {
     return (
       <View ref={ref} style={$containerStyles} testID={testID}>
-        <GestureDetector gesture={composedGesture}>{content}</GestureDetector>
+        <GestureDetector gesture={gesture}>{content}</GestureDetector>
       </View>
     )
   }

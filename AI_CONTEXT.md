@@ -186,7 +186,16 @@ const styles = StyleSheet.create((theme) => ({
 
 ---
 
-## 🔄 Documentation System
+## 📚 Documentation System
+
+We use a **Layered Context** approach to maximize AI efficiency:
+
+1.  **AGENTS.md (Discovery Layer)**: Nested in directories. Controls agent behavior, enforces constraints (Always/Never), and provides a map to deeper documentation.
+2.  **vibe/ (Specification Layer)**: Detailed implementation guides, architectural reference, and feature manuals.
+
+### Documentation Tipping Point
+- **Move to AGENTS.md**: If it's a critical constraint or navigation aid that agents must see immediately.
+- **Keep in vibe/**: If it's a detailed "how-to", reference list, or conceptual explanation.
 
 ### 📁 Allowed Root-Level Documentation Files
 
@@ -200,7 +209,8 @@ const styles = StyleSheet.create((theme) => ({
 | `LICENSE.md` | License information |
 | `SUPABASE.md`, `MONETIZATION.md`, etc. | Core feature guides |
 | `AI_CONTEXT.md` | AI instruction file (single source of truth) |
-| `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` | Agent instructions (pointer to AI_CONTEXT) |
+| `AGENTS.md` | Primary entry point for AI agents (standard) |
+| `CLAUDE.md`, `GEMINI.md` | Agent-specific pointers to AGENTS.md |
 | `LANDING_PAGE_CONTENT.md` | Landing page content reference |
 
 ### ❌ DO NOT Create Random Files in Root

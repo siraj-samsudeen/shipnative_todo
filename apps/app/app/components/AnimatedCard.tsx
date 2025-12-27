@@ -18,6 +18,7 @@ import Animated, {
 import { StyleSheet } from "react-native-unistyles"
 
 import { haptics } from "@/utils/haptics"
+import { SPRING_CONFIG_SOFT } from "@/utils/animations"
 
 // =============================================================================
 // TYPES
@@ -70,11 +71,8 @@ export interface AnimatedCardProps {
 // CONSTANTS
 // =============================================================================
 
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 150,
-  mass: 0.5,
-}
+// Use softer spring config for 3D tilt animations
+const SPRING_CONFIG = SPRING_CONFIG_SOFT
 
 const getEnteringAnimation = (type: EnteringAnimations, delay: number) => {
   const baseDelay = delay

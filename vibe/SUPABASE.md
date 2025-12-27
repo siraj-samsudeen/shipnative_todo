@@ -56,10 +56,10 @@ Shipnative includes a production-ready database schema. To set it up:
 5. Click **Run** to execute
 
 The schema includes:
-- **profiles** - User profile information (first name, last name, avatar, etc.)
-- **user_preferences** - App preferences (dark mode, notifications, language, etc.)
+- **profiles** - User profile information (first name, last name, avatar, onboarding status, etc.)
+- **user_preferences** - App preferences (language, timezone, privacy, marketing, etc.)
 - **push_tokens** - Expo push notification tokens for multiple devices
-- **waitlist** - Email addresses from marketing page waitlist form (for pre-launch email collection)
+- **waitlist** - Email collection for pre-launch marketing
 - Automatic triggers for profile creation on signup
 - Row Level Security (RLS) policies
 - Helper functions for common operations
@@ -473,69 +473,53 @@ const session = mockSupabaseHelpers.getCurrentSession()
 
 ---
 
-## Database Schema
+### Core Tables
 
-### Create Tables
+For the complete schema, refer to `supabase-schema.sql` at the root of the repository. Below is an overview of the core tables.
 
-In Supabase dashboard → SQL Editor:
+#### User Profiles
 
 ```sql
--- Users table (extends auth.users)
-create table public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  email text,
-  first_name text,
-  last_name text,
-  avatar_url text,
-  has_completed_onboarding boolean default false,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    first_name TEXT,
+    last_name TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    bio TEXT,
+    dark_mode_enabled BOOLEAN DEFAULT false,
+    notifications_enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
 
--- Posts table
-create table public.posts (
-  id bigserial primary key,
-  title text not null,
-  content text,
-  author_id uuid references public.profiles(id) on delete cascade,
-  published boolean default false,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
+#### User Preferences
+
+```sql
+CREATE TABLE public.user_preferences (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    language TEXT DEFAULT 'en',
+    timezone TEXT DEFAULT 'UTC',
+    profile_visibility TEXT DEFAULT 'public',
+    marketing_emails BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
 
--- Enable Row Level Security
-alter table public.profiles enable row level security;
-alter table public.posts enable row level security;
+#### Push Tokens
 
--- Profiles policies
-create policy "Public profiles are viewable by everyone"
-  on public.profiles for select
-  using (true);
-
-create policy "Users can update own profile"
-  on public.profiles for update
-  using (auth.uid() = id);
-
-create policy "Users can insert own profile"
-  on public.profiles for insert
-  with check (auth.uid() = id);
-
--- Posts policies
-create policy "Posts are viewable by everyone"
-  on public.posts for select
-  using (published = true or author_id = auth.uid());
-
-create policy "Users can create own posts"
-  on public.posts for insert
-  with check (auth.uid() = author_id);
-
-create policy "Users can update own posts"
-  on public.posts for update
-  using (auth.uid() = author_id);
-
-create policy "Users can delete own posts"
-  on public.posts for delete
-  using (auth.uid() = author_id);
+```sql
+CREATE TABLE public.push_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    token TEXT NOT NULL,
+    device_id TEXT,
+    platform TEXT CHECK (platform IN ('ios', 'android', 'web')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ---

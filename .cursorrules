@@ -1,59 +1,33 @@
-You are a senior React Native engineer working on the ShipNative starter kit.
+You# ShipNative - Cursor Rules
 
-## ⚠️ SINGLE SOURCE OF TRUTH
+You are working on **ShipNative**, a production-ready React Native boilerplate. This is a monorepo with three interconnected repositories that MUST stay in sync.
 
-**CRITICAL**: This file references `AI_CONTEXT.md` as the single source of truth for all technology decisions, patterns, and guidelines. When in doubt, refer to `AI_CONTEXT.md` first.
+## ⚠️ START HERE
+Read [AGENTS.md](./AGENTS.md) first. It is the primary entry point for all agents and points to the single source of truth ([AI_CONTEXT.md](./AI_CONTEXT.md)).
 
-## Core Responsibilities
+## 🔄 CRITICAL: Repository Synchronization
+When modifying the boilerplate (`shipnativeapp/`), you MUST update documentation and the landing page:
 
-1. **Read AI_CONTEXT.md first** - This is the single source of truth for tech stack and patterns
-2. **Read the vibe/ folder** - Before writing any code, check:
-   - `apps/app/vibe/CONTEXT.md` - Understand the app structure and current state
-   - `apps/app/vibe/TECH_STACK.md` - Know which technologies to use (and avoid)
-   - `apps/app/vibe/STYLE_GUIDE.md` - Follow code conventions and patterns
-   - `vibe/SERVICES.md` - Service architecture
-   - `vibe/MOCK_SERVICES.md` - Mock mode guide
+### 1. Documentation (`mintlify_docs/docs/`)
+- Update relevant `.mdx` files for any feature or architecture changes.
+- Add new features to the index.
 
-3. **Use existing components** - Check `/components` before creating new ones
-4. **Follow established patterns** - Look at `STYLE_GUIDE.md` and `SCREEN_TEMPLATES.md`
-5. **Update documentation** - Follow the documentation rules in `AI_CONTEXT.md`
+### 2. Landing Page (`landing_page/src/`)
+- Update UI components (BentoGrid, Pricing) to reflect new capabilities.
+- Update `CHANGELOG.md` and `ROADMAP.md`.
 
-## Technology Decisions
+### 3. Internal Context (`vibe/` folder)
+- Update `CONTEXT.md`, `TECH_STACK.md`, or `STYLE_GUIDE.md` as needed.
 
-**See `AI_CONTEXT.md` for complete details.**
+## 🎯 Tech Stack Summary (Detailed in AGENTS.md)
+- **Styling**: Unistyles 3.0 ONLY.
+- **Navigation**: React Navigation ONLY.
+- **State**: Zustand + React Query.
+- **Platform**: iOS, Android, and Web.
 
-### ✅ ALWAYS USE
-- **React Native Unistyles 3.0** for styling (NOT NativeWind/Tailwind)
-- **React Navigation** for navigation (NOT Expo Router)
-- **Zustand** for global state management
-- **React Query** for data fetching and server state
-- **TypeScript** with strict mode (no `any` types)
-- **React Hook Form + Zod** for forms and validation
-- **Functional components** only
+## 📱 Documentation Rules
+- **New Features**: Create `docs/[FEATURE].md`, NOT in the root.
+- **Root Files**: ONLY update existing files (`README.md`, `SUPABASE.md`, etc.).
 
-### ❌ NEVER SUGGEST
-- NativeWind/Tailwind
-- Expo Router
-- Redux, MobX, or Context API for new state
-- Inline styles or hardcoded values
-- useEffect for data fetching
-
-## Styling & Code Style
-
-**Refer to `apps/app/vibe/STYLE_GUIDE.md` for all styling patterns and code examples.**
-
-Key Rules:
-1. **Unistyles**: Always use `StyleSheet.create((theme) => ...)`
-2. **Theme**: Never hardcode colors/spacing. Use `theme.colors.*` and `theme.spacing.*`.
-3. **Dark Mode**: Automatic via semantic theme colors.
-4. **Imports**: Standardized order (React -> Libs -> Stores -> Components).
-
-## Documentation System
-
-**Refer to `AI_CONTEXT.md` for the allowed root-level files and location rules.**
-
-**Key Rule**: New features → `docs/` folder, NOT root directory. Only update existing root files.
-
-## Mock Mode
-
-The app supports running without API keys (mock mode). Ensure new features work in mock mode. See `vibe/MOCK_SERVICES.md`.
+---
+*Refer to [AGENTS.md](./AGENTS.md) for full setup and coding patterns.*

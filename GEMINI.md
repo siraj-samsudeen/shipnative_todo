@@ -1,11 +1,10 @@
-# Gemini Instructions
+# GEMINI.md
 
-> **⚠️ CRITICAL**: You MUST read `AI_CONTEXT.md` (in this directory) immediately. It is the SINGLE SOURCE OF TRUTH for this project.
+> **⚠️ CRITICAL**: [AI_CONTEXT.md](./AI_CONTEXT.md) is the **SINGLE SOURCE OF TRUTH** for this project.
 
-## Quick Summary of Inviolable Rules
-1. **Styling**: Unistyles 3.0 ONLY. No NativeWind/Tailwind.
-2. **Navigation**: React Navigation ONLY. No Expo Router.
-3. **State**: Zustand (Global), React Query (Server).
-4. **Docs**: Never create random .md files in root. Follow `AI_CONTEXT.md` documentation rules.
+## Agent Instructions
+This project uses the `AGENTS.md` standard for AI context management. Please refer to:
+- [AGENTS.md](./AGENTS.md) - Root instructions and setup.
+- [AI_CONTEXT.md](./AI_CONTEXT.md) - Tech stack and coding patterns.
 
-Read `AI_CONTEXT.md` for the full context, architecture, and workflow.
+If working in a subfolder, please check for a local `AGENTS.md` file (e.g., `apps/app/AGENTS.md`).

@@ -64,30 +64,34 @@ These are production-ready schemas that every app needs. The default schema is a
 
 ### User Profiles
 
-Extends Supabase auth.users with app-specific data.
+Extends Supabase `auth.users` with app-specific data. This table is automatically managed by triggers.
 
 ```sql
 -- Create profiles table
-create table public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  
-  -- Basic Info
-  username text unique,
-  full_name text,
-  avatar_url text,
-  bio text,
-  
-  -- App-specific fields (customize as needed)
-  onboarding_completed boolean default false,
-  email_notifications boolean default true,
-  push_notifications boolean default true,
-  
-  -- Metadata
-  metadata jsonb default '{}'::jsonb,
-  
-  constraint username_length check (char_length(username) >= 3)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    -- Primary key (matches auth.users.id)
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+
+    -- Profile information
+    first_name TEXT,
+    last_name TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    bio TEXT,
+
+    -- User preferences (integrated into profile for simplicity)
+    dark_mode_enabled BOOLEAN DEFAULT false,
+    notifications_enabled BOOLEAN DEFAULT true,
+    push_notifications_enabled BOOLEAN DEFAULT true,
+    email_notifications_enabled BOOLEAN DEFAULT true,
+
+    -- Onboarding
+    has_completed_onboarding BOOLEAN DEFAULT false,
+    onboarding_completed_at TIMESTAMPTZ,
+
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Enable RLS
@@ -110,13 +114,19 @@ create policy "Users can update own profile"
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, username, full_name, avatar_url)
+  insert into public.profiles (id, first_name, last_name, full_name, avatar_url)
   values (
     new.id,
-    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'first_name',
+    new.raw_user_meta_data->>'last_name',
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'avatar_url'
   );
+  
+  -- Also create associated preferences
+  insert into public.user_preferences (id)
+  values (new.id);
+  
   return new;
 end;
 $$ language plpgsql security definer;
@@ -139,52 +149,103 @@ create trigger on_profile_updated
   for each row execute procedure public.handle_updated_at();
 ```
 
-### User Settings
+### User Preferences
 
-Store user preferences and app settings.
+Store extended user preferences and app settings.
 
 ```sql
-create table public.user_settings (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users on delete cascade not null unique,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  
-  -- Notification Settings
-  email_notifications boolean default true,
-  push_notifications boolean default true,
-  marketing_emails boolean default false,
-  
-  -- App Preferences
-  theme text default 'auto' check (theme in ('light', 'dark', 'auto')),
-  language text default 'en',
-  timezone text default 'UTC',
-  
-  -- Privacy Settings
-  profile_visibility text default 'public' check (profile_visibility in ('public', 'private', 'friends')),
-  
-  -- Custom Settings (app-specific)
-  settings jsonb default '{}'::jsonb
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+    -- Primary key (matches auth.users.id)
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+
+    -- App preferences
+    language TEXT DEFAULT 'en',
+    timezone TEXT DEFAULT 'UTC',
+
+    -- Privacy preferences
+    profile_visibility TEXT DEFAULT 'public' CHECK (profile_visibility IN ('public', 'private', 'friends')),
+    show_online_status BOOLEAN DEFAULT true,
+
+    -- Communication preferences
+    marketing_emails BOOLEAN DEFAULT true,
+    product_updates BOOLEAN DEFAULT true,
+
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-alter table public.user_settings enable row level security;
+alter table public.user_preferences enable row level security;
 
-create policy "Users can view own settings"
-  on user_settings for select
-  using ( auth.uid() = user_id );
+create policy "Users can view own preferences"
+  on user_preferences for select
+  using ( auth.uid() = id );
 
-create policy "Users can update own settings"
-  on user_settings for update
-  using ( auth.uid() = user_id );
+create policy "Users can update own preferences"
+  on user_preferences for update
+  using ( auth.uid() = id );
 
-create policy "Users can insert own settings"
-  on user_settings for insert
-  with check ( auth.uid() = user_id );
-
-create trigger on_user_settings_updated
-  before update on public.user_settings
+create trigger on_user_preferences_updated
+  before update on public.user_preferences
   for each row execute procedure public.handle_updated_at();
 ```
+
+### Push Notification Tokens
+
+Stores Expo push notification tokens for users, supporting multiple devices.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.push_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    token TEXT NOT NULL,
+    device_id TEXT,
+    device_name TEXT,
+    platform TEXT CHECK (platform IN ('ios', 'android', 'web')),
+    is_active BOOLEAN DEFAULT true,
+    last_used_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, token)
+);
+
+alter table public.push_tokens enable row level security;
+
+create policy "Users can view own push tokens"
+    on push_tokens for select
+    using (auth.uid() = user_id);
+
+create policy "Users can insert own push tokens"
+    on push_tokens for insert
+    with check (auth.uid() = user_id);
+```
+
+### Waitlist
+
+Store email addresses from marketing page waitlist form.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.waitlist (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL UNIQUE,
+    source TEXT DEFAULT 'marketing_page',
+    user_agent TEXT,
+    ip_address TEXT,
+    email_sent BOOLEAN DEFAULT false,
+    email_sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+alter table public.waitlist enable row level security;
+
+create policy "Anyone can add to waitlist"
+    on waitlist for insert
+    with check (true);
+```
+
+### Extension Tables (Optional)
+
+The following tables are not in the default `supabase-schema.sql` but are recommended for most applications.
 
 ### File Uploads / Media
 
