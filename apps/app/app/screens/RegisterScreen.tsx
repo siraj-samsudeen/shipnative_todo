@@ -2,7 +2,10 @@ import { useState } from "react"
 import { View, TouchableOpacity, DimensionValue } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
+import { z } from "zod"
 
 import { Divider } from "@/components/Divider"
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
@@ -11,18 +14,16 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
 import { useAuth } from "@/hooks/useAuth"
+import { registerSchema } from "@/schemas/authSchemas"
 import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
-import {
-  validateEmail,
-  validatePassword,
-  validatePasswordConfirmation,
-  analyzePasswordStrength,
-} from "@/utils/validation"
+import { analyzePasswordStrength } from "@/utils/validation"
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
+
+type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterScreen = () => {
   const { theme } = useUnistyles()
@@ -30,44 +31,31 @@ export const RegisterScreen = () => {
   const signUp = useAuthStore((state) => state.signUp)
   const { signInWithGoogle, signInWithApple, loading: oauthLoading } = useAuth()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Touch state
-  const [emailTouched, setEmailTouched] = useState(false)
-  const [passwordTouched, setPasswordTouched] = useState(false)
-  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false)
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { isValid },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  })
 
-  const passwordStrength = password ? analyzePasswordStrength(password) : null
+  const passwordValue = watch("password")
+  const passwordStrength = passwordValue ? analyzePasswordStrength(passwordValue) : null
 
-  const emailValidation = emailTouched ? validateEmail(email) : { isValid: true, error: "" }
-  const passwordValidation = passwordTouched
-    ? validatePassword(password)
-    : { isValid: true, error: "" }
-  const confirmValidation = confirmPasswordTouched
-    ? validatePasswordConfirmation(password, confirmPassword)
-    : { isValid: true, error: "" }
-
-  const isFormValid = () => {
-    const emailValidation = validateEmail(email)
-    const passwordValidation = validatePassword(password)
-    const confirmValidation = validatePasswordConfirmation(password, confirmPassword)
-    return emailValidation.isValid && passwordValidation.isValid && confirmValidation.isValid
-  }
-
-  const handleRegister = async () => {
-    setEmailTouched(true)
-    setPasswordTouched(true)
-    setConfirmPasswordTouched(true)
-
-    if (!isFormValid()) return
-
+  const onSubmit = async (data: RegisterFormData) => {
     setLoading(true)
     setError("")
-    const { error: signUpError } = await signUp(email, password)
+    const { error: signUpError } = await signUp(data.email, data.password)
     setLoading(false)
 
     if (signUpError) {
@@ -86,6 +74,8 @@ export const RegisterScreen = () => {
       // If email is confirmed, AppNavigator will automatically navigate to Main/Onboarding
     }
   }
+
+  const handleRegister = handleSubmit(onSubmit)
 
   const handleAppleAuth = async () => {
     try {
@@ -163,44 +153,54 @@ export const RegisterScreen = () => {
     >
       {/* Email Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          onBlur={() => setEmailTouched(true)}
-          placeholder="Enter your email"
-          autoCapitalize="none"
-          autoComplete="email"
-          autoCorrect={false}
-          keyboardType="email-address"
-          returnKeyType="next"
-          status={emailTouched && !emailValidation.isValid ? "error" : "default"}
-          helper={emailTouched && !emailValidation.isValid ? emailValidation.error : undefined}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Email"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="Enter your email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
       </View>
 
       {/* Password Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          onBlur={() => setPasswordTouched(true)}
-          placeholder="Enter your password"
-          autoCapitalize="none"
-          autoComplete="password"
-          autoCorrect={false}
-          secureTextEntry
-          textContentType="oneTimeCode"
-          returnKeyType="next"
-          status={passwordTouched && !passwordValidation.isValid ? "error" : "default"}
-          helper={
-            passwordTouched && !passwordValidation.isValid ? passwordValidation.error : undefined
-          }
+        <Controller
+          control={control}
+          name="password"
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Password"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="Enter your password"
+              autoCapitalize="none"
+              autoComplete="password"
+              autoCorrect={false}
+              secureTextEntry
+              textContentType="oneTimeCode"
+              returnKeyType="next"
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
 
         {/* Password Strength Indicator */}
-        {password && passwordStrength && (
+        {passwordValue && passwordStrength && (
           <View style={styles.strengthContainer}>
             <View style={styles.strengthBar}>
               <View
@@ -221,25 +221,27 @@ export const RegisterScreen = () => {
 
       {/* Confirm Password Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          label="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          onBlur={() => setConfirmPasswordTouched(true)}
-          placeholder="Confirm your password"
-          autoCapitalize="none"
-          autoComplete="password"
-          autoCorrect={false}
-          secureTextEntry
-          textContentType="oneTimeCode"
-          returnKeyType="done"
-          onSubmitEditing={handleRegister}
-          status={confirmPasswordTouched && !confirmValidation.isValid ? "error" : "default"}
-          helper={
-            confirmPasswordTouched && !confirmValidation.isValid
-              ? confirmValidation.error
-              : undefined
-          }
+        <Controller
+          control={control}
+          name="confirmPassword"
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Confirm Password"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="Confirm your password"
+              autoCapitalize="none"
+              autoComplete="password"
+              autoCorrect={false}
+              secureTextEntry
+              textContentType="oneTimeCode"
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
       </View>
 
@@ -254,9 +256,9 @@ export const RegisterScreen = () => {
 
       {/* Sign Up Button */}
       <TouchableOpacity
-        style={[styles.primaryButton, (loading || !isFormValid()) && styles.buttonDisabled]}
+        style={[styles.primaryButton, (loading || !isValid) && styles.buttonDisabled]}
         onPress={handleRegister}
-        disabled={loading || !isFormValid()}
+        disabled={loading || !isValid}
         activeOpacity={0.8}
       >
         {loading ? (

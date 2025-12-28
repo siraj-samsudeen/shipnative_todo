@@ -303,6 +303,7 @@ const { data, loading, error } = useWidgetData({
 ### React Hook Form + Zod ✅
 - **Why**: Type-safe validation, great DX, performant
 - **Pattern**: Use in all forms
+- **Current usage**: Auth screens use `app/schemas/authSchemas.ts` with RHF controllers
 
 ```typescript
 // ✅ DO THIS

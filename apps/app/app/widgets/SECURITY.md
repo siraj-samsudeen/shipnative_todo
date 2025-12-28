@@ -1,6 +1,6 @@
 # Widget Security Guide
 
-This document outlines security best practices for widgets in ShipNative.
+This document outlines security best practices for widgets in Shipnative.
 
 ## Overview
 

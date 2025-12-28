@@ -25,7 +25,7 @@ This file contains **critical information only**. For detailed guides, see:
 
 ## 🎯 Project Overview
 
-**ShipNative** is a production-ready React Native (Expo) boilerplate optimized for AI-assisted development ("Vibecoding"). It includes authentication, payments, analytics, and a complete UI component system.
+**Shipnative** is a production-ready React Native (Expo) boilerplate optimized for AI-assisted development ("Vibecoding"). It includes authentication, payments, analytics, and a complete UI component system.
 
 ### Repository Structure
 

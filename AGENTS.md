@@ -3,7 +3,7 @@
 > **⚠️ CRITICAL**: [AI_CONTEXT.md](./AI_CONTEXT.md) is the **SINGLE SOURCE OF TRUTH** for this project. Read it first for tech stack, patterns, and documentation rules.
 
 ## Project Overview
-**ShipNative** is a production-ready React Native (Expo) boilerplate optimized for "Vibecoding". It's a monorepo consisting of three interconnected repositories.
+**Shipnative** is a production-ready React Native (Expo) boilerplate optimized for "Vibecoding". It's a monorepo consisting of three interconnected repositories.
 
 ## Setup Commands
 - **Install All Deps**: `yarn install`

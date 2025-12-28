@@ -1,6 +1,6 @@
 //
 //  ExampleWidget.kt
-//  Example Widget for ShipNative
+//  Example Widget for Shipnative
 //
 //  This widget demonstrates how to fetch and display data from Supabase
 //  in a native Android widget using Kotlin.

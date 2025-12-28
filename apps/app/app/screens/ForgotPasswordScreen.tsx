@@ -1,51 +1,52 @@
 import { useState } from "react"
 import { View, TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
 import { StyleSheet } from "react-native-unistyles"
+import { z } from "zod"
 
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { forgotPasswordSchema } from "@/schemas/authSchemas"
 import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
-import { validateEmail } from "@/utils/validation"
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
 
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+
 export const ForgotPasswordScreen = () => {
   const navigation = useNavigation()
   const resetPassword = useAuthStore((state) => state.resetPassword)
-  const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
-  // Touch state for validation
-  const [emailTouched, setEmailTouched] = useState(false)
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { isValid },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+    },
+  })
 
-  const emailValidation = emailTouched ? validateEmail(email) : { isValid: true, error: "" }
+  const emailValue = watch("email")
 
-  const isFormValid = () => {
-    const emailValidation = validateEmail(email)
-    return emailValidation.isValid
-  }
-
-  const handleResetPassword = async () => {
-    // Mark field as touched
-    setEmailTouched(true)
-
-    // Validate
-    if (!isFormValid()) {
-      return
-    }
-
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setLoading(true)
     setError("")
     setSuccess(false)
 
-    const { error: resetError } = await resetPassword(email)
+    const { error: resetError } = await resetPassword(data.email)
     setLoading(false)
 
     if (resetError) {
@@ -55,12 +56,10 @@ export const ForgotPasswordScreen = () => {
     }
   }
 
+  const handleResetPassword = handleSubmit(onSubmit)
+
   const handleBackToLogin = () => {
     navigation.navigate("Login" as never)
-  }
-
-  const handleEmailBlur = () => {
-    setEmailTouched(true)
   }
 
   // Success State
@@ -69,7 +68,7 @@ export const ForgotPasswordScreen = () => {
       <AuthScreenLayout
         headerIcon="✉️"
         title="Check Your Email"
-        subtitle={`We've sent a password reset link to ${email}`}
+        subtitle={`We've sent a password reset link to ${emailValue}`}
         scrollable={false}
       >
         <Text color="secondary" style={styles.successSubtext}>
@@ -103,20 +102,26 @@ export const ForgotPasswordScreen = () => {
     >
       {/* Email Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          onBlur={handleEmailBlur}
-          placeholder="Enter your email"
-          autoCapitalize="none"
-          autoComplete="email"
-          autoCorrect={false}
-          keyboardType="email-address"
-          returnKeyType="done"
-          onSubmitEditing={handleResetPassword}
-          status={emailTouched && !emailValidation.isValid ? "error" : "default"}
-          helper={emailTouched && !emailValidation.isValid ? emailValidation.error : undefined}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Email"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="Enter your email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="done"
+              onSubmitEditing={handleResetPassword}
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
       </View>
 
@@ -131,9 +136,9 @@ export const ForgotPasswordScreen = () => {
 
       {/* Reset Password Button */}
       <TouchableOpacity
-        style={[styles.primaryButton, (loading || !isFormValid()) && styles.buttonDisabled]}
+        style={[styles.primaryButton, (loading || !isValid) && styles.buttonDisabled]}
         onPress={handleResetPassword}
-        disabled={loading || !isFormValid()}
+        disabled={loading || !isValid}
         activeOpacity={0.8}
       >
         <Text weight="semiBold" style={styles.primaryButtonText}>

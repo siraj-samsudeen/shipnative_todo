@@ -3,7 +3,10 @@ import { View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
+import { z } from "zod"
 
 import { Divider } from "@/components/Divider"
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
@@ -14,13 +17,15 @@ import { features } from "@/config/features"
 import { useAuth } from "@/hooks/useAuth"
 import { translate } from "@/i18n"
 import { AppStackParamList } from "@/navigators/navigationTypes"
+import { loginSchema } from "@/schemas/authSchemas"
 import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
-import { validateEmail, validatePassword } from "@/utils/validation"
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginScreen = () => {
   const { theme } = useUnistyles()
@@ -28,35 +33,26 @@ export const LoginScreen = () => {
   const signIn = useAuthStore((state) => state.signIn)
   const { signInWithGoogle, signInWithApple, loading: oauthLoading } = useAuth()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Touch state for validation
-  const [emailTouched, setEmailTouched] = useState(false)
-  const [passwordTouched, setPasswordTouched] = useState(false)
+  const {
+    control,
+    handleSubmit,
+    formState: { isValid },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
 
-  const emailValidation = emailTouched ? validateEmail(email) : { isValid: true, error: "" }
-  const passwordValidation = passwordTouched
-    ? validatePassword(password)
-    : { isValid: true, error: "" }
-
-  const isFormValid = () => {
-    const emailValidation = validateEmail(email)
-    const passwordValidation = validatePassword(password)
-    return emailValidation.isValid && passwordValidation.isValid
-  }
-
-  const handleLogin = async () => {
-    setEmailTouched(true)
-    setPasswordTouched(true)
-
-    if (!isFormValid()) return
-
+  const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
     setError("")
-    const { error: signInError } = await signIn(email, password)
+    const { error: signInError } = await signIn(data.email, data.password)
     setLoading(false)
 
     if (signInError) {
@@ -69,6 +65,8 @@ export const LoginScreen = () => {
       }
     }
   }
+
+  const handleLogin = handleSubmit(onSubmit)
 
   const handleAppleAuth = async () => {
     try {
@@ -113,40 +111,50 @@ export const LoginScreen = () => {
     >
       {/* Email Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          labelTx="loginScreen:emailLabel"
-          value={email}
-          onChangeText={setEmail}
-          onBlur={() => setEmailTouched(true)}
-          placeholderTx="loginScreen:emailPlaceholder"
-          autoCapitalize="none"
-          autoComplete="email"
-          autoCorrect={false}
-          keyboardType="email-address"
-          returnKeyType="next"
-          status={emailTouched && !emailValidation.isValid ? "error" : "default"}
-          helper={emailTouched && !emailValidation.isValid ? emailValidation.error : undefined}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <TextField
+              labelTx="loginScreen:emailLabel"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholderTx="loginScreen:emailPlaceholder"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
       </View>
 
       {/* Password Input */}
       <View style={styles.inputContainer}>
-        <TextField
-          labelTx="loginScreen:passwordLabel"
-          value={password}
-          onChangeText={setPassword}
-          onBlur={() => setPasswordTouched(true)}
-          placeholderTx="loginScreen:passwordPlaceholder"
-          autoCapitalize="none"
-          autoComplete="password"
-          autoCorrect={false}
-          secureTextEntry
-          returnKeyType="done"
-          onSubmitEditing={handleLogin}
-          status={passwordTouched && !passwordValidation.isValid ? "error" : "default"}
-          helper={
-            passwordTouched && !passwordValidation.isValid ? passwordValidation.error : undefined
-          }
+        <Controller
+          control={control}
+          name="password"
+          render={({ field, fieldState }) => (
+            <TextField
+              labelTx="loginScreen:passwordLabel"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholderTx="loginScreen:passwordPlaceholder"
+              autoCapitalize="none"
+              autoComplete="password"
+              autoCorrect={false}
+              secureTextEntry
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
         />
       </View>
 
@@ -161,9 +169,9 @@ export const LoginScreen = () => {
 
       {/* Sign In Button */}
       <TouchableOpacity
-        style={[styles.primaryButton, (loading || !isFormValid()) && styles.buttonDisabled]}
+        style={[styles.primaryButton, (loading || !isValid) && styles.buttonDisabled]}
         onPress={handleLogin}
-        disabled={loading || !isFormValid()}
+        disabled={loading || !isValid}
         activeOpacity={0.8}
       >
         {loading ? (

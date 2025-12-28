@@ -1,6 +1,6 @@
 # Widgets Guide
 
-This guide explains how to use native iOS and Android widgets in your ShipNative app with Supabase integration.
+This guide explains how to use native iOS and Android widgets in your Shipnative app with Supabase integration.
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ yarn ios    # or yarn android
 
 ## Overview
 
-ShipNative includes preconfigured native widgets for both iOS and Android:
+Shipnative includes preconfigured native widgets for both iOS and Android:
 
 - **iOS Widgets** - Built with SwiftUI, supporting all widget sizes
 - **Android Widgets** - Built with Kotlin, supporting all widget sizes
