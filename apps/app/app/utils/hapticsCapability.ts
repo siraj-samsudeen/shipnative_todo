@@ -106,7 +106,3 @@ export function resetHapticsCapabilityCache(): void {
   hapticsSupported = null
   capabilityCheckPromise = null
 }
-
-
-
-

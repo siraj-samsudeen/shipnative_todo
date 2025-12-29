@@ -36,7 +36,3 @@ export interface AuthState {
  * Persisted auth state (only non-sensitive data)
  */
 export type PersistedAuthState = Pick<AuthState, "onboardingStatusByUserId">
-
-
-
-

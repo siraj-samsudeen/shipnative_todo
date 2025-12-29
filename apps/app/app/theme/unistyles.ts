@@ -493,8 +493,8 @@ type AppBreakpoints = typeof breakpoints
 
 // Extend Unistyles types for TypeScript support
 declare module "react-native-unistyles" {
-  export interface UnistylesThemes extends AppThemes { }
-  export interface UnistylesBreakpoints extends AppBreakpoints { }
+  export interface UnistylesThemes extends AppThemes {}
+  export interface UnistylesBreakpoints extends AppBreakpoints {}
 }
 
 // =============================================================================

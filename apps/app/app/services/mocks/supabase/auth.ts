@@ -190,7 +190,10 @@ export class MockSupabaseAuth {
     }
   }
 
-  async setSession(session: { access_token: string; refresh_token: string }): Promise<AuthResponse> {
+  async setSession(_session: {
+    access_token: string
+    refresh_token: string
+  }): Promise<AuthResponse> {
     await initializeStorage()
     await delay()
 
@@ -241,14 +244,26 @@ export class MockSupabaseAuth {
   }
 
   async verifyOtp(options: {
-    token: string
+    token?: string
+    token_hash?: string
     type: "email" | "signup" | "email_change" | "password_recovery"
   }): Promise<AuthResponse> {
     await delay()
-    const { token, type } = options
+    const { token, token_hash, type } = options
+    const tokenValue = token ?? token_hash ?? ""
 
     if (__DEV__) {
-      logger.debug(`[MockSupabase] Verify OTP`, { type, tokenPrefix: token.substring(0, 10) })
+      logger.debug(`[MockSupabase] Verify OTP`, {
+        type,
+        tokenPrefix: tokenValue ? tokenValue.substring(0, 10) : "missing",
+      })
+    }
+
+    if (!tokenValue) {
+      return {
+        data: { user: null, session: null },
+        error: new Error("Missing verification token"),
+      }
     }
 
     // In mock mode, find user by checking current session or any unconfirmed user
@@ -646,7 +661,3 @@ export class MockSupabaseAuth {
     // No-op for mock
   }
 }
-
-
-
-

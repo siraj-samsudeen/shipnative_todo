@@ -115,7 +115,3 @@ export function validateCertificatePin(hostname: string, certificateHash: string
  * 2. Integrate with fetch/XMLHttpRequest interceptors
  * 3. Validate certificates before requests
  */
-
-
-
-

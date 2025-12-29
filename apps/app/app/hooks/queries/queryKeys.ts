@@ -46,6 +46,22 @@ export const appKeys = {
 }
 
 /**
+ * Query key factory for widget-related queries
+ */
+export const widgetKeys = {
+  all: ["widget"] as const,
+  list: (params: {
+    table: string
+    select?: string
+    filters?: Record<string, unknown>
+    limit?: number
+    orderBy?: { column: string; ascending?: boolean }
+    requireAuth?: boolean
+  }) => [...widgetKeys.all, params] as const,
+  cache: (cacheKey: string) => [...widgetKeys.all, "cache", cacheKey] as const,
+}
+
+/**
  * All query keys
  */
 export const queryKeys = {
@@ -53,4 +69,5 @@ export const queryKeys = {
   subscription: subscriptionKeys,
   analytics: analyticsKeys,
   app: appKeys,
+  widget: widgetKeys,
 }

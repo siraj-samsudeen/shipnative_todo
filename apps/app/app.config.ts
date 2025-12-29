@@ -1,6 +1,7 @@
 import "tsx/cjs"
 
 import { ExpoConfig, ConfigContext } from "@expo/config"
+
 import withWidgetAppGroup from "./plugins/withWidgetAppGroup"
 
 /**
@@ -46,14 +47,12 @@ module.exports = ({ config }: ConfigContext): ExpoConfig => {
       },
     ])
 
-    plugins.push(
-      [
-        withWidgetAppGroup,
-        {
-          appGroupIdentifier,
-        },
-      ] as unknown as NonNullable<ExpoConfig["plugins"]>[number],
-    )
+    plugins.push([
+      withWidgetAppGroup,
+      {
+        appGroupIdentifier,
+      },
+    ] as unknown as NonNullable<ExpoConfig["plugins"]>[number])
   }
 
   return {

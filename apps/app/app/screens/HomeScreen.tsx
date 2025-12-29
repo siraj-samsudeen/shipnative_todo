@@ -1,5 +1,6 @@
 import { FC } from "react"
 import { View, ScrollView, Pressable, Platform, useWindowDimensions } from "react-native"
+import type { StyleProp, ViewStyle } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import Animated, {
@@ -44,7 +45,7 @@ const SPRING_CONFIG = {
 interface PressableCardProps {
   children: React.ReactNode
   onPress?: () => void
-  style?: any
+  style?: StyleProp<ViewStyle>
   delay?: number
 }
 
@@ -137,9 +138,7 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
             <View style={styles.headerLeft}>
               <Avatar fallback={userInitials} size="md" />
               <View style={styles.headerText}>
-                <Text size="sm" color="secondary">
-                  Good morning,
-                </Text>
+                <Text size="sm" color="secondary" tx="homeScreen:goodMorning" />
                 <Text size="xl" weight="bold">
                   {userName}
                 </Text>
@@ -158,20 +157,23 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
           {/* Featured Card */}
           <PressableCard style={styles.featuredCard} delay={ANIMATION.STAGGER_DELAY}>
             <View style={styles.featuredContent}>
-              <Badge text="Daily Challenge" variant="info" size="sm" />
+              <Badge tx="homeScreen:dailyChallenge" variant="info" size="sm" />
               <View style={styles.titleRow}>
                 <Text style={styles.emoji}>🧘‍♀️</Text>
-                <Text size="2xl" weight="bold" style={styles.featuredTitle}>
-                  Meditate for 10 mins
-                </Text>
+                <Text
+                  size="2xl"
+                  weight="bold"
+                  style={styles.featuredTitle}
+                  tx="homeScreen:featuredTitle"
+                />
               </View>
-              <Text color="secondary" style={styles.featuredSubtitle}>
-                Clear your mind and start fresh.
-              </Text>
+              <Text
+                color="secondary"
+                style={styles.featuredSubtitle}
+                tx="homeScreen:featuredSubtitle"
+              />
               <Pressable style={styles.startButton} onPress={() => haptics.buttonPress()}>
-                <Text weight="semiBold" style={styles.startButtonText}>
-                  Start Now
-                </Text>
+                <Text weight="semiBold" style={styles.startButtonText} tx="homeScreen:startNow" />
                 <Ionicons name="play-circle" size={22} color={theme.colors.card} />
               </Pressable>
             </View>
@@ -183,33 +185,25 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
               <Text size="2xl" weight="bold">
                 12
               </Text>
-              <Text size="sm" color="secondary">
-                Streak
-              </Text>
+              <Text size="sm" color="secondary" tx="homeScreen:statStreak" />
             </PressableCard>
             <PressableCard style={styles.statCard} delay={ANIMATION.STAGGER_DELAY * 2.5}>
               <Text size="2xl" weight="bold">
                 85%
               </Text>
-              <Text size="sm" color="secondary">
-                Completed
-              </Text>
+              <Text size="sm" color="secondary" tx="homeScreen:statCompleted" />
             </PressableCard>
             <PressableCard style={styles.statCard} delay={ANIMATION.STAGGER_DELAY * 3}>
               <Text size="2xl" weight="bold">
                 4.8
               </Text>
-              <Text size="sm" color="secondary">
-                Rating
-              </Text>
+              <Text size="sm" color="secondary" tx="homeScreen:statRating" />
             </PressableCard>
           </View>
 
           {/* Quick Actions */}
           <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3.5).springify()}>
-            <Text size="xl" weight="bold" style={styles.sectionTitle}>
-              Explore
-            </Text>
+            <Text size="xl" weight="bold" style={styles.sectionTitle} tx="homeScreen:explore" />
           </Animated.View>
 
           <PressableCard
@@ -224,13 +218,14 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
                 >
                   <Ionicons name="cube-outline" size={24} color={theme.colors.palette.primary600} />
                 </View>
-                <Text weight="semiBold" style={styles.actionTitle}>
-                  UI Components
-                </Text>
+                <Text weight="semiBold" style={styles.actionTitle} tx="homeScreen:uiComponents" />
               </View>
-              <Text size="sm" color="secondary" style={styles.actionDescription}>
-                View all pre-built components
-              </Text>
+              <Text
+                size="sm"
+                color="secondary"
+                style={styles.actionDescription}
+                tx="homeScreen:uiComponentsDescription"
+              />
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.foregroundTertiary} />
           </PressableCard>
@@ -251,13 +246,14 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
                     color={theme.colors.palette.secondary600}
                   />
                 </View>
-                <Text weight="semiBold" style={styles.actionTitle}>
-                  My Profile
-                </Text>
+                <Text weight="semiBold" style={styles.actionTitle} tx="homeScreen:myProfile" />
               </View>
-              <Text size="sm" color="secondary" style={styles.actionDescription}>
-                Manage account and settings
-              </Text>
+              <Text
+                size="sm"
+                color="secondary"
+                style={styles.actionDescription}
+                tx="homeScreen:myProfileDescription"
+              />
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.foregroundTertiary} />
           </PressableCard>
@@ -272,13 +268,18 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
                 <View style={[styles.iconBox, { backgroundColor: theme.colors.palette.accent100 }]}>
                   <Ionicons name="star-outline" size={24} color={theme.colors.palette.accent600} />
                 </View>
-                <Text weight="semiBold" style={styles.actionTitle}>
-                  Premium Features
-                </Text>
+                <Text
+                  weight="semiBold"
+                  style={styles.actionTitle}
+                  tx="homeScreen:premiumFeatures"
+                />
               </View>
-              <Text size="sm" color="secondary" style={styles.actionDescription}>
-                Upgrade to unlock more
-              </Text>
+              <Text
+                size="sm"
+                color="secondary"
+                style={styles.actionDescription}
+                tx="homeScreen:premiumFeaturesDescription"
+              />
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme.colors.foregroundTertiary} />
           </PressableCard>

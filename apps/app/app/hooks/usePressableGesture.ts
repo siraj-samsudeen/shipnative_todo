@@ -8,14 +8,19 @@ import {
   interpolate,
 } from "react-native-reanimated"
 
-import { haptics } from "@/utils/haptics"
 import { SPRING_CONFIG } from "@/utils/animations"
+import { haptics } from "@/utils/haptics"
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type HapticType = "buttonPress" | "buttonPressLight" | "cardPress" | "listItemPress" | "longPress"
+export type HapticType =
+  | "buttonPress"
+  | "buttonPressLight"
+  | "cardPress"
+  | "listItemPress"
+  | "longPress"
 
 export interface UsePressableGestureOptions {
   /**
@@ -103,7 +108,9 @@ export interface UsePressableGestureReturn {
  *   </Animated.View>
  * </GestureDetector>
  */
-export function usePressableGesture(options: UsePressableGestureOptions = {}): UsePressableGestureReturn {
+export function usePressableGesture(
+  options: UsePressableGestureOptions = {},
+): UsePressableGestureReturn {
   const {
     onPress,
     onLongPress,
@@ -184,5 +191,3 @@ export function usePressableGesture(options: UsePressableGestureOptions = {}): U
     animatedStyle,
   }
 }
-
-

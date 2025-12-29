@@ -5,15 +5,17 @@
  * Provides convenient access to widget data with caching and error handling.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback, useMemo } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
+import { widgetKeys } from "./queries"
 import { fetchWidgetData, clearWidgetCache, getWidgetConfig } from "../services/widgets"
 import { logger } from "../utils/Logger"
 
 export interface UseWidgetDataOptions {
   table: string
   select?: string
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   limit?: number
   orderBy?: { column: string; ascending?: boolean }
   requireAuth?: boolean
@@ -73,78 +75,72 @@ export function useWidgetData<T = any>(options: UseWidgetDataOptions): UseWidget
     enabled = true,
   } = options
 
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  const fetchData = useCallback(async () => {
-    if (!enabled) {
-      setLoading(false)
-      return
+  const queryClient = useQueryClient()
+  const queryKey = useMemo(() => {
+    if (cacheKey) {
+      return widgetKeys.cache(cacheKey)
     }
 
-    setLoading(true)
-    setError(null)
+    return widgetKeys.list({
+      table,
+      select,
+      filters,
+      limit,
+      orderBy,
+      requireAuth,
+    })
+  }, [cacheKey, table, select, filters, limit, orderBy, requireAuth])
 
-    try {
-      const result = await fetchWidgetData<T>({
-        table,
-        select,
-        filters,
-        limit,
-        orderBy,
-        requireAuth,
-        cacheKey,
-      })
+  const query = useQuery({
+    queryKey,
+    queryFn: async () => {
+      try {
+        const result = await fetchWidgetData<T>({
+          table,
+          select,
+          filters,
+          limit,
+          orderBy,
+          requireAuth,
+          cacheKey,
+        })
 
-      if (result.error) {
-        setError(result.error)
-        setData(null)
-      } else {
-        setData(result.data)
-        setError(null)
+        if (result.error) {
+          throw result.error
+        }
+
+        return result.data
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Unknown error")
+        logger.error("Widget data fetch error", { error, table })
+        throw error
       }
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error")
-      logger.error("Widget data fetch error", { error, table })
-      setError(error)
-      setData(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [table, select, filters, limit, orderBy, requireAuth, cacheKey, enabled])
-
-  // Initial fetch
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  // Set up refresh interval if provided
-  useEffect(() => {
-    if (!refreshInterval || !enabled) return
-
-    const interval = setInterval(() => {
-      fetchData()
-    }, refreshInterval)
-
-    return () => clearInterval(interval)
-  }, [refreshInterval, fetchData, enabled])
+    },
+    enabled,
+    refetchInterval: enabled && refreshInterval ? refreshInterval : false,
+  })
 
   const handleClearCache = useCallback(() => {
     if (cacheKey) {
       clearWidgetCache(cacheKey)
+      queryClient.removeQueries({ queryKey, exact: true })
     } else {
       clearWidgetCache()
+      queryClient.removeQueries({ queryKey: widgetKeys.all })
     }
     // Refetch after clearing cache
-    fetchData()
-  }, [cacheKey, fetchData])
+    if (enabled) {
+      void query.refetch()
+    }
+  }, [cacheKey, enabled, query, queryClient, queryKey])
 
   return {
-    data,
-    loading,
-    error,
-    refetch: fetchData,
+    data: query.data ?? null,
+    loading: query.isFetching,
+    error: query.error instanceof Error ? query.error : null,
+    refetch: async () => {
+      await query.refetch()
+    },
     clearCache: handleClearCache,
     config: getWidgetConfig(),
   }

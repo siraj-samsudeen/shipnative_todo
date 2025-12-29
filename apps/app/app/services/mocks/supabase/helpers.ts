@@ -473,7 +473,3 @@ export function notifyAuthStateChange(event: AuthChangeEvent, session: Session |
 
 // Simulate network delay
 export const delay = (ms: number = 500) => new Promise((resolve) => setTimeout(resolve, ms))
-
-
-
-

@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useState } from "react"
 import { View, Platform, ActivityIndicator } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { StyleSheet } from "react-native-unistyles"
+import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { Text, Container, Button } from "../components"
+import { translate } from "../i18n"
 import type { AppStackScreenProps } from "../navigators/navigationTypes"
 import { isRevenueCatMock } from "../services/revenuecat"
 import { useSubscriptionStore } from "../stores/subscriptionStore"
@@ -42,6 +43,7 @@ if (shouldLoadNativeSDK) {
 
 export const PaywallScreen = () => {
   const navigation = useNavigation<AppStackScreenProps<"Paywall">["navigation"]>()
+  const { theme } = useUnistyles()
   const isPro = useSubscriptionStore((state) => state.isPro)
   const packages = useSubscriptionStore((state) => state.packages)
   const fetchPackages = useSubscriptionStore((state) => state.fetchPackages)
@@ -53,6 +55,11 @@ export const PaywallScreen = () => {
   const [isPresenting, setIsPresenting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasAutoPresented, setHasAutoPresented] = useState(false)
+  const loadErrorMessage = translate("paywallScreen:loadFailed")
+  const purchaseErrorMessage = translate("paywallScreen:purchaseFailed")
+  const noWebOfferingMessage = translate("paywallScreen:noWebOfferingError")
+  const noPackagesMessage = translate("paywallScreen:noPackagesError")
+  const sdkUnavailableMessage = translate("paywallScreen:sdkUnavailableError")
 
   // Check if we can navigate back (i.e., came from onboarding)
   const canGoBack = navigation.canGoBack()
@@ -85,15 +92,11 @@ export const PaywallScreen = () => {
         }
 
         if (!useSubscriptionStore.getState().packages.length) {
-          throw new Error(
-            isWeb
-              ? "No web offering found. Add a Web Billing offering in RevenueCat and try again."
-              : "No packages available. Configure RevenueCat or add API keys.",
-          )
+          throw new Error(isWeb ? noWebOfferingMessage : noPackagesMessage)
         }
       } catch (err: any) {
         console.error("Failed to load paywall:", err)
-        setError(err?.message || "Failed to load paywall. Please try again.")
+        setError(err?.message || loadErrorMessage)
       } finally {
         setIsPresenting(false)
       }
@@ -103,7 +106,7 @@ export const PaywallScreen = () => {
     // Native path (iOS/Android) with real RevenueCat SDK
     if (!Purchases || !Paywalls) {
       console.error("RevenueCat native SDK not available")
-      setError("RevenueCat SDK not available on this platform.")
+      setError(sdkUnavailableMessage)
       return
     }
 
@@ -116,9 +119,7 @@ export const PaywallScreen = () => {
       const currentOffering = offerings.current
 
       if (!currentOffering) {
-        throw new Error(
-          "No offering available. Please configure an offering in RevenueCat dashboard.",
-        )
+        throw new Error(translate("paywallScreen:noOfferingError"))
       }
 
       // Present the paywall configured in RevenueCat dashboard
@@ -147,10 +148,7 @@ export const PaywallScreen = () => {
       }
 
       // If user purchased or restored, navigate to Main (if from onboarding)
-      if (
-        (resultValue === "PURCHASED" || resultValue === "RESTORED") &&
-        isFromOnboarding
-      ) {
+      if ((resultValue === "PURCHASED" || resultValue === "RESTORED") && isFromOnboarding) {
         navigateToMain()
       }
 
@@ -160,11 +158,21 @@ export const PaywallScreen = () => {
       }
     } catch (err: any) {
       console.error("Failed to present paywall:", err)
-      setError(err?.message || "Failed to load paywall. Please try again.")
+      setError(err?.message || loadErrorMessage)
     } finally {
       setIsPresenting(false)
     }
-  }, [fetchPackages, isFromOnboarding, isWeb, isMockMode, navigateToMain])
+  }, [
+    fetchPackages,
+    isFromOnboarding,
+    isWeb,
+    isMockMode,
+    loadErrorMessage,
+    navigateToMain,
+    noPackagesMessage,
+    noWebOfferingMessage,
+    sdkUnavailableMessage,
+  ])
 
   // Handle purchase flow (web or mock mode)
   const handlePackagePurchase = useCallback(
@@ -183,10 +191,10 @@ export const PaywallScreen = () => {
         }
       } catch (err: any) {
         console.error("Purchase failed:", err)
-        setError(err?.message || "Payment failed. Please try again.")
+        setError(err?.message || purchaseErrorMessage)
       }
     },
-    [purchasePackage, isFromOnboarding, navigateToMain],
+    [purchaseErrorMessage, purchasePackage, isFromOnboarding, navigateToMain],
   )
 
   // Auto-present paywall when screen loads (if not Pro)
@@ -224,29 +232,25 @@ export const PaywallScreen = () => {
         {isPro ? (
           // User is already Pro - show success message
           <View style={styles.content}>
-            <Text preset="heading" style={styles.title}>
-              Welcome to Pro! 🎉
-            </Text>
-            <Text style={styles.description}>You&apos;re all set. Enjoy all premium features!</Text>
+            <Text preset="heading" style={styles.title} tx="paywallScreen:welcomeTitle" />
+            <Text style={styles.description} tx="paywallScreen:welcomeDescription" />
           </View>
         ) : isPresenting ? (
           // Loading state while presenting paywall
           <View style={styles.content}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading paywall...</Text>
+            <ActivityIndicator size="large" color={theme.colors.tint} />
+            <Text style={styles.loadingText} tx="paywallScreen:loadingPaywall" />
           </View>
         ) : isWeb || isMockMode ? (
           // Web billing or Mock mode - use packages + custom UI instead of native paywall
           <View style={styles.content}>
-            <Text preset="heading" style={styles.title}>
-              Upgrade to Pro
-            </Text>
+            <Text preset="heading" style={styles.title} tx="paywallScreen:upgradeTitle" />
             <Text style={styles.description}>
               {isMock
                 ? isWeb
-                  ? "Mock checkout is enabled because no RevenueCat Web key is set. Add a key to use real billing."
-                  : "Mock mode is enabled because no RevenueCat API keys are set. Add keys to use real billing."
-                : "Secure checkout is handled by RevenueCat."}
+                  ? translate("paywallScreen:mockWebDescription")
+                  : translate("paywallScreen:mockNativeDescription")
+                : translate("paywallScreen:secureCheckoutDescription")}
             </Text>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -254,9 +258,7 @@ export const PaywallScreen = () => {
             <View style={styles.packageList}>
               {packages.length === 0 ? (
                 <Text style={styles.errorText}>
-                  {isWeb
-                    ? "No web offering found. Add a Web Billing offering in RevenueCat and try again."
-                    : "No packages available. Configure RevenueCat or add API keys."}
+                  {isWeb ? noWebOfferingMessage : noPackagesMessage}
                 </Text>
               ) : (
                 packages.map((pkg) => {
@@ -273,7 +275,11 @@ export const PaywallScreen = () => {
                         <Text style={styles.packageDescription}>{pricingPkg.description}</Text>
                       ) : null}
                       <Button
-                        text={subscriptionLoading || isPresenting ? "Processing..." : "Select plan"}
+                        text={
+                          subscriptionLoading || isPresenting
+                            ? translate("paywallScreen:processing")
+                            : translate("paywallScreen:selectPlan")
+                        }
                         onPress={() => handlePackagePurchase(pricingPkg)}
                         variant="filled"
                         loading={subscriptionLoading || isPresenting}
@@ -288,7 +294,7 @@ export const PaywallScreen = () => {
 
             {isFromOnboarding && (
               <Button
-                text="Continue with Free"
+                text={translate("paywallScreen:continueWithFree")}
                 onPress={handleSkip}
                 variant="ghost"
                 style={styles.skipButton}
@@ -299,20 +305,18 @@ export const PaywallScreen = () => {
         ) : error ? (
           // Error state - show error and retry option
           <View style={styles.content}>
-            <Text preset="heading" style={styles.title}>
-              Unable to Load Paywall
-            </Text>
+            <Text preset="heading" style={styles.title} tx="paywallScreen:unableToLoadTitle" />
             <Text style={styles.errorText}>{error}</Text>
             <View style={styles.buttonContainer}>
               <Button
-                text="Try Again"
+                text={translate("paywallScreen:tryAgain")}
                 onPress={handlePresentPaywall}
                 variant="filled"
                 style={styles.retryButton}
               />
               {isFromOnboarding && (
                 <Button
-                  text="Continue with Free"
+                  text={translate("paywallScreen:continueWithFree")}
                   onPress={handleSkip}
                   variant="ghost"
                   style={styles.skipButton}
@@ -323,19 +327,17 @@ export const PaywallScreen = () => {
         ) : (
           // Fallback - should not reach here, but show option to present paywall
           <View style={styles.content}>
-            <Text preset="heading" style={styles.title}>
-              Upgrade to Pro
-            </Text>
-            <Text style={styles.description}>Unlock all features and remove limits.</Text>
+            <Text preset="heading" style={styles.title} tx="paywallScreen:upgradeTitle" />
+            <Text style={styles.description} tx="paywallScreen:upgradeDescription" />
             <Button
-              text="View Plans"
+              text={translate("paywallScreen:viewPlans")}
               onPress={handlePresentPaywall}
               variant="filled"
               style={styles.presentButton}
             />
             {isFromOnboarding && (
               <Button
-                text="Continue with Free"
+                text={translate("paywallScreen:continueWithFree")}
                 onPress={handleSkip}
                 variant="ghost"
                 style={styles.skipButton}

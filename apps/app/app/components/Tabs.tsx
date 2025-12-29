@@ -5,8 +5,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { StyleSheet } from "react-native-unistyles"
 
 import { TxKeyPath } from "@/i18n"
-import { haptics } from "@/utils/haptics"
 import { SPRING_CONFIG_SOFT } from "@/utils/animations"
+import { haptics } from "@/utils/haptics"
 
 import { Text } from "./Text"
 

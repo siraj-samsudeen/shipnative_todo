@@ -47,8 +47,32 @@ export function getCertificatePins(domain: string): string[] | null {
   return CERTIFICATE_PINS[domain] || null
 }
 
+type CertificateHashSource =
+  | string
+  | {
+      publicKeyHash?: string
+      certificateHash?: string
+      hash?: string
+    }
+  | null
+  | undefined
+
+function normalizeCertificateHash(hash: string): string {
+  return hash.replace(/^sha256\//, "").toLowerCase()
+}
+
+function extractCertificateHash(certificate: CertificateHashSource): string | null {
+  if (!certificate) return null
+
+  if (typeof certificate === "string") {
+    return certificate
+  }
+
+  return certificate.publicKeyHash || certificate.certificateHash || certificate.hash || null
+}
+
 /**
- * Validate certificate pin (placeholder - implement with actual pinning library)
+ * Validate certificate pin.
  *
  * In production, this should:
  * 1. Extract the certificate from the connection
@@ -58,7 +82,7 @@ export function getCertificatePins(domain: string): string[] | null {
  */
 export async function validateCertificatePin(
   domain: string,
-  _certificate: any, // Certificate object from pinning library
+  certificate: CertificateHashSource, // Certificate object or hash from pinning library
 ): Promise<boolean> {
   if (!isCertificatePinningEnabled()) {
     return true // Skip validation in development
@@ -66,19 +90,26 @@ export async function validateCertificatePin(
 
   const pins = getCertificatePins(domain)
   if (!pins || pins.length === 0) {
-    logger.warn("[CertificatePinning] No pins configured for domain", { domain })
-    // In production, you might want to fail here if pinning is required
-    return true
+    logger.error("[CertificatePinning] Pinning enabled but no pins configured for domain", {
+      domain,
+    })
+    return false
   }
 
-  // TODO: Implement actual certificate validation
-  // This requires a native module or library like react-native-cert-pinner
-  // Example with react-native-cert-pinner:
-  // const pinner = new CertificatePinner({ [domain]: pins })
-  // return pinner.check(domain, certificate)
+  const certificateHash = extractCertificateHash(certificate)
+  if (!certificateHash) {
+    logger.error("[CertificatePinning] Missing certificate hash for validation", { domain })
+    return false
+  }
 
-  logger.warn("[CertificatePinning] Certificate validation not implemented", { domain })
-  return true
+  const normalizedHash = normalizeCertificateHash(certificateHash)
+  const matches = pins.some((pin) => normalizeCertificateHash(pin) === normalizedHash)
+
+  if (!matches) {
+    logger.error("[CertificatePinning] Certificate hash mismatch", { domain })
+  }
+
+  return matches
 }
 
 /**

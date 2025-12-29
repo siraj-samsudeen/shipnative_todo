@@ -118,7 +118,3 @@ export const resetToDeviceLanguage = async (): Promise<void> => {
     await changeLanguage("en", false)
   }
 }
-
-
-
-

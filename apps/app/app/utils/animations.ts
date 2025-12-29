@@ -40,5 +40,3 @@ export const SPRING_CONFIG_PROGRESS = {
   stiffness: 90,
   mass: 0.5,
 } as const
-
-

@@ -160,7 +160,11 @@ export function useAuth(): UseAuthReturn {
                 supabase.auth as any
               ).exchangeCodeForSession(code)
               if (sessionError) {
-                logger.error("[useAuth] Failed to exchange code for session", { error: sessionError.message }, sessionError)
+                logger.error(
+                  "[useAuth] Failed to exchange code for session",
+                  { error: sessionError.message },
+                  sessionError,
+                )
                 return { error: sessionError }
               }
               setSession(sessionData.session)
@@ -243,7 +247,11 @@ export function useAuth(): UseAuthReturn {
                 supabase.auth as any
               ).exchangeCodeForSession(code)
               if (sessionError) {
-                logger.error("[useAuth] Failed to exchange code for session (Apple)", { error: sessionError.message }, sessionError)
+                logger.error(
+                  "[useAuth] Failed to exchange code for session (Apple)",
+                  { error: sessionError.message },
+                  sessionError,
+                )
                 return { error: sessionError }
               }
               setSession(sessionData.session)

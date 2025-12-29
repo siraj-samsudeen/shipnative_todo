@@ -28,7 +28,3 @@ describe("Supabase Service", () => {
     expect(supabase.auth.signOut).toBeDefined()
   })
 })
-
-
-
-

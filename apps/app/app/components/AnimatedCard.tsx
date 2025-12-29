@@ -17,8 +17,8 @@ import Animated, {
 } from "react-native-reanimated"
 import { StyleSheet } from "react-native-unistyles"
 
-import { haptics } from "@/utils/haptics"
 import { SPRING_CONFIG_SOFT } from "@/utils/animations"
+import { haptics } from "@/utils/haptics"
 
 // =============================================================================
 // TYPES
