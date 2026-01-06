@@ -113,6 +113,9 @@ Real-time network status tracking enables robust offline support.
 
 We use scripts to generate boilerplate code and ensure consistency.
 
-- `node scripts/generate/component.js`
-- `node scripts/generate/screen.js`
-- `node scripts/generate/store.js`
+```bash
+# From apps/app/ directory:
+node scripts/generate/component.js ComponentName
+node scripts/generate/screen.js ScreenName
+node scripts/generate/store.js storeName
+```

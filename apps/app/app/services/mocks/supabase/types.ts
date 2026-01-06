@@ -9,10 +9,29 @@ import type { DatabaseResponse } from "../../../types/database"
 
 export type RealtimeEvent = "INSERT" | "UPDATE" | "DELETE" | "*"
 
+/**
+ * Generic database record type for mock database operations
+ */
+export type DatabaseRecord = Record<string, unknown>
+
+/**
+ * Filter value type for query operations
+ */
+export type FilterValue = string | number | boolean | null | string[] | number[]
+
+/**
+ * Database filter definition
+ */
+export interface DatabaseFilter {
+  column: string
+  operator: string
+  value: FilterValue
+}
+
 export type RealtimeCallback = (payload: {
   eventType: RealtimeEvent
-  new: any
-  old: any
+  new: DatabaseRecord | null
+  old: DatabaseRecord | null
   schema: string
   table: string
 }) => void
@@ -56,15 +75,20 @@ export interface SimulatedErrors {
   }
 }
 
+/**
+ * RPC handler function type
+ */
+export type RpcHandler = (params?: Record<string, unknown>) => Promise<DatabaseResponse>
+
 // Shared state object - using object properties allows mutation across modules
 export const sharedState = {
   mockUsers: new Map<string, MockUserData>(),
-  mockDatabase: new Map<string, Map<string, any>>(),
+  mockDatabase: new Map<string, Map<string, DatabaseRecord>>(),
   currentSession: null as Session | null,
   authStateListeners: [] as AuthStateChangeCallback[],
   isInitialized: false,
   realtimeSubscriptions: new Map<string, RealtimeSubscription[]>(),
-  mockRpcHandlers: new Map<string, (params?: Record<string, any>) => Promise<DatabaseResponse>>(),
+  mockRpcHandlers: new Map<string, RpcHandler>(),
   mockFileStorage: new Map<string, StorageFile>(),
   mockBuckets: new Set<string>(["avatars", "uploads", "public"]),
   simulatedErrors: {} as SimulatedErrors,

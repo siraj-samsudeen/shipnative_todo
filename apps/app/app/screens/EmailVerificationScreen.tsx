@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
+import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
@@ -16,6 +17,7 @@ import { useAuthStore } from "@/stores/auth"
 // =============================================================================
 
 export const EmailVerificationScreen = () => {
+  const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation()
   const user = useAuthStore((state) => state.user)
@@ -80,7 +82,7 @@ export const EmailVerificationScreen = () => {
       const { error } = await resendConfirmationEmail(email)
 
       if (error) {
-        setResendError(error.message || "Failed to resend email. Please try again.")
+        setResendError(error.message || t("emailVerificationScreen:resendError"))
       } else {
         setResendSuccess(true)
         // Start countdown
@@ -91,7 +93,7 @@ export const EmailVerificationScreen = () => {
     } catch (err) {
       // Handle any unexpected errors
       setResendError(
-        err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",
+        err instanceof Error ? err.message : t("emailVerificationScreen:unexpectedError"),
       )
     } finally {
       setResending(false)
@@ -116,8 +118,8 @@ export const EmailVerificationScreen = () => {
 
   return (
     <AuthScreenLayout
-      title="Verify Your Email"
-      subtitle={`We've sent a confirmation email to ${email}`}
+      titleTx="emailVerificationScreen:title"
+      subtitle={t("emailVerificationScreen:subtitle", { email })}
       showCloseButton={false}
       scrollable={false}
     >
@@ -130,21 +132,16 @@ export const EmailVerificationScreen = () => {
 
       {/* Instructions */}
       <View style={styles.contentContainer}>
-        <Text size="lg" weight="semiBold" style={styles.instructionText}>
-          Check your inbox
-        </Text>
+        <Text size="lg" weight="semiBold" style={styles.instructionText} tx="emailVerificationScreen:checkInbox" />
         <Text size="sm" color="secondary" style={styles.descriptionText}>
-          We&apos;ve sent a confirmation link to {email}. Click the link in the email to verify your
-          account.
+          {t("emailVerificationScreen:description", { email })}
         </Text>
 
         {/* Checking Status Indicator */}
         {checkingStatus && (
           <View style={styles.statusContainer}>
             <Spinner size="sm" />
-            <Text size="sm" color="secondary" style={styles.statusText}>
-              Checking verification status...
-            </Text>
+            <Text size="sm" color="secondary" style={styles.statusText} tx="emailVerificationScreen:checkingStatus" />
           </View>
         )}
 
@@ -154,9 +151,7 @@ export const EmailVerificationScreen = () => {
             style={[styles.messageContainer, { backgroundColor: theme.colors.successBackground }]}
           >
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text size="sm" color="success" style={styles.messageText}>
-              Confirmation email sent! Please check your inbox.
-            </Text>
+            <Text size="sm" color="success" style={styles.messageText} tx="emailVerificationScreen:resendSuccess" />
           </View>
         )}
 
@@ -196,15 +191,13 @@ export const EmailVerificationScreen = () => {
                 weight="semiBold"
                 style={[styles.primaryButtonText, styles.primaryButtonTextDisabled]}
               >
-                Resend in {countdown}s
+                {t("emailVerificationScreen:resendIn", { seconds: countdown })}
               </Text>
             </>
           ) : (
             <>
               <Ionicons name="refresh" size={20} color={theme.colors.primaryForeground} />
-              <Text weight="semiBold" style={styles.primaryButtonText}>
-                Resend Email
-              </Text>
+              <Text weight="semiBold" style={styles.primaryButtonText} tx="emailVerificationScreen:resendEmail" />
             </>
           )}
         </TouchableOpacity>
@@ -215,13 +208,15 @@ export const EmailVerificationScreen = () => {
           activeOpacity={0.6}
         >
           <Text color="secondary">
-            Wrong email? <Text weight="semiBold">Change it</Text>
+            <Text tx="emailVerificationScreen:wrongEmail" />{" "}
+            <Text weight="semiBold" tx="emailVerificationScreen:changeIt" />
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkButton} onPress={handleBackToLogin} activeOpacity={0.6}>
           <Text color="secondary">
-            Already confirmed? <Text weight="semiBold">Sign In</Text>
+            <Text tx="emailVerificationScreen:alreadyConfirmed" />{" "}
+            <Text weight="semiBold" tx="emailVerificationScreen:signIn" />
           </Text>
         </TouchableOpacity>
       </View>

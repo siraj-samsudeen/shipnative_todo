@@ -1,4 +1,4 @@
-import { Platform } from "react-native"
+import { Alert, Linking, Platform } from "react-native"
 import Constants from "expo-constants"
 
 import { env } from "../config/env"
@@ -6,7 +6,9 @@ import { logger } from "../utils/Logger"
 
 // Lazy import to avoid native module errors at module load time
 let Notifications: typeof import("expo-notifications") | null = null
+let Device: typeof import("expo-device") | null = null
 let notificationHandlerSetup = false
+let androidChannelSetup = false
 
 /**
  * Safely import expo-notifications
@@ -25,6 +27,43 @@ const getNotifications = (): typeof import("expo-notifications") | null => {
     }
     return null
   }
+}
+
+/**
+ * Safely import expo-device
+ */
+const getDevice = (): typeof import("expo-device") | null => {
+  if (Device !== null) {
+    return Device
+  }
+
+  try {
+    Device = require("expo-device")
+    return Device
+  } catch (error) {
+    if (__DEV__) {
+      logger.error("📬 [Notifications] Failed to import expo-device", {}, error as Error)
+    }
+    return null
+  }
+}
+
+/**
+ * Check if running on a physical device (required for push notifications)
+ */
+export const isPhysicalDevice = (): boolean => {
+  // Web always returns true (we handle web separately)
+  if (Platform.OS === "web") {
+    return true
+  }
+
+  const DeviceModule = getDevice()
+  if (!DeviceModule) {
+    // If we can't load expo-device, assume it's a physical device
+    return true
+  }
+
+  return DeviceModule.isDevice
 }
 
 /**
@@ -101,6 +140,43 @@ const setupNotificationHandler = (): void => {
 }
 
 /**
+ * Setup Android notification channel with proper configuration
+ * This is required for Android 8.0+ to display notifications properly
+ */
+const setupAndroidChannel = async (): Promise<void> => {
+  if (androidChannelSetup || Platform.OS !== "android") {
+    return
+  }
+
+  const NotificationsModule = getNotifications()
+  if (!NotificationsModule || !isNativeModuleAvailable()) {
+    return
+  }
+
+  try {
+    await NotificationsModule.setNotificationChannelAsync("default", {
+      name: "Default",
+      importance: NotificationsModule.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+      sound: "default",
+      enableVibrate: true,
+      enableLights: true,
+      showBadge: true,
+    })
+
+    if (__DEV__) {
+      logger.debug("📬 [Notifications] Android notification channel configured")
+    }
+    androidChannelSetup = true
+  } catch (error) {
+    if (__DEV__) {
+      logger.error("📬 [Notifications] Failed to setup Android channel", {}, error as Error)
+    }
+  }
+}
+
+/**
  * Check if we should use mock notifications
  */
 const forceMockNotifications = env.useMockNotifications
@@ -165,6 +241,36 @@ export async function requestPermission(): Promise<{
 }
 
 /**
+ * Show user-friendly error alert when permissions are denied
+ */
+export function showPermissionDeniedAlert(): void {
+  Alert.alert(
+    "Notifications Disabled",
+    "To receive push notifications, please enable them in your device settings.",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Open Settings",
+        onPress: () => {
+          void Linking.openSettings()
+        },
+      },
+    ],
+  )
+}
+
+/**
+ * Show error alert for notification setup failures
+ */
+export function showNotificationErrorAlert(message?: string): void {
+  Alert.alert(
+    "Notification Setup Failed",
+    message || "There was an error setting up notifications. Please try again later.",
+    [{ text: "OK" }],
+  )
+}
+
+/**
  * Register for push notifications and get Expo push token
  *
  * Note: On web, expo-notifications push tokens are not supported.
@@ -183,6 +289,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null
   }
 
+  // Check if running on a physical device (emulators/simulators can't receive push)
+  if (!isPhysicalDevice()) {
+    if (__DEV__) {
+      logger.debug(
+        "📬 [Notifications] Push notifications require a physical device. Running on emulator/simulator.",
+      )
+    }
+    // Return mock token for development on emulators
+    const mockToken = "ExponentPushToken[EMULATOR-" + Math.random().toString(36).substr(2, 9) + "]"
+    return mockToken
+  }
+
   if (useMockNotifications || !isNativeModuleAvailable()) {
     const mockToken = "ExponentPushToken[MOCK-" + Math.random().toString(36).substr(2, 9) + "]"
     if (__DEV__) {
@@ -190,6 +308,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
     return mockToken
   }
+
+  // Setup Android notification channel before registering
+  await setupAndroidChannel()
 
   // Verify permissions
   const { status } = await requestPermission()
@@ -211,6 +332,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
     const projectId = Constants.expoConfig?.extra?.eas?.projectId
     if (!projectId) {
       logger.warn("📬 [Notifications] No EAS project ID found")
+      if (!__DEV__) {
+        showNotificationErrorAlert("Project configuration is missing. Please contact support.")
+      }
       return null
     }
 
@@ -227,6 +351,51 @@ export async function registerForPushNotifications(): Promise<string | null> {
     // Fallback to mock token if native module fails
     const mockToken = "ExponentPushToken[MOCK-" + Math.random().toString(36).substr(2, 9) + "]"
     return mockToken
+  }
+}
+
+/**
+ * Add listener for push token changes
+ * Tokens can be invalidated and rolled by the push notification service
+ * This listener allows you to handle token updates and sync with your backend
+ */
+export function addPushTokenListener(
+  listener: (token: import("expo-notifications").DevicePushToken) => void,
+): import("expo-notifications").Subscription {
+  // Skip on web - push tokens not supported
+  if (Platform.OS === "web") {
+    return {
+      remove: () => {},
+    } as import("expo-notifications").Subscription
+  }
+
+  if (useMockNotifications || !isNativeModuleAvailable()) {
+    if (__DEV__) {
+      logger.debug("📬 [MockNotifications] Registered push token listener (mock)")
+    }
+    return {
+      remove: () => {
+        if (__DEV__) {
+          logger.debug("📬 [MockNotifications] Removed push token listener")
+        }
+      },
+    } as import("expo-notifications").Subscription
+  }
+
+  const NotificationsModule = getNotifications()
+  if (!NotificationsModule) {
+    return {
+      remove: () => {},
+    } as import("expo-notifications").Subscription
+  }
+
+  try {
+    return NotificationsModule.addPushTokenListener(listener)
+  } catch (error) {
+    logger.error("📬 [Notifications] Error adding push token listener", {}, error as Error)
+    return {
+      remove: () => {},
+    } as import("expo-notifications").Subscription
   }
 }
 
@@ -539,6 +708,10 @@ export const notificationService = {
   getScheduledNotifications,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
+  addPushTokenListener,
   getLastNotificationResponse,
+  showPermissionDeniedAlert,
+  showNotificationErrorAlert,
+  isPhysicalDevice,
   useMock: useMockNotifications,
 }

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigation } from "@react-navigation/native"
 import { Controller, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
@@ -26,6 +27,7 @@ import { analyzePasswordStrength } from "@/utils/validation"
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterScreen = () => {
+  const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation()
   const signUp = useAuthStore((state) => state.signUp)
@@ -81,9 +83,9 @@ export const RegisterScreen = () => {
     try {
       setError("")
       const { error } = await signInWithApple()
-      if (error) setError(formatAuthError(error as Error) || "Failed to sign in with Apple")
+      if (error) setError(formatAuthError(error as Error) || t("registerScreen:appleSignInFailed"))
     } catch {
-      setError("Failed to sign in with Apple")
+      setError(t("registerScreen:appleSignInFailed"))
     }
   }
 
@@ -91,9 +93,9 @@ export const RegisterScreen = () => {
     try {
       setError("")
       const { error } = await signInWithGoogle()
-      if (error) setError(formatAuthError(error as Error) || "Failed to sign in with Google")
+      if (error) setError(formatAuthError(error as Error) || t("registerScreen:googleSignInFailed"))
     } catch {
-      setError("Failed to sign in with Google")
+      setError(t("registerScreen:googleSignInFailed"))
     }
   }
 
@@ -145,8 +147,8 @@ export const RegisterScreen = () => {
 
   return (
     <AuthScreenLayout
-      title="Create Account"
-      subtitle="Sign up to get started"
+      titleTx="registerScreen:title"
+      subtitleTx="registerScreen:subtitle"
       showCloseButton
       onClose={handleClose}
       scrollable={false}
@@ -158,11 +160,11 @@ export const RegisterScreen = () => {
           name="email"
           render={({ field, fieldState }) => (
             <TextField
-              label="Email"
+              labelTx="registerScreen:emailLabel"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
-              placeholder="Enter your email"
+              placeholderTx="registerScreen:emailPlaceholder"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
@@ -182,11 +184,11 @@ export const RegisterScreen = () => {
           name="password"
           render={({ field, fieldState }) => (
             <TextField
-              label="Password"
+              labelTx="registerScreen:passwordLabel"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
-              placeholder="Enter your password"
+              placeholderTx="registerScreen:passwordPlaceholder"
               autoCapitalize="none"
               autoComplete="password"
               autoCorrect={false}
@@ -213,7 +215,7 @@ export const RegisterScreen = () => {
               />
             </View>
             <Text size="xs" weight="semiBold" style={getStrengthTextStyle()}>
-              {passwordStrength.label.charAt(0).toUpperCase() + passwordStrength.label.slice(1)}
+              {t(`registerScreen:passwordStrength.${passwordStrength.label}`)}
             </Text>
           </View>
         )}
@@ -226,11 +228,11 @@ export const RegisterScreen = () => {
           name="confirmPassword"
           render={({ field, fieldState }) => (
             <TextField
-              label="Confirm Password"
+              labelTx="registerScreen:confirmPasswordLabel"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
-              placeholder="Confirm your password"
+              placeholderTx="registerScreen:confirmPasswordPlaceholder"
               autoCapitalize="none"
               autoComplete="password"
               autoCorrect={false}
@@ -264,16 +266,14 @@ export const RegisterScreen = () => {
         {loading ? (
           <Spinner size="sm" color="white" />
         ) : (
-          <Text weight="semiBold" style={styles.primaryButtonText}>
-            Sign Up
-          </Text>
+          <Text weight="semiBold" style={styles.primaryButtonText} tx="registerScreen:signUp" />
         )}
       </TouchableOpacity>
 
       {/* Social Login Section */}
       {(features.enableGoogleAuth || features.enableAppleAuth) && (
         <>
-          <Divider label="or continue with" style={styles.divider} />
+          <Divider label={t("registerScreen:orContinueWith")} style={styles.divider} />
 
           <View style={styles.socialRow}>
             {features.enableAppleAuth && (
@@ -284,7 +284,7 @@ export const RegisterScreen = () => {
                 disabled={oauthLoading}
               >
                 <Ionicons name="logo-apple" size={24} color={theme.colors.foreground} />
-                <Text weight="semiBold">Apple</Text>
+                <Text weight="semiBold" tx="registerScreen:apple" />
               </TouchableOpacity>
             )}
 
@@ -296,7 +296,7 @@ export const RegisterScreen = () => {
                 disabled={oauthLoading}
               >
                 <Ionicons name="logo-google" size={24} color={theme.colors.foreground} />
-                <Text weight="semiBold">Google</Text>
+                <Text weight="semiBold" tx="registerScreen:google" />
               </TouchableOpacity>
             )}
           </View>
@@ -310,7 +310,8 @@ export const RegisterScreen = () => {
         activeOpacity={0.6}
       >
         <Text color="secondary">
-          Already have an account? <Text weight="semiBold">Log In</Text>
+          <Text tx="registerScreen:hasAccount" />{" "}
+          <Text weight="semiBold" tx="registerScreen:logIn" />
         </Text>
       </TouchableOpacity>
     </AuthScreenLayout>

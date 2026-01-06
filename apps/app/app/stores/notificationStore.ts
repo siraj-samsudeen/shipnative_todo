@@ -11,11 +11,20 @@ import {
   setBadgeCount as setAppBadgeCount,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
+  addPushTokenListener,
   getLastNotificationResponse,
+  showPermissionDeniedAlert,
   type LocalNotificationInput,
 } from "@/services/notifications"
 import { syncPushNotificationsPreference } from "@/services/preferencesSync"
+import { logger } from "@/utils/Logger"
 import { storage } from "@/utils/storage"
+
+// Store listener subscriptions for cleanup
+let notificationReceivedSubscription: Notifications.Subscription | null = null
+let notificationResponseSubscription: Notifications.Subscription | null = null
+let pushTokenSubscription: Notifications.Subscription | null = null
+let isInitialized = false
 
 export interface NotificationState {
   // Permission status
@@ -45,6 +54,7 @@ export interface NotificationState {
 
   // Actions
   initialize: () => Promise<void>
+  cleanup: () => void
   togglePush: (userId?: string) => Promise<void>
   requestPermission: () => Promise<boolean>
   registerForPush: () => Promise<void>
@@ -75,6 +85,18 @@ export const useNotificationStore = create<NotificationState>()(
       isPushEnabled: false,
 
       initialize: async () => {
+        // Prevent multiple initializations
+        if (isInitialized) {
+          if (__DEV__) {
+            logger.debug("📬 [NotificationStore] Already initialized, skipping")
+          }
+          return
+        }
+
+        if (__DEV__) {
+          logger.debug("📬 [NotificationStore] Initializing notification store")
+        }
+
         // Request permission status
         const { status } = await requestPermission()
         set({ permissionStatus: status })
@@ -90,8 +112,11 @@ export const useNotificationStore = create<NotificationState>()(
           get().handleNotificationResponse(lastResponse)
         }
 
+        // Clean up existing listeners before adding new ones
+        get().cleanup()
+
         // Listen for notifications while app is open
-        addNotificationReceivedListener((notification) => {
+        notificationReceivedSubscription = addNotificationReceivedListener((notification) => {
           const { request } = notification
           get().addNotification({
             id: request.identifier,
@@ -102,24 +127,66 @@ export const useNotificationStore = create<NotificationState>()(
         })
 
         // Listen for notification taps
-        addNotificationResponseReceivedListener((response) => {
+        notificationResponseSubscription = addNotificationResponseReceivedListener((response) => {
           get().handleNotificationResponse(response)
         })
+
+        // Listen for push token changes (tokens can be invalidated and rolled)
+        // Note: This receives native device tokens (iOS/Android), not Expo push tokens
+        pushTokenSubscription = addPushTokenListener((token) => {
+          if (__DEV__) {
+            logger.debug("📬 [NotificationStore] Device push token changed", { token: token.data })
+          }
+          // Store the native device token - you may want to convert this to an Expo push token
+          // For most use cases, you'll want to call registerForPushNotifications() again
+          // to get an updated Expo push token when the native token changes
+          void get().registerForPush()
+
+          // TODO: Sync new token to your backend here
+          // Example: await syncPushTokenToBackend(token.data)
+        })
+
+        isInitialized = true
+        if (__DEV__) {
+          logger.debug("📬 [NotificationStore] Initialization complete")
+        }
+      },
+
+      cleanup: () => {
+        // Clean up all listeners to prevent memory leaks
+        if (notificationReceivedSubscription) {
+          notificationReceivedSubscription.remove()
+          notificationReceivedSubscription = null
+        }
+        if (notificationResponseSubscription) {
+          notificationResponseSubscription.remove()
+          notificationResponseSubscription = null
+        }
+        if (pushTokenSubscription) {
+          pushTokenSubscription.remove()
+          pushTokenSubscription = null
+        }
+        isInitialized = false
+        if (__DEV__) {
+          logger.debug("📬 [NotificationStore] Listeners cleaned up")
+        }
       },
 
       togglePush: async (userId?: string) => {
-        const { isPushEnabled, requestPermission } = get()
+        const { isPushEnabled, requestPermission: reqPerm } = get()
         let newValue: boolean
 
         if (isPushEnabled) {
           newValue = false
           set({ isPushEnabled: false })
         } else {
-          const granted = await requestPermission()
+          const granted = await reqPerm()
           if (granted) {
             newValue = true
             set({ isPushEnabled: true })
           } else {
+            // Show helpful alert when permission is denied
+            showPermissionDeniedAlert()
             return // Permission denied, don't sync
           }
         }
@@ -138,6 +205,11 @@ export const useNotificationStore = create<NotificationState>()(
         if (status === "granted") {
           await get().registerForPush()
           return true
+        }
+
+        // Show alert only if explicitly denied (not undetermined)
+        if (status === "denied") {
+          showPermissionDeniedAlert()
         }
 
         return false

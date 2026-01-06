@@ -4,7 +4,12 @@
  * Mock implementation of Supabase realtime subscriptions
  */
 
-import type { RealtimeEvent, RealtimeCallback, RealtimeSubscription } from "./types"
+import type {
+  RealtimeEvent,
+  RealtimeCallback,
+  RealtimeSubscription,
+  DatabaseRecord,
+} from "./types"
 import { sharedState } from "./types"
 import { logger } from "../../../utils/Logger"
 
@@ -99,14 +104,14 @@ export class MockRealtime {
 export function triggerRealtimeEvent(
   table: string,
   eventType: RealtimeEvent,
-  newData: any,
-  oldData: any = null,
-) {
+  newData: DatabaseRecord | null,
+  oldData: DatabaseRecord | null = null,
+): void {
   sharedState.realtimeSubscriptions.forEach((subscriptions) => {
     subscriptions.forEach((sub) => {
       if (sub.table === table && (sub.event === eventType || sub.event === "*")) {
         // Check filter if present
-        if (sub.filter) {
+        if (sub.filter && newData) {
           const [column, operator, value] = sub.filter.split(/[=<>]/).map((s) => s.trim())
           if (operator === "eq" && newData[column] !== value) {
             return

@@ -1,6 +1,6 @@
 # Development Workflow
 
-> **Reference**: See `AI_CONTEXT.md` for technology stack overview. This file contains development workflow, mock mode, and common mistakes.
+> **Reference**: See root `AGENTS.md` for tech stack. This file covers development workflow, mock mode, and common mistakes.
 
 ## 🔄 Development Workflow
 
@@ -76,4 +76,4 @@ const data: User = fetchData()
 
 - **Mock Services**: `vibe/MOCK_SERVICES.md` (detailed mock mode guide)
 - **Services**: `vibe/SERVICES.md` (service architecture)
-- **AI Context**: `AI_CONTEXT.md` (technology stack overview)
+- **AI Context**: `AGENTS.md` (tech stack and directory map)

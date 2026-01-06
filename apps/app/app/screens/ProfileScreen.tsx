@@ -9,6 +9,7 @@ import Animated, {
   FadeInDown,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
+import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 import { useAuthStore, useNotificationStore, useSubscriptionStore, useWidgetStore } from "@/stores"
 import { useAppTheme } from "@/theme/context"
 import { webDimension } from "@/types/webStyles"
@@ -40,10 +42,17 @@ const SPRING_CONFIG = {
 }
 
 // =============================================================================
+// TYPES
+// =============================================================================
+
+interface ProfileScreenProps extends MainTabScreenProps<"Profile"> {}
+
+// =============================================================================
 // COMPONENT
 // =============================================================================
 
-export const ProfileScreen: FC = () => {
+export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
+  const { t } = useTranslation()
   const user = useAuthStore((state) => state.user)
   const signOut = useAuthStore((state) => state.signOut)
   const isPro = useSubscriptionStore((state) => state.isPro)
@@ -172,7 +181,7 @@ export const ProfileScreen: FC = () => {
         >
           {/* Header */}
           <Animated.View entering={FadeInDown.delay(0).springify()} style={styles.header}>
-            <Text style={styles.screenTitle}>Profile</Text>
+            <Text style={styles.screenTitle} tx="profileScreen:title" />
           </Animated.View>
 
           {/* Profile Card */}
@@ -192,11 +201,17 @@ export const ProfileScreen: FC = () => {
                 {isPro ? (
                   <View style={styles.proBadge}>
                     <Ionicons name="diamond" size={12} color={theme.colors.background} />
-                    <Text style={styles.proText}>PRO</Text>
+                    <Text style={styles.proText} tx="profileScreen:proBadge" />
                   </View>
                 ) : (
-                  <Pressable style={styles.upgradeButton} onPress={() => haptics.buttonPress()}>
-                    <Text style={styles.upgradeText}>Upgrade to Pro</Text>
+                  <Pressable
+                    style={styles.upgradeButton}
+                    onPress={() => {
+                      haptics.buttonPress()
+                      navigation.navigate("Paywall")
+                    }}
+                  >
+                    <Text style={styles.upgradeText} tx="profileScreen:upgradeButton" />
                   </Pressable>
                 )}
               </View>
@@ -205,7 +220,7 @@ export const ProfileScreen: FC = () => {
 
           {/* Settings Section */}
           <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 2).springify()}>
-            <Text style={styles.sectionTitle}>Settings</Text>
+            <Text style={styles.sectionTitle} tx="profileScreen:settingsTitle" />
           </Animated.View>
           <Animated.View
             entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 2.5).springify()}
@@ -213,15 +228,15 @@ export const ProfileScreen: FC = () => {
           >
             <MenuItem
               icon="person-outline"
-              title="Personal Information"
-              subtitle="Edit name, email"
+              title={t("profileScreen:personalInfo")}
+              subtitle={t("profileScreen:personalInfoSubtitle")}
               onPress={() => setEditModalVisible(true)}
             />
             <View style={styles.divider} />
             <MenuItem
               icon="notifications-outline"
-              title="Notifications"
-              subtitle="Manage push notifications"
+              title={t("profileScreen:notifications")}
+              subtitle={t("profileScreen:notificationsSubtitle")}
               rightElement={
                 <Switch
                   value={isPushEnabled}
@@ -234,7 +249,7 @@ export const ProfileScreen: FC = () => {
             <View style={styles.divider} />
             <MenuItem
               icon="moon-outline"
-              title="Dark Mode"
+              title={t("profileScreen:darkMode")}
               rightElement={
                 <Switch
                   value={themeContext === "dark"}
@@ -247,8 +262,8 @@ export const ProfileScreen: FC = () => {
             <View style={styles.divider} />
             <MenuItem
               icon="language-outline"
-              title="Language"
-              subtitle="Change app language"
+              title={t("settings:language")}
+              subtitle={t("profileScreen:languageSubtitle")}
               onPress={() => setLanguageModalVisible(true)}
             />
             {isWidgetsEnabled && (
@@ -256,13 +271,13 @@ export const ProfileScreen: FC = () => {
                 <View style={styles.divider} />
                 <MenuItem
                   icon="apps-outline"
-                  title="Home Screen Widgets"
+                  title={t("profileScreen:widgets")}
                   subtitle={
                     syncStatus === "syncing"
-                      ? "Syncing..."
+                      ? t("profileScreen:widgetsSyncing")
                       : userWidgetsEnabled
-                        ? "Enabled - add widgets from home screen"
-                        : "Show app data on your home screen"
+                        ? t("profileScreen:widgetsEnabled")
+                        : t("profileScreen:widgetsDisabled")
                   }
                   rightElement={
                     <Switch
@@ -283,22 +298,22 @@ export const ProfileScreen: FC = () => {
 
           {/* Support Section */}
           <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3).springify()}>
-            <Text style={styles.sectionTitle}>Support</Text>
+            <Text style={styles.sectionTitle} tx="profileScreen:supportTitle" />
           </Animated.View>
           <Animated.View
             entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3.5).springify()}
             style={styles.menuGroup}
           >
-            <MenuItem icon="help-circle-outline" title="Help Center" />
+            <MenuItem icon="help-circle-outline" title={t("profileScreen:helpCenter")} />
             <View style={styles.divider} />
-            <MenuItem icon="shield-checkmark-outline" title="Privacy Policy" />
+            <MenuItem icon="shield-checkmark-outline" title={t("profileScreen:privacyPolicy")} />
           </Animated.View>
 
           {/* Development Section - Only visible in dev mode */}
           {features.enableDebugLogging && (
             <>
               <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3.8).springify()}>
-                <Text style={styles.sectionTitle}>Development</Text>
+                <Text style={styles.sectionTitle} tx="profileScreen:developmentTitle" />
               </Animated.View>
               <Animated.View
                 entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 4).springify()}
@@ -306,8 +321,8 @@ export const ProfileScreen: FC = () => {
               >
                 <MenuItem
                   icon="bug-outline"
-                  title="Test Sentry Error"
-                  subtitle="Send a test error to Sentry"
+                  title={t("profileScreen:testSentryError")}
+                  subtitle={t("profileScreen:testSentryErrorSubtitle")}
                   onPress={() => {
                     haptics.buttonPress()
                     testErrors.testSimpleError()
@@ -316,8 +331,8 @@ export const ProfileScreen: FC = () => {
                 <View style={styles.divider} />
                 <MenuItem
                   icon="warning-outline"
-                  title="Test Warning"
-                  subtitle="Send a test warning message"
+                  title={t("profileScreen:testWarning")}
+                  subtitle={t("profileScreen:testWarningSubtitle")}
                   onPress={() => {
                     haptics.buttonPress()
                     testErrors.testWarningMessage()
@@ -326,8 +341,8 @@ export const ProfileScreen: FC = () => {
                 <View style={styles.divider} />
                 <MenuItem
                   icon="information-circle-outline"
-                  title="Test Info Message"
-                  subtitle="Send a test info message"
+                  title={t("profileScreen:testInfoMessage")}
+                  subtitle={t("profileScreen:testInfoMessageSubtitle")}
                   onPress={() => {
                     haptics.buttonPress()
                     testErrors.testInfoMessage()
@@ -336,8 +351,8 @@ export const ProfileScreen: FC = () => {
                 <View style={styles.divider} />
                 <MenuItem
                   icon="code-outline"
-                  title="Test Error with Context"
-                  subtitle="Send error with additional context"
+                  title={t("profileScreen:testErrorWithContext")}
+                  subtitle={t("profileScreen:testErrorWithContextSubtitle")}
                   onPress={() => {
                     haptics.buttonPress()
                     testErrors.testErrorWithContext()
@@ -348,7 +363,7 @@ export const ProfileScreen: FC = () => {
           )}
 
           <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 4).springify()}>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle} tx="profileScreen:accountTitle" />
           </Animated.View>
           <Animated.View
             entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 4.5).springify()}
@@ -356,21 +371,19 @@ export const ProfileScreen: FC = () => {
           >
             <MenuItem
               icon="log-out-outline"
-              title="Sign Out"
-              subtitle="Log out of this device"
+              title={t("profileScreen:signOut")}
+              subtitle={t("profileScreen:signOutSubtitle")}
               onPress={handleSignOut}
             />
             <View style={styles.divider} />
             <View style={styles.dangerHeader}>
               <View style={styles.dangerCopy}>
-                <Text style={styles.dangerTitle}>Delete Account</Text>
-                <Text style={styles.dangerSubtitle}>
-                  Permanently remove your data and sign out from all devices.
-                </Text>
+                <Text style={styles.dangerTitle} tx="profileScreen:deleteAccount" />
+                <Text style={styles.dangerSubtitle} tx="profileScreen:deleteAccountSubtitle" />
               </View>
               <View style={styles.dangerBadge}>
                 <Ionicons name="shield-half-outline" size={16} color={theme.colors.error} />
-                <Text style={styles.dangerBadgeText}>Privacy-first</Text>
+                <Text style={styles.dangerBadgeText} tx="profileScreen:deleteAccountPrivacy" />
               </View>
             </View>
 
@@ -379,24 +392,24 @@ export const ProfileScreen: FC = () => {
                 <View style={styles.dangerIcon}>
                   <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
                 </View>
-                <Text style={styles.dangerBulletText}>Removes your profile and preferences</Text>
+                <Text style={styles.dangerBulletText} tx="profileScreen:deleteAccountBullet1" />
               </View>
               <View style={styles.dangerBullet}>
                 <View style={styles.dangerIcon}>
                   <Ionicons name="receipt-outline" size={16} color={theme.colors.error} />
                 </View>
-                <Text style={styles.dangerBulletText}>Ends your active subscription</Text>
+                <Text style={styles.dangerBulletText} tx="profileScreen:deleteAccountBullet2" />
               </View>
               <View style={styles.dangerBullet}>
                 <View style={styles.dangerIcon}>
                   <Ionicons name="log-out-outline" size={16} color={theme.colors.error} />
                 </View>
-                <Text style={styles.dangerBulletText}>Signs you out on every device</Text>
+                <Text style={styles.dangerBulletText} tx="profileScreen:deleteAccountBullet3" />
               </View>
             </View>
 
             <Button
-              text="Delete my account"
+              tx="profileScreen:deleteMyAccount"
               variant="danger"
               onPress={() => {
                 haptics.delete()
@@ -407,7 +420,11 @@ export const ProfileScreen: FC = () => {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 5.2).springify()}>
-            <Text style={styles.versionText}>Version 1.0.0 (Build 12)</Text>
+            <Text
+              style={styles.versionText}
+              tx="profileScreen:version"
+              txOptions={{ version: "1.0.0", build: "12" }}
+            />
           </Animated.View>
         </ScrollView>
       </LinearGradient>

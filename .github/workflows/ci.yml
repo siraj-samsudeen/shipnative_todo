@@ -101,6 +101,117 @@ jobs:
       - name: Build Web App
         run: yarn app:web:build
 
+      - name: Analyze bundle size
+        run: |
+          cd apps/app
+          # Calculate total bundle size
+          if [ -d "dist" ]; then
+            BUNDLE_SIZE=$(du -sb dist 2>/dev/null | cut -f1 || echo "0")
+            BUNDLE_SIZE_MB=$(echo "scale=2; $BUNDLE_SIZE / 1048576" | bc)
+            echo "📦 Web bundle size: ${BUNDLE_SIZE_MB}MB"
+
+            # Count JS files and their sizes
+            echo "📊 JavaScript bundle breakdown:"
+            find dist -name "*.js" -type f -exec du -h {} \; 2>/dev/null | sort -rh | head -10 || echo "No JS files found"
+
+            # Warn if bundle exceeds budget (10MB for web)
+            if [ "$BUNDLE_SIZE" -gt 10485760 ]; then
+              echo "⚠️ Warning: Bundle size exceeds 10MB budget"
+            else
+              echo "✅ Bundle size within budget"
+            fi
+          else
+            echo "ℹ️ dist directory not found"
+          fi
+
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-bundle
+          path: apps/app/dist
+          retention-days: 7
+          if-no-files-found: ignore
+
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_APP_ENV: development
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Check for tree-shaking effectiveness
+        run: |
+          cd apps/app
+          echo "🌳 Checking for tree-shaking effectiveness..."
+
+          # Check for barrel exports that might prevent tree-shaking
+          BARREL_COUNT=$(find app -name "index.ts" -o -name "index.tsx" | wc -l)
+          echo "📁 Found $BARREL_COUNT barrel export files"
+
+          # Check for default exports (named exports are better for tree-shaking)
+          DEFAULT_EXPORTS=$(grep -r "export default" app --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+          NAMED_EXPORTS=$(grep -rE "export (const|function|class|type|interface)" app --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+
+          echo "📊 Export analysis:"
+          echo "   - Default exports: $DEFAULT_EXPORTS"
+          echo "   - Named exports: $NAMED_EXPORTS"
+
+          # Calculate ratio
+          if [ "$DEFAULT_EXPORTS" -gt 0 ]; then
+            RATIO=$(echo "scale=2; $NAMED_EXPORTS / $DEFAULT_EXPORTS" | bc)
+            echo "   - Named/Default ratio: $RATIO"
+            if [ "$(echo "$RATIO < 2" | bc)" -eq 1 ]; then
+              echo "⚠️ Consider using more named exports for better tree-shaking"
+            else
+              echo "✅ Good named export ratio"
+            fi
+          else
+            echo "✅ All exports are named (optimal for tree-shaking)"
+          fi
+
+      - name: Dependency size check
+        run: |
+          cd apps/app
+          echo "📦 Checking dependency sizes..."
+
+          # List largest dependencies
+          echo "Top 10 largest node_modules:"
+          du -sh node_modules/*/ 2>/dev/null | sort -rh | head -10 || echo "Could not analyze node_modules"
+
+      - name: Check for duplicate dependencies
+        run: |
+          cd apps/app
+          echo "🔍 Checking for duplicate dependencies..."
+
+          # Count unique package names vs total
+          if [ -d "node_modules" ]; then
+            TOTAL_DIRS=$(find node_modules -maxdepth 1 -type d | wc -l)
+            echo "Total top-level packages: $TOTAL_DIRS"
+
+            # Check for common duplicates in nested node_modules
+            NESTED=$(find node_modules -name "node_modules" -type d 2>/dev/null | wc -l || echo "0")
+            if [ "$NESTED" -gt 0 ]; then
+              echo "⚠️ Found $NESTED nested node_modules directories (potential duplicates)"
+            else
+              echo "✅ No nested node_modules detected"
+            fi
+          fi
+
   build-marketing:
     name: Build Marketing Site
     runs-on: ubuntu-latest

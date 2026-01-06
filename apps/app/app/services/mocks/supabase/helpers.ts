@@ -12,7 +12,7 @@
 import { Platform } from "react-native"
 import * as SecureStore from "expo-secure-store"
 
-import { sharedState } from "./types"
+import { sharedState, type DatabaseRecord } from "./types"
 import type { User, Session, AuthChangeEvent } from "../../../types/auth"
 import { logger } from "../../../utils/Logger"
 import { webSecureStorage } from "../../../utils/webStorageEncryption"
@@ -164,7 +164,7 @@ export async function loadFromStorage<T>(key: string): Promise<T | null> {
   }
 }
 
-export async function saveToStorage(key: string, value: any): Promise<void> {
+export async function saveToStorage(key: string, value: unknown): Promise<void> {
   try {
     await storageAdapter.setItem(key, JSON.stringify(value))
   } catch (error) {
@@ -221,13 +221,13 @@ export async function initializeStorage() {
     }
 
     // Load database
-    const savedDatabase = await loadFromStorage<Record<string, Record<string, any>>>(
+    const savedDatabase = await loadFromStorage<Record<string, Record<string, DatabaseRecord>>>(
       STORAGE_KEYS.DATABASE,
     )
     if (savedDatabase) {
       sharedState.mockDatabase.clear()
       Object.entries(savedDatabase).forEach(([tableName, records]) => {
-        const tableMap = new Map(Object.entries(records))
+        const tableMap = new Map<string, DatabaseRecord>(Object.entries(records))
         sharedState.mockDatabase.set(tableName, tableMap)
       })
       if (__DEV__ && sharedState.mockDatabase.size > 0) {
@@ -251,8 +251,8 @@ export async function persistUsers() {
 }
 
 // Save database to storage
-export async function persistDatabase() {
-  const databaseObj: Record<string, Record<string, any>> = {}
+export async function persistDatabase(): Promise<void> {
+  const databaseObj: Record<string, Record<string, DatabaseRecord>> = {}
   sharedState.mockDatabase.forEach((table, tableName) => {
     databaseObj[tableName] = Object.fromEntries(table.entries())
   })
@@ -379,12 +379,12 @@ export function extractNameFromEmail(email: string): {
  * Email is not confirmed by default to simulate email confirmation flow.
  *
  * @param {string} email - The user's email address
- * @param {Record<string, any>} [metadata] - Optional metadata to merge with extracted metadata
+ * @param {Record<string, unknown>} [metadata] - Optional metadata to merge with extracted metadata
  * @returns {User} A mock User object
  * @example
  * createMockUser("john.doe@example.com", { custom_field: "value" })
  */
-export function createMockUser(email: string, metadata?: Record<string, any>): User {
+export function createMockUser(email: string, metadata?: Record<string, unknown>): User {
   // Extract realistic name from email
   const { first_name, last_name, full_name } = extractNameFromEmail(email)
 

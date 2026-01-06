@@ -1,48 +1,59 @@
 # AGENTS.md
 
-> **⚠️ CRITICAL**: [AI_CONTEXT.md](./AI_CONTEXT.md) is the **SINGLE SOURCE OF TRUTH** for this project. Read it first for tech stack, patterns, and documentation rules.
+## Setup
+```bash
+yarn install          # Install dependencies
+yarn setup            # Interactive wizard (configures .env, app.json)
+yarn app:start        # Start Expo dev server
+yarn app:ios          # Run on iOS simulator
+yarn app:android      # Run on Android emulator
+yarn app:web          # Run in browser
+```
 
-## Project Overview
-**Shipnative** is a production-ready React Native (Expo) boilerplate optimized for "Vibecoding". It's a monorepo consisting of three interconnected repositories.
+## Tech Stack
 
-## Setup Commands
-- **Install All Deps**: `yarn install`
-- **Start RN App**: `yarn app:start`
-- **Start Marketing Site**: `yarn marketing:dev`
-- **Run Tests**: `yarn test`
-
-## 🛠️ High-Level Tech Stack (ALWAYS USE)
-- **Styling**: React Native Unistyles 3.0 (NOT Tailwind/NativeWind)
-- **Navigation**: React Navigation (NOT Expo Router)
-- **State**: Zustand (Global), React Query (Server)
+### ALWAYS USE
+- **Styling**: Unistyles 3.0 with `StyleSheet.create((theme) => ({...}))`
+- **Navigation**: React Navigation (type-safe via `navigationTypes.ts`)
+- **State**: Zustand (global) + React Query (server)
 - **Forms**: React Hook Form + Zod
+- **Backend**: Supabase, RevenueCat, PostHog, Sentry
 
-## 📂 Context Mapping
-This project uses nested `AGENTS.md` files for folder-specific context. 
-> **IMPORTANT**: Always check the directory you are working in (and its parents) for an `AGENTS.md` file. The closest file takes precedence.
+### NEVER USE
+- NativeWind/Tailwind (use Unistyles)
+- Expo Router (use React Navigation)
+- Redux/MobX/Context API (use Zustand)
+- Inline styles or hardcoded values (use theme)
+- useEffect for data fetching (use React Query)
 
-- **Root**: Global layout and monorepo management.
-- **`apps/app/`**: [App-Specific AGENTS.md](./apps/app/AGENTS.md) (Styling, Screen Templates, etc.)
-- **`landing_page/`**: [Landing Page AGENTS.md](../landing_page/AGENTS.md)
-- **`mintlify_docs/`**: [Docs AGENTS.md](../mintlify_docs/AGENTS.md)
-- **`vibe/`**: Platform-specific detailed specifications (Engineering guides, Service architecture, etc.).
+## Directory Map
 
-## 📝 Documentation Principle: Discovery vs. Specification
-- **AGENTS.md (Discovery)**: The closest file to your cursor. Contains high-level rules, anti-patterns, and maps to deeper context. Keep it lean (under 100 lines).
-- **docs/ & vibe/ (Specification)**: Detailed technical specifications, architectural deep dives, and complex setup guides.
+| Need | Location |
+|------|----------|
+| Screens | `apps/app/app/screens/` |
+| Components | `apps/app/app/components/` |
+| Stores (Zustand) | `apps/app/app/stores/` |
+| Services | `apps/app/app/services/` |
+| Theme config | `apps/app/app/theme/unistyles.ts` |
+| Navigation types | `apps/app/app/navigators/navigationTypes.ts` |
 
-### ⚖️ The "Tipping Point"
-Add to `AGENTS.md` ONLY if:
-1. It is a **constraint** (Always/Never).
-2. It is a **directory map** (Where is X?).
-3. It fixes a **recurring agent mistake**.
-*Everything else belongs in `docs/` or `vibe/` to save tokens.*
+## Detailed Docs (in `vibe/`)
 
-## 📝 Maintenance Rules
-- **New Feature**: Create `vibe/[FEATURE_NAME].md`.
-- **Major App Changes**: Update `apps/app/vibe/CONTEXT.md`.
-- **Instruction Drift**: If an agent makes a mistake, update the local `AGENTS.md` with a specific rule.
-- **NEVER** create random `.md` files in the root directory.
+| Topic | File |
+|-------|------|
+| Styling patterns | `apps/app/vibe/STYLE_GUIDE.md` |
+| App architecture | `apps/app/vibe/ARCHITECTURE.md` |
+| Screen templates | `apps/app/vibe/SCREEN_TEMPLATES.md` |
+| Services & mocks | `vibe/SERVICES.md`, `vibe/MOCK_SERVICES.md` |
+| Auth & database | `vibe/SUPABASE.md` |
+| Payments | `vibe/MONETIZATION.md` |
 
----
-*Refer to [AI_CONTEXT.md](./AI_CONTEXT.md) for full architecture and workflow details.*
+## Platform Support
+- iOS, Android, Web (via Expo Web)
+- `apps/web/` is a separate marketing site using Tailwind (not Unistyles)
+
+## Rules
+- Check `apps/app/app/components/` before creating new components
+- Use theme values (`theme.colors.*`, `theme.spacing.*`) - never hardcode
+- All components must support dark mode via semantic theme colors
+- New feature docs go in `vibe/` or `docs/`, NOT root directory

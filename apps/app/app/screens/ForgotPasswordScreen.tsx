@@ -3,6 +3,7 @@ import { View, TouchableOpacity } from "react-native"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigation } from "@react-navigation/native"
 import { Controller, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native-unistyles"
 import { z } from "zod"
 
@@ -20,6 +21,7 @@ import { formatAuthError } from "@/utils/formatAuthError"
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
 export const ForgotPasswordScreen = () => {
+  const { t } = useTranslation()
   const navigation = useNavigation()
   const resetPassword = useAuthStore((state) => state.resetPassword)
   const [loading, setLoading] = useState(false)
@@ -67,14 +69,11 @@ export const ForgotPasswordScreen = () => {
     return (
       <AuthScreenLayout
         headerIcon="✉️"
-        title="Check Your Email"
-        subtitle={`We've sent a password reset link to ${emailValue}`}
+        titleTx="forgotPasswordScreen:successTitle"
+        subtitle={t("forgotPasswordScreen:successSubtitle", { email: emailValue })}
         scrollable={false}
       >
-        <Text color="secondary" style={styles.successSubtext}>
-          Click the link in the email to reset your password. If you don&apos;t see it, check your
-          spam folder.
-        </Text>
+        <Text color="secondary" style={styles.successSubtext} tx="forgotPasswordScreen:successDescription" />
 
         {/* Back to Login Button */}
         <TouchableOpacity
@@ -82,9 +81,7 @@ export const ForgotPasswordScreen = () => {
           onPress={handleBackToLogin}
           activeOpacity={0.8}
         >
-          <Text weight="semiBold" style={styles.primaryButtonText}>
-            Back to Login
-          </Text>
+          <Text weight="semiBold" style={styles.primaryButtonText} tx="forgotPasswordScreen:backToLogin" />
         </TouchableOpacity>
       </AuthScreenLayout>
     )
@@ -94,8 +91,8 @@ export const ForgotPasswordScreen = () => {
   return (
     <AuthScreenLayout
       headerIcon="🔑"
-      title="Forgot Password?"
-      subtitle="No worries! Enter your email and we'll send you reset instructions."
+      titleTx="forgotPasswordScreen:title"
+      subtitleTx="forgotPasswordScreen:subtitle"
       showBackButton
       onBack={() => navigation.goBack()}
       scrollable={false}
@@ -107,11 +104,11 @@ export const ForgotPasswordScreen = () => {
           name="email"
           render={({ field, fieldState }) => (
             <TextField
-              label="Email"
+              labelTx="forgotPasswordScreen:emailLabel"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
-              placeholder="Enter your email"
+              placeholderTx="forgotPasswordScreen:emailPlaceholder"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
@@ -142,14 +139,15 @@ export const ForgotPasswordScreen = () => {
         activeOpacity={0.8}
       >
         <Text weight="semiBold" style={styles.primaryButtonText}>
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? t("forgotPasswordScreen:sending") : t("forgotPasswordScreen:sendResetLink")}
         </Text>
       </TouchableOpacity>
 
       {/* Back to Login Link */}
       <TouchableOpacity onPress={handleBackToLogin} style={styles.linkButton} activeOpacity={0.6}>
         <Text color="secondary">
-          Remember your password? <Text weight="semiBold">Back to Login</Text>
+          <Text tx="forgotPasswordScreen:rememberPassword" />{" "}
+          <Text weight="semiBold" tx="forgotPasswordScreen:backToLogin" />
         </Text>
       </TouchableOpacity>
     </AuthScreenLayout>

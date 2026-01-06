@@ -2,6 +2,7 @@ import { FC, useState } from "react"
 import { View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
+import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { OnboardingScreenLayout } from "@/components/layouts/OnboardingScreenLayout"
@@ -21,6 +22,7 @@ interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}
 // =============================================================================
 
 export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingScreen(_props) {
+  const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation<AppStackScreenProps<"Onboarding">["navigation"]>()
   const setHasCompletedOnboarding = useAuthStore((state) => state.setHasCompletedOnboarding)
@@ -63,13 +65,11 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
         currentStep={0}
         totalSteps={3}
         headerIcon="👋"
-        title="Welcome Aboard!"
-        subtitle="We're excited to help you build your next great app. Let's get you set up in just a few seconds."
+        titleTx="onboardingScreen:welcomeTitle"
+        subtitleTx="onboardingScreen:welcomeSubtitle"
       >
         <TouchableOpacity style={styles.primaryButton} onPress={handleNext} activeOpacity={0.8}>
-          <Text weight="semiBold" style={styles.primaryButtonText}>
-            Let&apos;s Go
-          </Text>
+          <Text weight="semiBold" style={styles.primaryButtonText} tx="onboardingScreen:letsGo" />
         </TouchableOpacity>
       </OnboardingScreenLayout>
     )
@@ -77,19 +77,25 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
 
   // Step 1: Goal Selection
   if (step === 1) {
+    const goalOptions = [
+      { key: "goalBuildApp", label: t("onboardingScreen:goalBuildApp") },
+      { key: "goalLearnReactNative", label: t("onboardingScreen:goalLearnReactNative") },
+      { key: "goalJustExploring", label: t("onboardingScreen:goalJustExploring") },
+    ]
+
     return (
       <OnboardingScreenLayout
         currentStep={1}
         totalSteps={3}
         headerIcon="🎯"
-        title="Your Goal"
-        subtitle="What's your main focus today? This helps us personalize your experience."
+        titleTx="onboardingScreen:goalsTitle"
+        subtitleTx="onboardingScreen:goalsSubtitle"
       >
         <View style={styles.optionsContainer}>
-          {["Build an App", "Learn React Native", "Just Exploring"].map((option, index) => (
-            <TouchableOpacity key={index} style={styles.optionButton} onPress={handleNext}>
+          {goalOptions.map((option) => (
+            <TouchableOpacity key={option.key} style={styles.optionButton} onPress={handleNext}>
               <Text weight="semiBold" style={styles.optionText}>
-                {option}
+                {option.label}
               </Text>
               <Ionicons name="chevron-forward" size={20} color={theme.colors.foregroundSecondary} />
             </TouchableOpacity>
@@ -105,8 +111,8 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
       currentStep={2}
       totalSteps={3}
       headerIcon="🔔"
-      title="Stay Updated"
-      subtitle="Enable notifications to get daily updates, tips, and important announcements."
+      titleTx="onboardingScreen:notificationsTitle"
+      subtitleTx="onboardingScreen:notificationsSubtitle"
     >
       {/* Notification Preview Card */}
       <View style={styles.notificationCard}>
@@ -115,15 +121,11 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
             <Ionicons name="chatbubble-ellipses" size={20} color={theme.colors.card} />
           </View>
           <View>
-            <Text weight="semiBold" style={styles.notificationTitle}>
-              New Feature!
-            </Text>
-            <Text size="xs" color="secondary">
-              Just now
-            </Text>
+            <Text weight="semiBold" style={styles.notificationTitle} tx="onboardingScreen:notificationPreviewTitle" />
+            <Text size="xs" color="secondary" tx="onboardingScreen:notificationPreviewTime" />
           </View>
         </View>
-        <Text color="secondary">Dark mode is now available. Check it out in settings!</Text>
+        <Text color="secondary" tx="onboardingScreen:notificationPreviewMessage" />
       </View>
 
       <TouchableOpacity
@@ -133,14 +135,12 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
         disabled={isRequestingPermission}
       >
         <Text weight="semiBold" style={styles.primaryButtonText}>
-          {isRequestingPermission ? "Enabling..." : "Turn On Notifications"}
+          {isRequestingPermission ? t("onboardingScreen:enabling") : t("onboardingScreen:turnOnNotifications")}
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.secondaryButton} onPress={handleNext} activeOpacity={0.8}>
-        <Text weight="medium" color="secondary">
-          Maybe Later
-        </Text>
+        <Text weight="medium" color="secondary" tx="onboardingScreen:maybeLater" />
       </TouchableOpacity>
     </OnboardingScreenLayout>
   )

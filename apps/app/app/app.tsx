@@ -38,7 +38,7 @@ import { logMockServicesStatus } from "./services/mocks"
 import { initPosthog } from "./services/posthog"
 import { initRevenueCat } from "./services/revenuecat"
 import { initSentry } from "./services/sentry"
-import { useAuthStore, useSubscriptionStore } from "./stores"
+import { useAuthStore, useNotificationStore, useSubscriptionStore } from "./stores"
 import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { webDimension } from "./types/webStyles"
@@ -209,6 +209,15 @@ export function App() {
         void initRevenueCat().catch((error) => {
           logger.error("RevenueCat initialization failed", {}, error as Error)
         })
+
+        // Initialize notification store (sets up listeners for push notifications)
+        void useNotificationStore
+          .getState()
+          .initialize()
+          .catch((error) => {
+            logger.error("Notification store initialization failed", {}, error as Error)
+          })
+
         logStartup("Deferred services initialized")
       } catch (error) {
         logger.error("Deferred initialization failed", {}, error as Error)
@@ -220,6 +229,8 @@ export function App() {
     return () => {
       isMounted = false
       deferredInitialization.cancel()
+      // Clean up notification listeners to prevent memory leaks
+      useNotificationStore.getState().cleanup()
     }
   }, [handleInitialEmailLink])
 

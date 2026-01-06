@@ -5,14 +5,14 @@
  */
 
 import { delay, persistDatabase } from "./helpers"
-import { sharedState } from "./types"
+import { sharedState, type DatabaseRecord, type DatabaseFilter, type FilterValue } from "./types"
 import type { DatabaseResponse } from "../../../types/database"
 import { logger } from "../../../utils/Logger"
 
 // Mock database query builder
 export class MockDatabaseQuery {
   private tableName: string
-  private filters: Array<{ column: string; operator: string; value: any }> = []
+  private filters: DatabaseFilter[] = []
   private orderColumn?: string
   private orderAscending: boolean = true
   private limitCount?: number
@@ -26,73 +26,73 @@ export class MockDatabaseQuery {
   /**
    * Get filters for external use (update/delete operations)
    */
-  getFilters(): Array<{ column: string; operator: string; value: any }> {
+  getFilters(): DatabaseFilter[] {
     return this.filters
   }
 
-  eq(column: string, value: any) {
+  eq(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "eq", value })
     return this
   }
 
-  neq(column: string, value: any) {
+  neq(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "neq", value })
     return this
   }
 
-  gt(column: string, value: any) {
+  gt(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "gt", value })
     return this
   }
 
-  gte(column: string, value: any) {
+  gte(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "gte", value })
     return this
   }
 
-  lt(column: string, value: any) {
+  lt(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "lt", value })
     return this
   }
 
-  lte(column: string, value: any) {
+  lte(column: string, value: FilterValue): this {
     this.filters.push({ column, operator: "lte", value })
     return this
   }
 
-  like(column: string, pattern: string) {
+  like(column: string, pattern: string): this {
     this.filters.push({ column, operator: "like", value: pattern })
     return this
   }
 
-  ilike(column: string, pattern: string) {
+  ilike(column: string, pattern: string): this {
     this.filters.push({ column, operator: "ilike", value: pattern })
     return this
   }
 
-  in(column: string, values: any[]) {
+  in(column: string, values: string[] | number[]): this {
     this.filters.push({ column, operator: "in", value: values })
     return this
   }
 
-  order(column: string, options?: { ascending?: boolean }) {
+  order(column: string, options?: { ascending?: boolean }): this {
     this.orderColumn = column
     this.orderAscending = options?.ascending ?? true
     return this
   }
 
-  limit(count: number) {
+  limit(count: number): this {
     this.limitCount = count
     return this
   }
 
-  range(from: number, to: number) {
+  range(from: number, to: number): this {
     this.rangeFrom = from
     this.rangeTo = to
     return this
   }
 
-  match(query: Record<string, any>) {
+  match(query: Record<string, FilterValue>): this {
     Object.entries(query).forEach(([column, value]) => {
       this.eq(column, value)
     })
@@ -102,7 +102,7 @@ export class MockDatabaseQuery {
   /**
    * Apply filters to items - public for use by update/delete operations
    */
-  applyFilters(items: any[]): any[] {
+  applyFilters(items: DatabaseRecord[]): DatabaseRecord[] {
     return items.filter((item) => {
       return this.filters.every((filter) => {
         const value = item[filter.column]
@@ -113,20 +113,21 @@ export class MockDatabaseQuery {
           case "neq":
             return value !== filter.value
           case "gt":
-            return value > filter.value
+            return (value as number) > (filter.value as number)
           case "gte":
-            return value >= filter.value
+            return (value as number) >= (filter.value as number)
           case "lt":
-            return value < filter.value
+            return (value as number) < (filter.value as number)
           case "lte":
-            return value <= filter.value
+            return (value as number) <= (filter.value as number)
           case "like":
-          case "ilike":
-            const pattern = filter.value.replace(/%/g, ".*")
+          case "ilike": {
+            const pattern = String(filter.value).replace(/%/g, ".*")
             const regex = new RegExp(pattern, filter.operator === "ilike" ? "i" : "")
             return regex.test(String(value))
+          }
           case "in":
-            return filter.value.includes(value)
+            return (filter.value as (string | number)[]).includes(value as string | number)
           default:
             return true
         }
@@ -134,20 +135,23 @@ export class MockDatabaseQuery {
     })
   }
 
-  private applyOrdering(items: any[]): any[] {
+  private applyOrdering(items: DatabaseRecord[]): DatabaseRecord[] {
     if (!this.orderColumn) return items
 
+    const orderCol = this.orderColumn
     return [...items].sort((a, b) => {
-      const aVal = a[this.orderColumn!]
-      const bVal = b[this.orderColumn!]
+      const aVal = a[orderCol]
+      const bVal = b[orderCol]
 
+      if (aVal === undefined || aVal === null) return 1
+      if (bVal === undefined || bVal === null) return -1
       if (aVal < bVal) return this.orderAscending ? -1 : 1
       if (aVal > bVal) return this.orderAscending ? 1 : -1
       return 0
     })
   }
 
-  private applyLimiting(items: any[]): any[] {
+  private applyLimiting(items: DatabaseRecord[]): DatabaseRecord[] {
     if (this.rangeFrom !== undefined && this.rangeTo !== undefined) {
       return items.slice(this.rangeFrom, this.rangeTo + 1)
     }
@@ -239,19 +243,20 @@ export class MockDatabaseTable {
     return new MockDatabaseQuery(this.tableName)
   }
 
-  async insert(data: any | any[]): Promise<DatabaseResponse> {
+  async insert(data: DatabaseRecord | DatabaseRecord[]): Promise<DatabaseResponse> {
     await delay(300)
 
     const table = sharedState.mockDatabase.get(this.tableName)!
     const items = Array.isArray(data) ? data : [data]
-    const inserted: any[] = []
+    const inserted: DatabaseRecord[] = []
 
     items.forEach((item) => {
-      const id = item.id || `mock-id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      const record = {
+      const id =
+        (item.id as string) || `mock-id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const record: DatabaseRecord = {
         ...item,
         id,
-        created_at: item.created_at || new Date().toISOString(),
+        created_at: (item.created_at as string) || new Date().toISOString(),
       }
       table.set(id, record)
       inserted.push(record)
@@ -270,23 +275,25 @@ export class MockDatabaseTable {
     }
   }
 
-  update(data: any) {
+  update(data: DatabaseRecord): MockDatabaseQuery {
     if (__DEV__) {
       logger.debug(`[MockSupabase] UPDATE`, { table: this.tableName })
     }
 
     const query = new MockDatabaseQuery(this.tableName)
+    const tableName = this.tableName
 
     query.then = async (resolve) => {
       await delay(300)
 
-      const table = sharedState.mockDatabase.get(this.tableName)!
+      const table = sharedState.mockDatabase.get(tableName)!
       const items = Array.from(table.values())
       const filtered = query.applyFilters(items)
 
-      filtered.forEach((item: any) => {
-        const updated = { ...item, ...data, updated_at: new Date().toISOString() }
-        table.set(item.id, updated)
+      filtered.forEach((item) => {
+        const itemId = item.id as string
+        const updated: DatabaseRecord = { ...item, ...data, updated_at: new Date().toISOString() }
+        table.set(itemId, updated)
       })
 
       // Persist database changes
@@ -294,7 +301,7 @@ export class MockDatabaseTable {
 
       if (__DEV__) {
         logger.debug(`[MockSupabase] Updated rows`, {
-          table: this.tableName,
+          table: tableName,
           count: filtered.length,
         })
       }
@@ -305,22 +312,24 @@ export class MockDatabaseTable {
     return query
   }
 
-  delete() {
+  delete(): MockDatabaseQuery {
     if (__DEV__) {
       logger.debug(`[MockSupabase] DELETE`, { table: this.tableName })
     }
 
     const query = new MockDatabaseQuery(this.tableName)
+    const tableName = this.tableName
 
     query.then = async (resolve) => {
       await delay(300)
 
-      const table = sharedState.mockDatabase.get(this.tableName)!
+      const table = sharedState.mockDatabase.get(tableName)!
       const items = Array.from(table.values())
       const filtered = query.applyFilters(items)
 
-      filtered.forEach((item: any) => {
-        table.delete(item.id)
+      filtered.forEach((item) => {
+        const itemId = item.id as string
+        table.delete(itemId)
       })
 
       // Persist database changes
@@ -328,7 +337,7 @@ export class MockDatabaseTable {
 
       if (__DEV__) {
         logger.debug(`[MockSupabase] Deleted rows`, {
-          table: this.tableName,
+          table: tableName,
           count: filtered.length,
         })
       }
@@ -339,21 +348,22 @@ export class MockDatabaseTable {
     return query
   }
 
-  async upsert(data: any | any[]): Promise<DatabaseResponse> {
+  async upsert(data: DatabaseRecord | DatabaseRecord[]): Promise<DatabaseResponse> {
     await delay(300)
 
     const table = sharedState.mockDatabase.get(this.tableName)!
     const items = Array.isArray(data) ? data : [data]
-    const upserted: any[] = []
+    const upserted: DatabaseRecord[] = []
 
     items.forEach((item) => {
-      const id = item.id || `mock-id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const id =
+        (item.id as string) || `mock-id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const existing = table.get(id)
-      const record = {
+      const record: DatabaseRecord = {
         ...existing,
         ...item,
         id,
-        created_at: existing?.created_at || new Date().toISOString(),
+        created_at: (existing?.created_at as string) || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
       table.set(id, record)

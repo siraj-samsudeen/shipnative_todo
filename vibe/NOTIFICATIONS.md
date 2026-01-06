@@ -9,8 +9,12 @@ This boilerplate includes push notification support via `expo-notifications`, wi
 - ✅ Remote notifications (FCM for Android, APNs for iOS)
 - ✅ Deep linking from notifications
 - ✅ Mock mode for development
-- ✅ Permission handling
+- ✅ Permission handling with user-friendly alerts
 - ✅ Notification badges and sounds
+- ✅ Physical device detection (graceful emulator handling)
+- ✅ Automatic token refresh handling
+- ✅ Android notification channel configuration
+- ✅ Automatic initialization and cleanup
 
 ---
 
@@ -244,22 +248,28 @@ import { useNotificationStore } from '@/stores/notificationStore'
 
 const {
   // State
-  permissionStatus,    // 'granted' | 'denied' | 'undetermined'
+  permissionStatus,    // 'granted' | 'denied' | 'undetermined' | 'loading'
   isPushEnabled,       // User preference toggle
   pushToken,           // Expo push token
-  notifications,       // Array of received notifications
+  notifications,       // Array of received notifications (last 50)
   unreadCount,         // Number of unread notifications
-  
+  badgeCount,          // Current app badge count
+
   // Actions
-  togglePush,          // Toggle notifications on/off
-  requestPermission,   // Request notification permission
-  registerForPushNotifications, // Get push token
+  initialize,          // Initialize store (called automatically on app start)
+  cleanup,             // Clean up listeners (called automatically on app unmount)
+  togglePush,          // Toggle notifications on/off (shows alert if denied)
+  requestPermission,   // Request notification permission (shows alert if denied)
+  registerForPush,     // Get push token
   scheduleNotification, // Schedule local notification
   cancelNotification,  // Cancel scheduled notification
   cancelAllNotifications, // Cancel all notifications
   setBadgeCount,       // Set app badge number
   clearBadge,          // Clear app badge
   markAsRead,          // Mark notification as read
+  markAllAsRead,       // Mark all notifications as read
+  addNotification,     // Add notification to history
+  handleNotificationResponse, // Handle notification tap
 } = useNotificationStore()
 ```
 
@@ -275,12 +285,17 @@ import {
   setBadgeCount,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
+  addPushTokenListener,         // NEW: Listen for token changes
+  getLastNotificationResponse,
+  showPermissionDeniedAlert,    // NEW: Show settings alert
+  showNotificationErrorAlert,   // NEW: Show error alert
+  isPhysicalDevice,             // NEW: Check if running on real device
 } from '@/services/notifications'
 
 // Request permission
 const { status } = await requestPermission()
 
-// Get push token
+// Get push token (auto-checks for physical device)
 const token = await registerForPushNotifications()
 
 // Schedule notification
@@ -297,6 +312,17 @@ await cancelNotification(notificationId)
 addNotificationReceivedListener(notification => {
   console.log('Received:', notification)
 })
+
+// Listen for token changes (tokens can be invalidated by OS)
+addPushTokenListener(token => {
+  console.log('Token changed:', token.data)
+  // Re-register or sync to backend
+})
+
+// Check if running on physical device
+if (!isPhysicalDevice()) {
+  console.log('Running on emulator - mock tokens used')
+}
 ```
 
 ---
@@ -440,22 +466,22 @@ if (notificationCount < MAX_NOTIFICATIONS_PER_DAY) {
 
 ### 4. Handle Permission Denial
 
-```typescript
-const { status } = await requestPermission()
+The notification store and service now handle this automatically! When permission is denied, a helpful alert is shown prompting users to open Settings.
 
+```typescript
+// Automatic handling (built-in):
+const { togglePush, requestPermission } = useNotificationStore()
+
+// Both methods automatically show alert if permission denied
+await togglePush()      // Shows alert if denied
+await requestPermission() // Shows alert if denied
+
+// Manual handling (if you need custom behavior):
+import { showPermissionDeniedAlert } from '@/services/notifications'
+
+const { status } = await requestPermission()
 if (status === 'denied') {
-  // Guide user to settings
-  Alert.alert(
-    'Notifications Disabled',
-    'To enable notifications, go to Settings > Notifications',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Open Settings',
-        onPress: () => Linking.openSettings(),
-      }
-    ]
-  )
+  showPermissionDeniedAlert() // Shows "Open Settings" alert
 }
 ```
 
