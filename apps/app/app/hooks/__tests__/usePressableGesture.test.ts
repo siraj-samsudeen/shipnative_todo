@@ -209,9 +209,7 @@ describe("usePressableGesture", () => {
 
     it("should animate opacity when enabled", () => {
       const onPress = jest.fn()
-      const { result } = renderHook(() =>
-        usePressableGesture({ onPress, animateOpacity: true }),
-      )
+      const { result } = renderHook(() => usePressableGesture({ onPress, animateOpacity: true }))
 
       expect(result.current.animatedStyle).toBeDefined()
     })

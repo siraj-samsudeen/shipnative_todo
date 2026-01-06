@@ -218,13 +218,15 @@ const ja: Translations = {
     backToLogin: "ログインに戻る",
     successTitle: "メールを確認してください",
     successSubtitle: "{{email}}にパスワードリセットリンクを送信しました",
-    successDescription: "メール内のリンクをクリックしてパスワードをリセットしてください。見つからない場合は、迷惑メールフォルダを確認してください。",
+    successDescription:
+      "メール内のリンクをクリックしてパスワードをリセットしてください。見つからない場合は、迷惑メールフォルダを確認してください。",
   },
   emailVerificationScreen: {
     title: "メールを確認してください",
     subtitle: "{{email}}に確認メールを送信しました",
     checkInbox: "受信トレイを確認",
-    description: "{{email}}に確認リンクを送信しました。メール内のリンクをクリックしてアカウントを確認してください。",
+    description:
+      "{{email}}に確認リンクを送信しました。メール内のリンクをクリックしてアカウントを確認してください。",
     checkingStatus: "確認状態を確認中...",
     resendSuccess: "確認メールを送信しました！受信トレイを確認してください。",
     resendError: "メールの再送信に失敗しました。もう一度お試しください。",
@@ -238,7 +240,8 @@ const ja: Translations = {
   },
   onboardingScreen: {
     welcomeTitle: "ようこそ！",
-    welcomeSubtitle: "次の素晴らしいアプリの構築をお手伝いできることを楽しみにしています。数秒でセットアップしましょう。",
+    welcomeSubtitle:
+      "次の素晴らしいアプリの構築をお手伝いできることを楽しみにしています。数秒でセットアップしましょう。",
     letsGo: "始めましょう！",
     goalsTitle: "あなたの目標",
     goalsSubtitle: "今日の主なフォーカスは何ですか？これにより体験をパーソナライズできます。",
@@ -246,7 +249,8 @@ const ja: Translations = {
     goalLearnReactNative: "React Nativeを学ぶ",
     goalJustExploring: "探索中",
     notificationsTitle: "最新情報を入手",
-    notificationsSubtitle: "通知を有効にして、毎日のアップデート、ヒント、重要なお知らせを受け取りましょう。",
+    notificationsSubtitle:
+      "通知を有効にして、毎日のアップデート、ヒント、重要なお知らせを受け取りましょう。",
     notificationPreviewTitle: "新機能！",
     notificationPreviewTime: "たった今",
     notificationPreviewMessage: "ダークモードが利用可能になりました。設定で確認してください！",

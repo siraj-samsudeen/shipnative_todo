@@ -177,7 +177,8 @@ const fr: Translations = {
     signOut: "Se Déconnecter",
     signOutSubtitle: "Se déconnecter de cet appareil",
     deleteAccount: "Supprimer le Compte",
-    deleteAccountSubtitle: "Supprimer définitivement vos données et vous déconnecter de tous les appareils.",
+    deleteAccountSubtitle:
+      "Supprimer définitivement vos données et vous déconnecter de tous les appareils.",
     deleteAccountPrivacy: "Confidentialité d'abord",
     deleteAccountBullet1: "Supprime votre profil et préférences",
     deleteAccountBullet2: "Met fin à votre abonnement actif",
@@ -211,7 +212,8 @@ const fr: Translations = {
   },
   forgotPasswordScreen: {
     title: "Mot de Passe Oublié ?",
-    subtitle: "Pas de souci ! Entrez votre e-mail et nous vous enverrons les instructions de réinitialisation.",
+    subtitle:
+      "Pas de souci ! Entrez votre e-mail et nous vous enverrons les instructions de réinitialisation.",
     emailLabel: "E-mail",
     emailPlaceholder: "Entrez votre e-mail",
     sendResetLink: "Envoyer le Lien de Réinitialisation",
@@ -220,13 +222,15 @@ const fr: Translations = {
     backToLogin: "Retour à la Connexion",
     successTitle: "Vérifiez votre E-mail",
     successSubtitle: "Nous avons envoyé un lien de réinitialisation à {{email}}",
-    successDescription: "Cliquez sur le lien dans l'e-mail pour réinitialiser votre mot de passe. Si vous ne le voyez pas, vérifiez votre dossier spam.",
+    successDescription:
+      "Cliquez sur le lien dans l'e-mail pour réinitialiser votre mot de passe. Si vous ne le voyez pas, vérifiez votre dossier spam.",
   },
   emailVerificationScreen: {
     title: "Vérifiez votre E-mail",
     subtitle: "Nous avons envoyé un e-mail de confirmation à {{email}}",
     checkInbox: "Vérifiez votre boîte de réception",
-    description: "Nous avons envoyé un lien de confirmation à {{email}}. Cliquez sur le lien dans l'e-mail pour vérifier votre compte.",
+    description:
+      "Nous avons envoyé un lien de confirmation à {{email}}. Cliquez sur le lien dans l'e-mail pour vérifier votre compte.",
     checkingStatus: "Vérification du statut...",
     resendSuccess: "E-mail de confirmation envoyé ! Veuillez vérifier votre boîte de réception.",
     resendError: "Échec de l'envoi de l'e-mail. Veuillez réessayer.",
@@ -240,18 +244,22 @@ const fr: Translations = {
   },
   onboardingScreen: {
     welcomeTitle: "Bienvenue !",
-    welcomeSubtitle: "Nous sommes ravis de vous aider à créer votre prochaine grande application. Configurons-vous en quelques secondes.",
+    welcomeSubtitle:
+      "Nous sommes ravis de vous aider à créer votre prochaine grande application. Configurons-vous en quelques secondes.",
     letsGo: "C'est parti !",
     goalsTitle: "Votre Objectif",
-    goalsSubtitle: "Quel est votre focus principal aujourd'hui ? Cela nous aide à personnaliser votre expérience.",
+    goalsSubtitle:
+      "Quel est votre focus principal aujourd'hui ? Cela nous aide à personnaliser votre expérience.",
     goalBuildApp: "Créer une App",
     goalLearnReactNative: "Apprendre React Native",
     goalJustExploring: "Juste Explorer",
     notificationsTitle: "Restez Informé",
-    notificationsSubtitle: "Activez les notifications pour recevoir des mises à jour quotidiennes, des conseils et des annonces importantes.",
+    notificationsSubtitle:
+      "Activez les notifications pour recevoir des mises à jour quotidiennes, des conseils et des annonces importantes.",
     notificationPreviewTitle: "Nouvelle Fonctionnalité !",
     notificationPreviewTime: "À l'instant",
-    notificationPreviewMessage: "Le mode sombre est maintenant disponible. Découvrez-le dans les paramètres !",
+    notificationPreviewMessage:
+      "Le mode sombre est maintenant disponible. Découvrez-le dans les paramètres !",
     turnOnNotifications: "Activer les Notifications",
     enabling: "Activation...",
     maybeLater: "Peut-être Plus Tard",

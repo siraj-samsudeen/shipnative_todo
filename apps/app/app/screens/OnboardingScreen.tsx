@@ -10,6 +10,7 @@ import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAuthStore } from "@/stores/auth"
 import { useNotificationStore } from "@/stores/notificationStore"
+import { logger } from "@/utils/Logger"
 
 // =============================================================================
 // TYPES
@@ -51,7 +52,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
     try {
       await togglePush()
     } catch (error) {
-      console.warn("📬 [Onboarding] Failed to enable notifications", error)
+      logger.warn("📬 [Onboarding] Failed to enable notifications", { error })
     } finally {
       setIsRequestingPermission(false)
       handleNext()
@@ -121,7 +122,11 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
             <Ionicons name="chatbubble-ellipses" size={20} color={theme.colors.card} />
           </View>
           <View>
-            <Text weight="semiBold" style={styles.notificationTitle} tx="onboardingScreen:notificationPreviewTitle" />
+            <Text
+              weight="semiBold"
+              style={styles.notificationTitle}
+              tx="onboardingScreen:notificationPreviewTitle"
+            />
             <Text size="xs" color="secondary" tx="onboardingScreen:notificationPreviewTime" />
           </View>
         </View>
@@ -135,7 +140,9 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
         disabled={isRequestingPermission}
       >
         <Text weight="semiBold" style={styles.primaryButtonText}>
-          {isRequestingPermission ? t("onboardingScreen:enabling") : t("onboardingScreen:turnOnNotifications")}
+          {isRequestingPermission
+            ? t("onboardingScreen:enabling")
+            : t("onboardingScreen:turnOnNotifications")}
         </Text>
       </TouchableOpacity>
 

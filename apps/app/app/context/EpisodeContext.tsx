@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { api } from "@/services/api"
 import type { EpisodeItem } from "@/services/api/types"
 import { formatDate } from "@/utils/formatDate"
+import { logger } from "@/utils/Logger"
 
 export type EpisodeContextType = {
   totalEpisodes: number
@@ -38,7 +39,7 @@ export const EpisodeProvider: FC<PropsWithChildren<EpisodeProviderProps>> = ({ c
     if (response.kind === "ok") {
       setEpisodes(response.episodes)
     } else {
-      console.error(`Error fetching episodes: ${JSON.stringify(response)}`)
+      logger.error("Error fetching episodes", { response })
     }
   }, [])
 

@@ -121,7 +121,7 @@ async function clearSubscriptionState() {
     const service = subscriptionState.getActiveService()
     await service.logOut()
   } catch (error) {
-    console.warn("Failed to log out of subscription service", error)
+    logger.warn("Failed to log out of subscription service", { error })
   }
 
   subscriptionState.setCustomerInfo(null)

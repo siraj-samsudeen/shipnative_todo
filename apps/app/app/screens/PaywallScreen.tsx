@@ -11,6 +11,7 @@ import { resetRoot } from "../navigators/navigationUtilities"
 import { isRevenueCatMock } from "../services/revenuecat"
 import { useSubscriptionStore } from "../stores/subscriptionStore"
 import type { PricingPackage } from "../types/subscription"
+import { logger } from "../utils/Logger"
 
 // Conditionally import native RevenueCat SDKs (not available on web or in mock mode)
 // Note: isRevenueCatMock is imported from revenuecat service which handles the mock detection logic
@@ -40,7 +41,7 @@ if (shouldLoadNativeSDK) {
     Paywalls = require("react-native-purchases-ui").Paywalls
   } catch (e) {
     if (__DEV__) {
-      console.warn("Failed to load react-native-purchases", e)
+      logger.warn("Failed to load react-native-purchases", { error: e })
     }
   }
 }
@@ -99,7 +100,7 @@ export const PaywallScreen = () => {
           throw new Error(isWeb ? noWebOfferingMessage : noPackagesMessage)
         }
       } catch (err) {
-        console.error("Failed to load paywall:", err)
+        logger.error("Failed to load paywall", { error: err })
         setError(err instanceof Error ? err.message : loadErrorMessage)
       } finally {
         setIsPresenting(false)
@@ -109,7 +110,7 @@ export const PaywallScreen = () => {
 
     // Native path (iOS/Android) with real RevenueCat SDK
     if (!Purchases || !Paywalls) {
-      console.error("RevenueCat native SDK not available")
+      logger.error("RevenueCat native SDK not available")
       setError(sdkUnavailableMessage)
       return
     }
@@ -155,10 +156,10 @@ export const PaywallScreen = () => {
 
       // Log unexpected results for debugging
       if (resultValue && resultValue !== "PURCHASED" && resultValue !== "RESTORED") {
-        console.info("[Paywall] Unexpected paywall result", resultValue)
+        logger.info("[Paywall] Unexpected paywall result", { result: resultValue })
       }
     } catch (err) {
-      console.error("Failed to present paywall:", err)
+      logger.error("Failed to present paywall", { error: err })
       setError(err instanceof Error ? err.message : loadErrorMessage)
     } finally {
       setIsPresenting(false)
@@ -192,7 +193,7 @@ export const PaywallScreen = () => {
           navigateToMain()
         }
       } catch (err) {
-        console.error("Purchase failed:", err)
+        logger.error("Purchase failed", { error: err })
         setError(err instanceof Error ? err.message : purchaseErrorMessage)
       }
     },

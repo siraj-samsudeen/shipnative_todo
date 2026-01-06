@@ -6,6 +6,8 @@
 
 import { renderHook, act, waitFor } from "@testing-library/react-native"
 
+import { trackEvent } from "../../utils/analytics"
+import { logger } from "../../utils/Logger"
 import {
   networkMonitor,
   NetworkQuality,
@@ -43,9 +45,6 @@ jest.mock("../../utils/Logger", () => ({
   },
 }))
 
-import { trackEvent } from "../../utils/analytics"
-import { logger } from "../../utils/Logger"
-
 describe("NetworkMonitor", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -78,10 +77,7 @@ describe("NetworkMonitor", () => {
     it("should log initialization", async () => {
       await networkMonitor.initialize()
 
-      expect(logger.info).toHaveBeenCalledWith(
-        "Network monitor initialized",
-        expect.any(Object),
-      )
+      expect(logger.info).toHaveBeenCalledWith("Network monitor initialized", expect.any(Object))
     })
 
     it("should handle initialization errors", async () => {
@@ -90,11 +86,7 @@ describe("NetworkMonitor", () => {
 
       await networkMonitor.initialize()
 
-      expect(logger.error).toHaveBeenCalledWith(
-        "Failed to initialize network monitor",
-        {},
-        error,
-      )
+      expect(logger.error).toHaveBeenCalledWith("Failed to initialize network monitor", {}, error)
     })
   })
 
@@ -327,11 +319,7 @@ describe("NetworkMonitor", () => {
         details: { cellularGeneration: "4g" },
       })
 
-      expect(logger.error).toHaveBeenCalledWith(
-        "Network listener error",
-        {},
-        expect.any(Error),
-      )
+      expect(logger.error).toHaveBeenCalledWith("Network listener error", {}, expect.any(Error))
       // Normal listener should still be called
       expect(normalListener).toHaveBeenCalled()
     })

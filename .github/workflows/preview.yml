@@ -1,0 +1,309 @@
+# Preview Workflow
+#
+# Creates preview deployments for pull requests.
+# Allows testing changes before merging to main.
+#
+# Features:
+# - Web app preview URL for each PR
+# - EAS Preview builds for mobile testing
+# - Automatic cleanup when PR is closed
+#
+# Prerequisites:
+# 1. Set up required secrets in GitHub Settings → Secrets:
+#    - EXPO_TOKEN: Your Expo access token
+#    - VERCEL_TOKEN: Vercel deployment token (for web previews)
+#    - VERCEL_ORG_ID: Vercel organization ID
+#    - VERCEL_PROJECT_ID: Vercel project ID
+
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to preview"
+        required: true
+        type: string
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+env:
+  EXPO_PUBLIC_APP_ENV: preview
+
+jobs:
+  # ============================================
+  # Detect what changed
+  # ============================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      marketing: ${{ steps.filter.outputs.marketing }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'apps/app/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'yarn.lock'
+            marketing:
+              - 'apps/web/**'
+              - 'package.json'
+              - 'yarn.lock'
+
+  # ============================================
+  # Web App Preview
+  # ============================================
+  preview-web:
+    name: Web Preview
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.preview-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build Web App
+        run: yarn app:web:build
+        env:
+          EXPO_PUBLIC_APP_ENV: preview
+
+      # Deploy preview to Vercel
+      - name: Deploy Preview to Vercel
+        id: deploy
+        if: ${{ secrets.VERCEL_TOKEN }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: apps/app
+          # Don't use --prod for preview deployments
+
+      # Comment on PR with preview URL
+      - name: Comment Preview URL
+        if: steps.deploy.outputs.preview-url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview-url }}';
+            const body = `## 🚀 Preview Deployment Ready!
+
+            | Platform | URL |
+            |----------|-----|
+            | Web App | [${url}](${url}) |
+
+            ---
+            *This preview was automatically generated for PR #${{ github.event.pull_request.number }}*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Preview Deployment Ready')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ============================================
+  # Mobile Preview (EAS Update)
+  # ============================================
+  preview-mobile:
+    name: Mobile Preview (EAS Update)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Create EAS Update for preview channel
+      - name: Create EAS Update
+        id: update
+        working-directory: apps/app
+        run: |
+          # Create update for preview channel
+          OUTPUT=$(eas update --branch preview --message "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" --non-interactive 2>&1)
+          echo "$OUTPUT"
+
+          # Extract update URL
+          UPDATE_URL=$(echo "$OUTPUT" | grep -oP 'https://expo.dev/accounts/[^\s]+' | head -1 || echo "")
+          echo "update-url=$UPDATE_URL" >> $GITHUB_OUTPUT
+
+      # Add QR code comment for mobile testing
+      - name: Comment Mobile Preview
+        if: steps.update.outputs.update-url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const updateUrl = '${{ steps.update.outputs.update-url }}';
+            const body = `## 📱 Mobile Preview Ready!
+
+            Scan this QR code with Expo Go to test on your device:
+
+            ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(updateUrl)})
+
+            Or open directly: [${updateUrl}](${updateUrl})
+
+            > **Note:** Make sure you have a development build installed with the preview channel configured.
+
+            ---
+            *Mobile preview for PR #${{ github.event.pull_request.number }}*`;
+
+            // Find existing mobile comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Mobile Preview Ready')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ============================================
+  # Marketing Preview
+  # ============================================
+  preview-marketing:
+    name: Marketing Preview
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.marketing == 'true'
+    environment:
+      name: marketing-preview
+      url: ${{ steps.deploy.outputs.preview-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build Marketing Site
+        run: yarn marketing:build
+
+      - name: Deploy Preview
+        id: deploy
+        if: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
+          working-directory: apps/web
+
+      - name: Comment Marketing Preview
+        if: steps.deploy.outputs.preview-url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview-url }}';
+            const body = `## 🌐 Marketing Site Preview
+
+            | Site | URL |
+            |------|-----|
+            | Marketing | [${url}](${url}) |
+
+            ---
+            *Marketing preview for PR #${{ github.event.pull_request.number }}*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

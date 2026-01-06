@@ -9,9 +9,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 - Stripe/PayPal add-ons alongside RevenueCat
-- Expanded component library drops (charts, file uploads)
 - Offline-first data patterns and caching presets
-- More CI/CD recipes (GitHub Actions) and automated QA
+
+## [1.0.0-rc8] - 2026-01-06
+
+### Added
+- **Push Token Backend Sync**: Automatic sync of Expo push tokens to Supabase `push_tokens` table:
+  - Device info capture (device ID, name, platform)
+  - Token activation/deactivation on logout
+  - Fire-and-forget pattern for non-blocking sync
+  - TypeScript types for push_tokens table in `types/supabase.ts`
+- **Integration Tests**: Comprehensive test suites for core flows:
+  - `notificationFlow.test.tsx`: Permission requests, token registration, notification management, badges
+  - `subscriptionFlow.test.tsx`: Initialization, package fetching, purchases, restores, pro status
+
+### Changed
+- **Logger Consolidation**: Converted ~25 console.log/warn/error calls to use Logger utility across:
+  - Store files (subscriptionStore, notificationStore)
+  - Screen components (OnboardingScreen, PaywallScreen, EditProfileModal)
+  - Service files (accountDeletion, languageSwitcher, hapticsCapability)
+  - Navigation utilities and auth hooks
+
+### Developer Experience
+- Better debugging with structured logging and sensitive data redaction
+- Test coverage for notification and subscription flows
+- Type-safe push token database operations
+
+## [1.0.0-rc7] - 2026-01-06
+
+### Added
+- **DatePicker Component**: Full-featured date and time picker with:
+  - Calendar view with month navigation
+  - Time picker with hour/minute selection
+  - Support for date-only, time-only, or datetime modes
+  - Min/max date constraints
+  - i18n support with translation keys
+  - Dark mode support
+- **FilePicker Component**: File selection component with:
+  - Image picker (camera roll) integration via `expo-image-picker`
+  - Document picker integration via `expo-document-picker`
+  - File type filtering (image, document, or any)
+  - Multiple file selection with max file limit
+  - File size validation
+  - Image preview for selected files
+  - Compact mode for inline display
+- **Chart Components**: SVG-based data visualization:
+  - `LineChart`: Multi-series line charts with smooth curves, area fills, and legend
+  - `BarChart`: Vertical and horizontal bar charts with animated bars
+  - `PieChart`: Pie and donut charts with percentage labels and legend
+  - All charts support theming, animation, and responsive sizing
+
+### Dependencies
+- Added `expo-image-picker` (^17.0.10) for image selection
+- Added `expo-document-picker` (^14.0.8) for document selection
+
+## [1.0.0-rc6] - 2026-01-06
+
+### Added
+- **Supabase Realtime Hooks**: Ready-to-use hooks for common realtime patterns:
+  - `useRealtimeMessages`: Full-featured chat with typing indicators, message CRUD, and connection status
+  - `useRealtimePresence`: Track online users with status (online/away/busy) and custom presence data
+  - `useRealtimeSubscription`: Generic hook for subscribing to any table changes
+  - `useActivityFeed`: Helper for activity feed subscriptions
+- **Realtime Types**: TypeScript types for messages, activities, presence, and subscriptions (`types/realtime.ts`)
+- **GitHub Actions CI/CD Templates**:
+  - `deploy.yml`: Production deployments for web (Vercel), iOS (EAS + App Store), Android (EAS + Play Store)
+  - `preview.yml`: PR preview deployments with web URL and mobile QR code
+  - Manual workflow dispatch for selective deployments
+  - Build artifact uploads when Vercel isn't configured
+- **Database Schemas**: SQL schemas for messages and activities tables with RLS policies
+
+### Documentation
+- **Realtime Guide**: Comprehensive documentation in `vibe/SUPABASE.md` with usage examples and database setup
+- **CI/CD Guide**: New Mintlify docs page for GitHub Actions workflows (`deployment/ci-cd.mdx`)
+- **Realtime Docs**: New Mintlify docs page for realtime features (`core-features/realtime.mdx`)
+- **AGENTS.md**: Updated directory map with hooks, types, and CI/CD references
+
+### Changed
+- Expanded `vibe/SUPABASE.md` with full realtime hooks documentation and SQL schemas
 
 ## [1.0.0-rc5] - 2026-01-04
 

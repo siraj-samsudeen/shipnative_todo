@@ -4,9 +4,13 @@
  * Handles syncing user preferences (theme, notifications) between
  * local storage and the Supabase profiles table.
  *
+ * Also handles push token synchronization to the push_tokens table.
+ *
  * Uses fire-and-forget pattern for updates to avoid blocking UI.
  */
 
+import { Platform } from "react-native"
+import * as Device from "expo-device"
 import { UnistylesRuntime } from "react-native-unistyles"
 
 import { supabase, isUsingMockSupabase } from "./supabase"
@@ -16,6 +20,7 @@ import { logger } from "../utils/Logger"
 import { storage } from "../utils/storage"
 
 type _ProfilesUpdate = SupabaseDatabase["public"]["Tables"]["profiles"]["Update"]
+type PushTokenInsert = SupabaseDatabase["public"]["Tables"]["push_tokens"]["Insert"]
 
 // Storage keys (must match the keys used in theme context and notification store)
 const THEME_STORAGE_KEY = "shipnative.themeScheme"
@@ -182,4 +187,145 @@ export async function fetchAndApplyUserPreferences(userId: string): Promise<bool
   }
 
   return false
+}
+
+// =====================================================================
+// PUSH TOKEN SYNC
+// =====================================================================
+
+/**
+ * Get a unique device identifier
+ * Uses a combination of device info to create a stable ID
+ */
+function getDeviceId(): string {
+  // Create a pseudo-unique device ID from available device info
+  const parts = [Platform.OS, Device.modelName ?? "unknown", Device.osVersion ?? "unknown"]
+  return parts.join("-").toLowerCase().replace(/\s+/g, "-")
+}
+
+/**
+ * Get a human-readable device name
+ */
+function getDeviceName(): string {
+  if (Platform.OS === "web") {
+    return "Web Browser"
+  }
+  return Device.modelName ?? `${Platform.OS} Device`
+}
+
+/**
+ * Get the platform type for the database
+ */
+function getPlatform(): "ios" | "android" | "web" {
+  if (Platform.OS === "ios") return "ios"
+  if (Platform.OS === "android") return "android"
+  return "web"
+}
+
+/**
+ * Sync push token to the database
+ * Uses upsert to handle both new tokens and updates
+ *
+ * @param userId - The authenticated user's ID
+ * @param token - The Expo push token (e.g., ExponentPushToken[xxx])
+ */
+export function syncPushToken(userId: string, token: string): void {
+  if (isUsingMockSupabase) {
+    logger.debug("Skipping push token sync (mock mode)")
+    return
+  }
+
+  if (!token) {
+    logger.debug("No push token to sync")
+    return
+  }
+
+  const tokenData: PushTokenInsert = {
+    user_id: userId,
+    token,
+    device_id: getDeviceId(),
+    device_name: getDeviceName(),
+    platform: getPlatform(),
+    is_active: true,
+    last_used_at: new Date().toISOString(),
+  }
+
+  // Fire and forget - use upsert with unique constraint on (user_id, token)
+  Promise.resolve(supabase.from("push_tokens").upsert(tokenData, { onConflict: "user_id,token" }))
+    .then(({ error }) => {
+      if (error) {
+        logger.debug("Failed to sync push token", { error: error.message })
+      } else {
+        logger.debug("Push token synced to database", {
+          platform: tokenData.platform,
+          deviceName: tokenData.device_name,
+        })
+      }
+    })
+    .catch((err: unknown) => {
+      logger.debug("Error syncing push token", { error: err })
+    })
+}
+
+/**
+ * Deactivate push token when user logs out or disables notifications
+ * Instead of deleting, we mark as inactive to maintain history
+ *
+ * @param userId - The authenticated user's ID
+ * @param token - The Expo push token to deactivate
+ */
+export function deactivatePushToken(userId: string, token: string): void {
+  if (isUsingMockSupabase) {
+    return
+  }
+
+  if (!token) {
+    return
+  }
+
+  Promise.resolve(
+    supabase
+      .from("push_tokens")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("token", token),
+  )
+    .then(({ error }) => {
+      if (error) {
+        logger.debug("Failed to deactivate push token", { error: error.message })
+      } else {
+        logger.debug("Push token deactivated")
+      }
+    })
+    .catch((err: unknown) => {
+      logger.debug("Error deactivating push token", { error: err })
+    })
+}
+
+/**
+ * Deactivate all push tokens for a user (e.g., on logout)
+ *
+ * @param userId - The authenticated user's ID
+ */
+export function deactivateAllPushTokens(userId: string): void {
+  if (isUsingMockSupabase) {
+    return
+  }
+
+  Promise.resolve(
+    supabase
+      .from("push_tokens")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("user_id", userId),
+  )
+    .then(({ error }) => {
+      if (error) {
+        logger.debug("Failed to deactivate all push tokens", { error: error.message })
+      } else {
+        logger.debug("All push tokens deactivated for user")
+      }
+    })
+    .catch((err: unknown) => {
+      logger.debug("Error deactivating all push tokens", { error: err })
+    })
 }

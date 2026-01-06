@@ -176,7 +176,8 @@ const es: Translations = {
     signOut: "Cerrar Sesión",
     signOutSubtitle: "Cerrar sesión en este dispositivo",
     deleteAccount: "Eliminar Cuenta",
-    deleteAccountSubtitle: "Eliminar permanentemente tus datos y cerrar sesión en todos los dispositivos.",
+    deleteAccountSubtitle:
+      "Eliminar permanentemente tus datos y cerrar sesión en todos los dispositivos.",
     deleteAccountPrivacy: "Privacidad primero",
     deleteAccountBullet1: "Elimina tu perfil y preferencias",
     deleteAccountBullet2: "Termina tu suscripción activa",
@@ -210,7 +211,8 @@ const es: Translations = {
   },
   forgotPasswordScreen: {
     title: "¿Olvidaste tu Contraseña?",
-    subtitle: "¡No te preocupes! Ingresa tu correo y te enviaremos instrucciones para restablecerla.",
+    subtitle:
+      "¡No te preocupes! Ingresa tu correo y te enviaremos instrucciones para restablecerla.",
     emailLabel: "Correo Electrónico",
     emailPlaceholder: "Ingresa tu correo",
     sendResetLink: "Enviar Enlace de Restablecimiento",
@@ -219,13 +221,15 @@ const es: Translations = {
     backToLogin: "Volver a Iniciar Sesión",
     successTitle: "Revisa tu Correo",
     successSubtitle: "Hemos enviado un enlace de restablecimiento a {{email}}",
-    successDescription: "Haz clic en el enlace del correo para restablecer tu contraseña. Si no lo ves, revisa tu carpeta de spam.",
+    successDescription:
+      "Haz clic en el enlace del correo para restablecer tu contraseña. Si no lo ves, revisa tu carpeta de spam.",
   },
   emailVerificationScreen: {
     title: "Verifica tu Correo",
     subtitle: "Hemos enviado un correo de confirmación a {{email}}",
     checkInbox: "Revisa tu bandeja de entrada",
-    description: "Hemos enviado un enlace de confirmación a {{email}}. Haz clic en el enlace del correo para verificar tu cuenta.",
+    description:
+      "Hemos enviado un enlace de confirmación a {{email}}. Haz clic en el enlace del correo para verificar tu cuenta.",
     checkingStatus: "Verificando estado...",
     resendSuccess: "¡Correo de confirmación enviado! Por favor revisa tu bandeja de entrada.",
     resendError: "Error al reenviar el correo. Por favor intenta de nuevo.",
@@ -239,15 +243,18 @@ const es: Translations = {
   },
   onboardingScreen: {
     welcomeTitle: "¡Bienvenido a Bordo!",
-    welcomeSubtitle: "Estamos emocionados de ayudarte a construir tu próxima gran app. Vamos a configurarte en solo unos segundos.",
+    welcomeSubtitle:
+      "Estamos emocionados de ayudarte a construir tu próxima gran app. Vamos a configurarte en solo unos segundos.",
     letsGo: "¡Vamos!",
     goalsTitle: "Tu Objetivo",
-    goalsSubtitle: "¿Cuál es tu enfoque principal hoy? Esto nos ayuda a personalizar tu experiencia.",
+    goalsSubtitle:
+      "¿Cuál es tu enfoque principal hoy? Esto nos ayuda a personalizar tu experiencia.",
     goalBuildApp: "Crear una App",
     goalLearnReactNative: "Aprender React Native",
     goalJustExploring: "Solo Explorando",
     notificationsTitle: "Mantente Actualizado",
-    notificationsSubtitle: "Activa las notificaciones para recibir actualizaciones diarias, consejos y anuncios importantes.",
+    notificationsSubtitle:
+      "Activa las notificaciones para recibir actualizaciones diarias, consejos y anuncios importantes.",
     notificationPreviewTitle: "¡Nueva Función!",
     notificationPreviewTime: "Ahora mismo",
     notificationPreviewMessage: "El modo oscuro ya está disponible. ¡Pruébalo en configuración!",

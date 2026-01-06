@@ -4,12 +4,9 @@
  * Comprehensive tests for the service factory pattern implementation
  */
 
-import {
-  serviceFactory,
-  registerService,
-  getService,
-  type Service,
-} from "../ServiceFactory"
+import { errorHandler } from "../../utils/ErrorHandler"
+import { logger } from "../../utils/Logger"
+import { serviceFactory, registerService, getService, type Service } from "../ServiceFactory"
 
 // Mock logger
 jest.mock("../../utils/Logger", () => ({
@@ -27,9 +24,6 @@ jest.mock("../../utils/ErrorHandler", () => ({
     handle: jest.fn(),
   },
 }))
-
-import { logger } from "../../utils/Logger"
-import { errorHandler } from "../../utils/ErrorHandler"
 
 describe("ServiceFactory", () => {
   // Create a fresh factory for each test to avoid state pollution
@@ -85,9 +79,7 @@ describe("ServiceFactory", () => {
     })
 
     it("should throw error for unregistered service", () => {
-      expect(() => getService("nonExistentService")).toThrow(
-        "Service nonExistentService not found",
-      )
+      expect(() => getService("nonExistentService")).toThrow("Service nonExistentService not found")
     })
 
     it("should return typed service", () => {
@@ -281,9 +273,9 @@ describe("ServiceFactory", () => {
       const services = delays.map((delay, index) => ({
         name: `concurrentService${index}`,
         service: {
-          initialize: jest.fn().mockImplementation(
-            () => new Promise((resolve) => setTimeout(resolve, delay)),
-          ),
+          initialize: jest
+            .fn()
+            .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, delay))),
         } as Service,
       }))
 

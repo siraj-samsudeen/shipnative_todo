@@ -594,21 +594,315 @@ create policy "Authenticated users can insert"
 
 ### Real-time Subscriptions
 
+Shipnative includes ready-to-use hooks for common realtime patterns.
+
+---
+
+## Realtime Hooks
+
+### useRealtimeMessages (Chat)
+
+Full-featured chat hook with typing indicators:
+
 ```typescript
+import { useRealtimeMessages } from './hooks/useRealtimeMessages'
+
+function ChatRoom({ channelId }: { channelId: string }) {
+  const {
+    messages,
+    sendMessage,
+    typingUsers,
+    setTyping,
+    isConnected,
+    loading,
+  } = useRealtimeMessages({
+    channelId,
+    maxMessages: 100,
+    onNewMessage: (msg) => {
+      // Play notification sound, update badge, etc.
+      playNotificationSound()
+    },
+  })
+
+  const handleSend = async (text: string) => {
+    const { error } = await sendMessage(text)
+    if (error) Alert.alert('Error', error.message)
+  }
+
+  // Show typing indicator while user is typing
+  const handleInputChange = (text: string) => {
+    setTyping(text.length > 0)
+  }
+
+  if (loading) return <LoadingSpinner />
+
+  return (
+    <View style={{ flex: 1 }}>
+      {!isConnected && <ConnectionBanner />}
+
+      <FlatList
+        data={messages}
+        renderItem={({ item }) => <MessageBubble message={item} />}
+        keyExtractor={(item) => item.id}
+      />
+
+      {typingUsers.length > 0 && (
+        <Text>{typingUsers.join(', ')} typing...</Text>
+      )}
+
+      <ChatInput
+        onSend={handleSend}
+        onChangeText={handleInputChange}
+      />
+    </View>
+  )
+}
+```
+
+**Features:**
+- Real-time message sync (INSERT, UPDATE, DELETE)
+- Typing indicators with auto-timeout
+- Optimistic updates
+- Connection status tracking
+- Mock mode support for development
+
+### useRealtimePresence (Online Users)
+
+Track who's online with status indicators:
+
+```typescript
+import { useRealtimePresence } from './hooks/useRealtimePresence'
+
+function OnlineUsers({ roomId }: { roomId: string }) {
+  const {
+    presentUsers,
+    userCount,
+    isConnected,
+    updateStatus,
+    isUserOnline,
+  } = useRealtimePresence({
+    channelName: `room:${roomId}`,
+    initialStatus: 'online',
+    customData: { currentScreen: 'chat' },
+    onUserJoin: (user) => console.log(`${user.user_id} joined`),
+    onUserLeave: (userId) => console.log(`${userId} left`),
+  })
+
+  return (
+    <View>
+      <Text>{userCount} online</Text>
+
+      {presentUsers.map((user) => (
+        <View key={user.user_id} style={styles.userRow}>
+          <Avatar userId={user.user_id} />
+          <StatusDot status={user.status} />
+        </View>
+      ))}
+
+      {/* Status picker */}
+      <Picker
+        selectedValue={currentStatus}
+        onValueChange={(status) => updateStatus(status)}
+      >
+        <Picker.Item label="Online" value="online" />
+        <Picker.Item label="Away" value="away" />
+        <Picker.Item label="Busy" value="busy" />
+      </Picker>
+    </View>
+  )
+}
+```
+
+**Features:**
+- Track online/away/busy/offline status
+- Custom presence data (current screen, activity, etc.)
+- Join/leave callbacks
+- Status updates broadcast to all users
+
+### useRealtimeSubscription (Generic)
+
+Subscribe to any table changes:
+
+```typescript
+import { useRealtimeSubscription } from './hooks/useRealtimeSubscription'
+
+// Watch for new orders
+function OrderNotifications() {
+  useRealtimeSubscription<Order>({
+    table: 'orders',
+    event: 'INSERT',
+    onInsert: (order) => {
+      toast.success(`New order #${order.id}!`)
+      queryClient.invalidateQueries(['orders'])
+    },
+  })
+
+  return null // Just listening, no UI
+}
+
+// Watch specific user's notifications
+function NotificationListener({ userId }: { userId: string }) {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  useRealtimeSubscription<Notification>({
+    table: 'notifications',
+    filter: { column: 'user_id', value: userId },
+    onInsert: (notification) => {
+      setNotifications((prev) => [notification, ...prev])
+      playNotificationSound()
+    },
+  })
+
+  return <NotificationList items={notifications} />
+}
+
+// Activity feed helper
+import { useActivityFeed } from './hooks/useRealtimeSubscription'
+
+function ActivityFeed({ userId }: { userId: string }) {
+  const [activities, setActivities] = useState([])
+
+  useActivityFeed({
+    userId,
+    onNewActivity: (activity) => {
+      setActivities((prev) => [activity, ...prev].slice(0, 50))
+    },
+  })
+
+  return <ActivityList items={activities} />
+}
+```
+
+**Features:**
+- Subscribe to INSERT, UPDATE, DELETE, or all events
+- Filter by column values
+- Connection management (connect, disconnect, reconnect)
+- Works with any table
+
+### Database Schema for Chat
+
+Add this to your Supabase SQL editor for chat functionality:
+
+```sql
+-- Messages table
+CREATE TABLE public.messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    channel_id TEXT NOT NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
+);
+
+-- Enable RLS
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Users can read messages in their channels"
+  ON public.messages FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Users can insert their own messages"
+  ON public.messages FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own messages"
+  ON public.messages FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own messages"
+  ON public.messages FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Enable realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+
+-- Index for fast channel queries
+CREATE INDEX idx_messages_channel_id ON public.messages(channel_id);
+CREATE INDEX idx_messages_created_at ON public.messages(created_at DESC);
+```
+
+### Database Schema for Activity Feed
+
+```sql
+-- Activities table
+CREATE TABLE public.activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('comment', 'like', 'follow', 'mention', 'share', 'custom')),
+    target_id TEXT,
+    target_type TEXT,
+    content TEXT,
+    read BOOLEAN DEFAULT false,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
+
+-- Users can only read their own activities
+CREATE POLICY "Users can read own activities"
+  ON public.activities FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Enable realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE public.activities;
+
+-- Index for fast user queries
+CREATE INDEX idx_activities_user_id ON public.activities(user_id);
+CREATE INDEX idx_activities_created_at ON public.activities(created_at DESC);
+```
+
+### Realtime Configuration
+
+Enable realtime in Supabase Dashboard:
+
+1. Go to **Database** → **Replication**
+2. Under "Realtime", enable for your tables
+3. Or run: `ALTER PUBLICATION supabase_realtime ADD TABLE your_table;`
+
+### Low-Level Realtime API
+
+For custom implementations:
+
+```typescript
+import { supabase } from './services/supabase'
+
+// Subscribe to postgres changes
 const channel = supabase
-  .channel('posts-changes')
+  .channel('custom-channel')
   .on(
     'postgres_changes',
     {
       event: '*',
       schema: 'public',
       table: 'posts',
+      filter: 'author_id=eq.123',
     },
     (payload) => {
-      console.log('Change received!', payload)
+      console.log('Change:', payload.eventType, payload.new)
     }
   )
   .subscribe()
+
+// Broadcast messages (no database)
+channel.send({
+  type: 'broadcast',
+  event: 'cursor-move',
+  payload: { x: 100, y: 200, userId: 'abc' },
+})
+
+// Listen for broadcasts
+channel.on('broadcast', { event: 'cursor-move' }, (payload) => {
+  console.log('Cursor:', payload.payload)
+})
 
 // Cleanup
 channel.unsubscribe()

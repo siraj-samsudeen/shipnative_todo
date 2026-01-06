@@ -2,6 +2,7 @@ import { I18nManager } from "react-native"
 import i18n from "i18next"
 
 import { loadDateFnsLocale } from "@/utils/formatDate"
+import { logger } from "@/utils/Logger"
 import { storage } from "@/utils/storage"
 
 /**
@@ -53,7 +54,7 @@ export const changeLanguage = async (
 ): Promise<void> => {
   // Validate language code
   if (!SUPPORTED_LANGUAGES[languageCode]) {
-    console.warn(`Unsupported language code: ${languageCode}. Falling back to 'en'.`)
+    logger.warn("Unsupported language code, falling back to 'en'", { languageCode })
     return changeLanguage("en", persist)
   }
 
@@ -62,7 +63,7 @@ export const changeLanguage = async (
     try {
       storage.set(LANGUAGE_STORAGE_KEY, languageCode)
     } catch (error) {
-      console.warn("Failed to persist language preference:", error)
+      logger.warn("Failed to persist language preference", { error })
     }
   }
 
@@ -103,7 +104,7 @@ export const resetToDeviceLanguage = async (): Promise<void> => {
   try {
     storage.delete(LANGUAGE_STORAGE_KEY)
   } catch (error) {
-    console.warn("Failed to clear language preference:", error)
+    logger.warn("Failed to clear language preference", { error })
   }
 
   // Get device locale

@@ -73,7 +73,11 @@ export const ForgotPasswordScreen = () => {
         subtitle={t("forgotPasswordScreen:successSubtitle", { email: emailValue })}
         scrollable={false}
       >
-        <Text color="secondary" style={styles.successSubtext} tx="forgotPasswordScreen:successDescription" />
+        <Text
+          color="secondary"
+          style={styles.successSubtext}
+          tx="forgotPasswordScreen:successDescription"
+        />
 
         {/* Back to Login Button */}
         <TouchableOpacity
@@ -81,7 +85,11 @@ export const ForgotPasswordScreen = () => {
           onPress={handleBackToLogin}
           activeOpacity={0.8}
         >
-          <Text weight="semiBold" style={styles.primaryButtonText} tx="forgotPasswordScreen:backToLogin" />
+          <Text
+            weight="semiBold"
+            style={styles.primaryButtonText}
+            tx="forgotPasswordScreen:backToLogin"
+          />
         </TouchableOpacity>
       </AuthScreenLayout>
     )

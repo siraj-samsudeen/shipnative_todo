@@ -24,7 +24,7 @@ const getWebBrowser = () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require("expo-web-browser")
   } catch {
-    console.warn("expo-web-browser not available, falling back to Linking")
+    logger.warn("expo-web-browser not available, falling back to Linking")
     return null
   }
 }

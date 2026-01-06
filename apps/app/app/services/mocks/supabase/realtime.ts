@@ -4,12 +4,7 @@
  * Mock implementation of Supabase realtime subscriptions
  */
 
-import type {
-  RealtimeEvent,
-  RealtimeCallback,
-  RealtimeSubscription,
-  DatabaseRecord,
-} from "./types"
+import type { RealtimeEvent, RealtimeCallback, RealtimeSubscription, DatabaseRecord } from "./types"
 import { sharedState } from "./types"
 import { logger } from "../../../utils/Logger"
 

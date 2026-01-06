@@ -8,6 +8,7 @@ import { supabase } from "@/services/supabase"
 import { useAuthStore } from "@/stores"
 import type { SupabaseDatabase } from "@/types/supabase"
 import { haptics } from "@/utils/haptics"
+import { logger } from "@/utils/Logger"
 
 import { Button } from "./Button"
 import { Text } from "./Text"
@@ -79,7 +80,7 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
       // We use fire-and-forget pattern to avoid blocking the UI
       supabase.auth.updateUser({ data: updatedMetadata }).then(({ error: updateError }) => {
         if (updateError) {
-          console.warn("Auth user update error:", updateError.message)
+          logger.warn("Auth user update error", { error: updateError.message })
         }
       })
 
@@ -95,7 +96,7 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
           } as ProfilesInsert),
         ).then(({ error: profileError }) => {
           if (profileError) {
-            console.warn("Profile table update error:", profileError.message)
+            logger.warn("Profile table update error", { error: profileError.message })
           }
         })
       }
@@ -103,7 +104,7 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
       haptics.success()
       onClose()
     } catch (err) {
-      console.error("Profile update error:", err)
+      logger.error("Profile update error", { error: err })
       setError(err instanceof Error ? err.message : t("editProfileModal:errorGeneric"))
       haptics.error()
     } finally {

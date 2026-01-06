@@ -132,7 +132,12 @@ export const EmailVerificationScreen = () => {
 
       {/* Instructions */}
       <View style={styles.contentContainer}>
-        <Text size="lg" weight="semiBold" style={styles.instructionText} tx="emailVerificationScreen:checkInbox" />
+        <Text
+          size="lg"
+          weight="semiBold"
+          style={styles.instructionText}
+          tx="emailVerificationScreen:checkInbox"
+        />
         <Text size="sm" color="secondary" style={styles.descriptionText}>
           {t("emailVerificationScreen:description", { email })}
         </Text>
@@ -141,7 +146,12 @@ export const EmailVerificationScreen = () => {
         {checkingStatus && (
           <View style={styles.statusContainer}>
             <Spinner size="sm" />
-            <Text size="sm" color="secondary" style={styles.statusText} tx="emailVerificationScreen:checkingStatus" />
+            <Text
+              size="sm"
+              color="secondary"
+              style={styles.statusText}
+              tx="emailVerificationScreen:checkingStatus"
+            />
           </View>
         )}
 
@@ -151,7 +161,12 @@ export const EmailVerificationScreen = () => {
             style={[styles.messageContainer, { backgroundColor: theme.colors.successBackground }]}
           >
             <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-            <Text size="sm" color="success" style={styles.messageText} tx="emailVerificationScreen:resendSuccess" />
+            <Text
+              size="sm"
+              color="success"
+              style={styles.messageText}
+              tx="emailVerificationScreen:resendSuccess"
+            />
           </View>
         )}
 
@@ -197,7 +212,11 @@ export const EmailVerificationScreen = () => {
           ) : (
             <>
               <Ionicons name="refresh" size={20} color={theme.colors.primaryForeground} />
-              <Text weight="semiBold" style={styles.primaryButtonText} tx="emailVerificationScreen:resendEmail" />
+              <Text
+                weight="semiBold"
+                style={styles.primaryButtonText}
+                tx="emailVerificationScreen:resendEmail"
+              />
             </>
           )}
         </TouchableOpacity>

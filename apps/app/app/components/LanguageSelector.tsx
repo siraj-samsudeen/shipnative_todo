@@ -8,6 +8,7 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { changeLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n"
 import { haptics } from "@/utils/haptics"
+import { logger } from "@/utils/Logger"
 
 import { Text } from "./Text"
 
@@ -63,7 +64,7 @@ export const LanguageSelector: FC<LanguageSelectorProps> = ({ visible, onClose }
       haptics.success()
       onClose()
     } catch (error) {
-      console.error("Failed to change language:", error)
+      logger.error("Failed to change language", { error })
       haptics.error()
     } finally {
       setChanging(false)

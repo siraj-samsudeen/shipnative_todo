@@ -16,7 +16,8 @@ import {
   showPermissionDeniedAlert,
   type LocalNotificationInput,
 } from "@/services/notifications"
-import { syncPushNotificationsPreference } from "@/services/preferencesSync"
+import { syncPushNotificationsPreference, syncPushToken } from "@/services/preferencesSync"
+import { useAuthStore } from "@/stores/auth/authStore"
 import { logger } from "@/utils/Logger"
 import { storage } from "@/utils/storage"
 
@@ -140,10 +141,8 @@ export const useNotificationStore = create<NotificationState>()(
           // Store the native device token - you may want to convert this to an Expo push token
           // For most use cases, you'll want to call registerForPushNotifications() again
           // to get an updated Expo push token when the native token changes
+          // registerForPush() will also sync the new token to the backend
           void get().registerForPush()
-
-          // TODO: Sync new token to your backend here
-          // Example: await syncPushTokenToBackend(token.data)
         })
 
         isInitialized = true
@@ -218,6 +217,14 @@ export const useNotificationStore = create<NotificationState>()(
       registerForPush: async () => {
         const token = await registerForPushNotifications()
         set({ pushToken: token })
+
+        // Sync token to backend if user is authenticated
+        if (token) {
+          const userId = useAuthStore.getState().user?.id
+          if (userId) {
+            syncPushToken(userId, token)
+          }
+        }
       },
 
       scheduleNotification: async (input: LocalNotificationInput) => {
@@ -292,7 +299,7 @@ export const useNotificationStore = create<NotificationState>()(
 
         // Handle deep linking (if data.screen is provided)
         if (data?.screen) {
-          console.log("📬 [Notifications] Deep linking to screen:", data.screen)
+          logger.debug("📬 [Notifications] Deep linking to screen", { screen: data.screen })
           // Deep linking will be handled by navigation listener
         }
       },

@@ -9,6 +9,7 @@ import type {
   PricingPackage,
   SubscriptionService,
 } from "../types/subscription"
+import { logger } from "../utils/Logger"
 import * as storage from "../utils/storage"
 
 const getAuthStore = () => {
@@ -117,7 +118,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               (error as { code?: string }).code !== "23" &&
               (error as { code?: string }).code !== "1")
           ) {
-            console.error("Failed to fetch packages:", error)
+            logger.error("Failed to fetch packages", { error })
           }
         }
       },
@@ -252,7 +253,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             })
           }
         } catch (error) {
-          console.error("Subscription initialization failed:", error)
+          logger.error("Subscription initialization failed", { error })
         }
       },
     }),
@@ -280,7 +281,7 @@ const subscribeToAuthChanges = () => {
         .getState()
         .initialize()
         .catch((err) => {
-          console.error("Failed to re-initialize subscription on auth change:", err)
+          logger.error("Failed to re-initialize subscription on auth change", { error: err })
         })
     }
   })
@@ -292,7 +293,7 @@ if (process.env.NODE_ENV !== "test" && typeof setTimeout === "function") {
       subscribeToAuthChanges()
     } catch (error) {
       if (__DEV__) {
-        console.warn("Failed to subscribe to auth changes for subscription store", error)
+        logger.warn("Failed to subscribe to auth changes for subscription store", { error })
       }
     }
   }, 0)

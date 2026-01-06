@@ -9,6 +9,7 @@ import {
 
 import Config from "@/config"
 import type { PersistNavigationConfig } from "@/config/config.base"
+import { logger } from "@/utils/Logger"
 import * as storage from "@/utils/storage"
 import { useIsMounted } from "@/utils/useIsMounted"
 
@@ -134,7 +135,7 @@ export function useNavigationPersistence(storage: Storage, persistenceKey: strin
       if (previousRouteName !== currentRouteName) {
         // track screens.
         if (__DEV__) {
-          console.log(currentRouteName)
+          logger.debug("Navigation screen changed", { screen: currentRouteName })
         }
       }
 

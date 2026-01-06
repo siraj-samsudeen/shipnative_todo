@@ -9,7 +9,9 @@
  */
 
 // Simple performance measurement utilities
-const measureTime = async <T>(fn: () => Promise<T> | T): Promise<{ result: T; duration: number }> => {
+const measureTime = async <T>(
+  fn: () => Promise<T> | T,
+): Promise<{ result: T; duration: number }> => {
   const start = performance.now()
   const result = await fn()
   const duration = performance.now() - start
@@ -71,7 +73,9 @@ describe("Performance Benchmarks", () => {
         1000,
       )
 
-      console.log(`Zustand state update: ${result.mean.toFixed(4)}ms avg (${result.iterations} iterations)`)
+      console.log(
+        `Zustand state update: ${result.mean.toFixed(4)}ms avg (${result.iterations} iterations)`,
+      )
 
       // State updates should be sub-millisecond
       expect(result.mean).toBeLessThan(1)
@@ -228,12 +232,7 @@ describe("Performance Benchmarks", () => {
 
     it("should validate email efficiently", async () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      const emails = [
-        "test@example.com",
-        "invalid-email",
-        "another@test.org",
-        "not-valid",
-      ]
+      const emails = ["test@example.com", "invalid-email", "another@test.org", "not-valid"]
 
       const result = await runBenchmark(
         "email validation",

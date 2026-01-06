@@ -7,6 +7,8 @@
 
 import { Platform, NativeModules } from "react-native"
 
+import { logger } from "./Logger"
+
 interface HapticsCapabilityModule {
   supportsHaptics: () => Promise<boolean>
   supportsHapticsSync: () => Promise<boolean>
@@ -63,7 +65,7 @@ export async function checkHapticsSupport(): Promise<boolean> {
     } catch (error) {
       // If check fails, assume haptics are not supported
       if (__DEV__) {
-        console.warn("[Haptics] Capability check failed:", error)
+        logger.warn("[Haptics] Capability check failed", { error })
       }
       hapticsSupported = false
       return false

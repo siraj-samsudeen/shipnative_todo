@@ -231,13 +231,15 @@ const en = {
     // Success state
     successTitle: "Check Your Email",
     successSubtitle: "We've sent a password reset link to {{email}}",
-    successDescription: "Click the link in the email to reset your password. If you don't see it, check your spam folder.",
+    successDescription:
+      "Click the link in the email to reset your password. If you don't see it, check your spam folder.",
   },
   emailVerificationScreen: {
     title: "Verify Your Email",
     subtitle: "We've sent a confirmation email to {{email}}",
     checkInbox: "Check your inbox",
-    description: "We've sent a confirmation link to {{email}}. Click the link in the email to verify your account.",
+    description:
+      "We've sent a confirmation link to {{email}}. Click the link in the email to verify your account.",
     checkingStatus: "Checking verification status...",
     resendSuccess: "Confirmation email sent! Please check your inbox.",
     resendError: "Failed to resend email. Please try again.",
@@ -252,7 +254,8 @@ const en = {
   onboardingScreen: {
     // Step 0: Welcome
     welcomeTitle: "Welcome Aboard!",
-    welcomeSubtitle: "We're excited to help you build your next great app. Let's get you set up in just a few seconds.",
+    welcomeSubtitle:
+      "We're excited to help you build your next great app. Let's get you set up in just a few seconds.",
     letsGo: "Let's Go",
     // Step 1: Goals
     goalsTitle: "Your Goal",
@@ -262,7 +265,8 @@ const en = {
     goalJustExploring: "Just Exploring",
     // Step 2: Notifications
     notificationsTitle: "Stay Updated",
-    notificationsSubtitle: "Enable notifications to get daily updates, tips, and important announcements.",
+    notificationsSubtitle:
+      "Enable notifications to get daily updates, tips, and important announcements.",
     notificationPreviewTitle: "New Feature!",
     notificationPreviewTime: "Just now",
     notificationPreviewMessage: "Dark mode is now available. Check it out in settings!",

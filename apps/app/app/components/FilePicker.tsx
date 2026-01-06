@@ -1,0 +1,608 @@
+import { useCallback, useState } from "react"
+import { View, ViewStyle, Pressable, Image, Alert } from "react-native"
+import * as DocumentPicker from "expo-document-picker"
+import * as ImagePicker from "expo-image-picker"
+import { Ionicons } from "@expo/vector-icons"
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  FadeIn,
+  FadeOut,
+  Layout,
+} from "react-native-reanimated"
+import { StyleSheet, useUnistyles } from "react-native-unistyles"
+
+import { SPRING_CONFIG } from "@/utils/animations"
+import { logger } from "@/utils/Logger"
+
+import { Text, TextProps } from "./Text"
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+type FileType = "image" | "document" | "any"
+
+export interface PickedFile {
+  uri: string
+  name: string
+  type: string
+  size?: number
+}
+
+export interface FilePickerProps {
+  /**
+   * Currently selected files
+   */
+  value?: PickedFile[]
+  /**
+   * Callback when files change
+   */
+  onChange?: (files: PickedFile[]) => void
+  /**
+   * Callback when a file is removed
+   */
+  onRemove?: (file: PickedFile) => void
+  /**
+   * Type of files to pick
+   */
+  fileType?: FileType
+  /**
+   * Allow multiple file selection
+   */
+  multiple?: boolean
+  /**
+   * Maximum number of files (only for multiple)
+   */
+  maxFiles?: number
+  /**
+   * Maximum file size in bytes
+   */
+  maxFileSize?: number
+  /**
+   * Allowed file extensions (for documents)
+   */
+  allowedExtensions?: string[]
+  /**
+   * Label text
+   */
+  label?: string
+  /**
+   * Label translation key
+   */
+  labelTx?: TextProps["tx"]
+  /**
+   * Placeholder text
+   */
+  placeholder?: string
+  /**
+   * Placeholder translation key
+   */
+  placeholderTx?: TextProps["tx"]
+  /**
+   * Error message
+   */
+  error?: string
+  /**
+   * Error translation key
+   */
+  errorTx?: TextProps["tx"]
+  /**
+   * Helper text
+   */
+  helper?: string
+  /**
+   * Helper translation key
+   */
+  helperTx?: TextProps["tx"]
+  /**
+   * Disabled state
+   */
+  disabled?: boolean
+  /**
+   * Show image preview for image files
+   */
+  showPreview?: boolean
+  /**
+   * Compact mode - inline file display
+   */
+  compact?: boolean
+  /**
+   * Additional style
+   */
+  style?: ViewStyle
+  /**
+   * Test ID
+   */
+  testID?: string
+}
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const formatFileSize = (bytes?: number): string => {
+  if (!bytes) return "Unknown size"
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const getFileIcon = (type: string): keyof typeof Ionicons.glyphMap => {
+  if (type.startsWith("image/")) return "image-outline"
+  if (type.startsWith("video/")) return "videocam-outline"
+  if (type.startsWith("audio/")) return "musical-notes-outline"
+  if (type.includes("pdf")) return "document-text-outline"
+  if (type.includes("word") || type.includes("document")) return "document-outline"
+  if (type.includes("sheet") || type.includes("excel")) return "grid-outline"
+  if (type.includes("zip") || type.includes("rar")) return "archive-outline"
+  return "document-outline"
+}
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+/**
+ * A file picker component for selecting images and documents.
+ *
+ * @example
+ * // Basic image picker
+ * <FilePicker
+ *   value={selectedFiles}
+ *   onChange={setSelectedFiles}
+ *   fileType="image"
+ *   label="Profile Picture"
+ * />
+ *
+ * // Document picker
+ * <FilePicker
+ *   value={selectedDocs}
+ *   onChange={setSelectedDocs}
+ *   fileType="document"
+ *   label="Upload Documents"
+ *   multiple
+ * />
+ *
+ * // Any file type with preview
+ * <FilePicker
+ *   value={files}
+ *   onChange={setFiles}
+ *   fileType="any"
+ *   showPreview
+ *   multiple
+ *   maxFiles={5}
+ * />
+ */
+export function FilePicker(props: FilePickerProps) {
+  const {
+    value = [],
+    onChange,
+    onRemove,
+    fileType = "any",
+    multiple = false,
+    maxFiles = 10,
+    maxFileSize,
+    allowedExtensions,
+    label,
+    labelTx,
+    placeholder = "Tap to select files",
+    placeholderTx,
+    error,
+    errorTx,
+    helper,
+    helperTx,
+    disabled = false,
+    showPreview = true,
+    compact = false,
+    style,
+    testID,
+  } = props
+
+  const { theme } = useUnistyles()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const scale = useSharedValue(1)
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+
+  const handlePressIn = useCallback(() => {
+    if (!disabled) {
+      scale.value = withSpring(0.98, SPRING_CONFIG)
+    }
+  }, [disabled, scale])
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, SPRING_CONFIG)
+  }, [scale])
+
+  const validateFile = useCallback(
+    (file: PickedFile): boolean => {
+      // Check file size
+      if (maxFileSize && file.size && file.size > maxFileSize) {
+        Alert.alert(
+          "File Too Large",
+          `${file.name} exceeds the maximum file size of ${formatFileSize(maxFileSize)}`,
+        )
+        return false
+      }
+
+      // Check allowed extensions
+      if (allowedExtensions && allowedExtensions.length > 0) {
+        const ext = file.name.split(".").pop()?.toLowerCase()
+        if (!ext || !allowedExtensions.includes(ext)) {
+          Alert.alert(
+            "Invalid File Type",
+            `${file.name} is not an allowed file type. Allowed: ${allowedExtensions.join(", ")}`,
+          )
+          return false
+        }
+      }
+
+      return true
+    },
+    [maxFileSize, allowedExtensions],
+  )
+
+  const pickImage = useCallback(async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photo library to select images.",
+        )
+        return
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: multiple,
+        quality: 0.8,
+        selectionLimit: multiple ? maxFiles - value.length : 1,
+      })
+
+      if (!result.canceled && result.assets) {
+        const newFiles: PickedFile[] = result.assets.map((asset) => ({
+          uri: asset.uri,
+          name: asset.fileName || asset.uri.split("/").pop() || "image",
+          type: asset.mimeType || "image/jpeg",
+          size: asset.fileSize,
+        }))
+
+        // Validate files
+        const validFiles = newFiles.filter(validateFile)
+
+        if (validFiles.length > 0) {
+          if (multiple) {
+            const totalFiles = [...value, ...validFiles].slice(0, maxFiles)
+            onChange?.(totalFiles)
+          } else {
+            onChange?.(validFiles.slice(0, 1))
+          }
+        }
+      }
+    } catch (err) {
+      logger.error("Error picking image", { error: err })
+      Alert.alert("Error", "Failed to pick image. Please try again.")
+    }
+  }, [multiple, maxFiles, value, onChange, validateFile])
+
+  const pickDocument = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        multiple,
+        copyToCacheDirectory: true,
+        type: allowedExtensions ? allowedExtensions.map((ext) => `application/${ext}`) : "*/*",
+      })
+
+      if (!result.canceled && result.assets) {
+        const newFiles: PickedFile[] = result.assets.map((asset) => ({
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || "application/octet-stream",
+          size: asset.size,
+        }))
+
+        // Validate files
+        const validFiles = newFiles.filter(validateFile)
+
+        if (validFiles.length > 0) {
+          if (multiple) {
+            const totalFiles = [...value, ...validFiles].slice(0, maxFiles)
+            onChange?.(totalFiles)
+          } else {
+            onChange?.(validFiles.slice(0, 1))
+          }
+        }
+      }
+    } catch (err) {
+      logger.error("Error picking document", { error: err })
+      Alert.alert("Error", "Failed to pick document. Please try again.")
+    }
+  }, [multiple, maxFiles, value, onChange, validateFile, allowedExtensions])
+
+  const handlePick = useCallback(async () => {
+    if (disabled || isLoading) return
+
+    setIsLoading(true)
+
+    try {
+      if (fileType === "image") {
+        await pickImage()
+      } else if (fileType === "document") {
+        await pickDocument()
+      } else {
+        // Show action sheet for "any" type
+        Alert.alert("Select File Type", "What type of file would you like to select?", [
+          { text: "Image", onPress: pickImage },
+          { text: "Document", onPress: pickDocument },
+          { text: "Cancel", style: "cancel" },
+        ])
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [disabled, isLoading, fileType, pickImage, pickDocument])
+
+  const handleRemove = useCallback(
+    (file: PickedFile) => {
+      onRemove?.(file)
+      const newFiles = value.filter((f) => f.uri !== file.uri)
+      onChange?.(newFiles)
+    },
+    [value, onChange, onRemove],
+  )
+
+  const hasError = !!error || !!errorTx
+  const canAddMore = multiple ? value.length < maxFiles : value.length === 0
+
+  return (
+    <View style={[styles.wrapper, style]} testID={testID}>
+      {/* Label */}
+      {(label || labelTx) && (
+        <Text text={label} tx={labelTx} weight="medium" size="sm" style={styles.label} />
+      )}
+
+      {/* Pick Button */}
+      {canAddMore && (
+        <Pressable
+          onPress={handlePick}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={disabled || isLoading}
+          accessibilityRole="button"
+          accessibilityLabel={label || "File picker"}
+          accessibilityState={{ disabled }}
+        >
+          <Animated.View
+            style={[
+              compact ? styles.inputCompact : styles.input,
+              hasError && styles.inputError,
+              disabled && styles.inputDisabled,
+              animatedStyle,
+            ]}
+          >
+            <View style={styles.inputContent}>
+              <View style={[styles.iconContainer, compact && styles.iconContainerCompact]}>
+                <Ionicons
+                  name={fileType === "image" ? "image-outline" : "cloud-upload-outline"}
+                  size={compact ? 20 : 32}
+                  color={theme.colors.foregroundSecondary}
+                />
+              </View>
+              <Text
+                text={placeholder}
+                tx={placeholderTx}
+                size={compact ? "sm" : "base"}
+                style={styles.placeholder}
+              />
+              {!compact && (
+                <Text
+                  text={
+                    fileType === "image"
+                      ? "PNG, JPG, GIF up to 10MB"
+                      : fileType === "document"
+                        ? "PDF, DOC, XLS up to 10MB"
+                        : "Any file type up to 10MB"
+                  }
+                  size="xs"
+                  style={styles.hint}
+                />
+              )}
+            </View>
+          </Animated.View>
+        </Pressable>
+      )}
+
+      {/* Selected Files */}
+      {value.length > 0 && (
+        <Animated.View
+          style={styles.filesContainer}
+          entering={FadeIn.duration(200)}
+          layout={Layout.springify()}
+        >
+          {value.map((file, index) => (
+            <Animated.View
+              key={file.uri}
+              style={styles.fileItem}
+              entering={FadeIn.duration(200).delay(index * 50)}
+              exiting={FadeOut.duration(150)}
+              layout={Layout.springify()}
+            >
+              {/* Preview or Icon */}
+              {showPreview && file.type.startsWith("image/") ? (
+                <Image source={{ uri: file.uri }} style={styles.preview} />
+              ) : (
+                <View style={styles.fileIconContainer}>
+                  <Ionicons
+                    name={getFileIcon(file.type)}
+                    size={24}
+                    color={theme.colors.foregroundSecondary}
+                  />
+                </View>
+              )}
+
+              {/* File Info */}
+              <View style={styles.fileInfo}>
+                <Text text={file.name} numberOfLines={1} weight="medium" size="sm" />
+                <Text text={formatFileSize(file.size)} size="xs" style={styles.fileSize} />
+              </View>
+
+              {/* Remove Button */}
+              {!disabled && (
+                <Pressable
+                  onPress={() => handleRemove(file)}
+                  style={styles.removeButton}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={20} color={theme.colors.foregroundTertiary} />
+                </Pressable>
+              )}
+            </Animated.View>
+          ))}
+        </Animated.View>
+      )}
+
+      {/* File Count */}
+      {multiple && value.length > 0 && (
+        <Text
+          text={`${value.length} / ${maxFiles} files selected`}
+          size="xs"
+          style={styles.fileCount}
+        />
+      )}
+
+      {/* Helper/Error Text */}
+      {(helper || helperTx || error || errorTx) && (
+        <Text
+          text={error || helper}
+          tx={errorTx || helperTx}
+          size="xs"
+          style={[styles.helper, hasError && styles.helperError]}
+        />
+      )}
+    </View>
+  )
+}
+
+// =============================================================================
+// STYLES
+// =============================================================================
+
+const styles = StyleSheet.create((theme) => ({
+  wrapper: {
+    width: "100%",
+  },
+  label: {
+    marginBottom: theme.spacing.xs,
+    color: theme.colors.foreground,
+  },
+  input: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+  },
+  inputCompact: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: theme.sizes.input.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.input,
+    borderWidth: 1,
+    borderColor: theme.colors.inputBorder,
+    borderRadius: theme.radius.lg,
+    gap: theme.spacing.sm,
+  },
+  inputError: {
+    borderColor: theme.colors.error,
+  },
+  inputDisabled: {
+    opacity: 0.5,
+  },
+  inputContent: {
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.full,
+  },
+  iconContainerCompact: {
+    width: 32,
+    height: 32,
+    backgroundColor: "transparent",
+  },
+  placeholder: {
+    color: theme.colors.foregroundSecondary,
+    textAlign: "center",
+  },
+  hint: {
+    color: theme.colors.foregroundTertiary,
+    textAlign: "center",
+  },
+  filesContainer: {
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  fileItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.sm,
+  },
+  preview: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.backgroundSecondary,
+  },
+  fileIconContainer: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: theme.radius.md,
+  },
+  fileInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  fileSize: {
+    color: theme.colors.foregroundTertiary,
+  },
+  removeButton: {
+    padding: theme.spacing.xs,
+  },
+  fileCount: {
+    marginTop: theme.spacing.xs,
+    color: theme.colors.foregroundSecondary,
+    textAlign: "right",
+  },
+  helper: {
+    marginTop: theme.spacing.xs,
+    color: theme.colors.foregroundSecondary,
+  },
+  helperError: {
+    color: theme.colors.error,
+  },
+}))

@@ -40,6 +40,45 @@ export type SupabaseDatabase = {
         }
         Relationships: []
       }
+      push_tokens: {
+        Row: {
+          id: string
+          user_id: string
+          token: string
+          device_id: string | null
+          device_name: string | null
+          platform: "ios" | "android" | "web" | null
+          is_active: boolean
+          last_used_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          token: string
+          device_id?: string | null
+          device_name?: string | null
+          platform?: "ios" | "android" | "web" | null
+          is_active?: boolean
+          last_used_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          token?: string
+          device_id?: string | null
+          device_name?: string | null
+          platform?: "ios" | "android" | "web" | null
+          is_active?: boolean
+          last_used_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

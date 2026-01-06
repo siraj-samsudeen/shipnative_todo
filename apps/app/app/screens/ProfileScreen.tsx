@@ -2,6 +2,7 @@ import { FC, ReactNode, useState } from "react"
 import { ScrollView, Switch, Pressable, View, Platform, useWindowDimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +10,6 @@ import Animated, {
   FadeInDown,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import {

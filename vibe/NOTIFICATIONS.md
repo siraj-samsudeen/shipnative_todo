@@ -15,6 +15,7 @@ This boilerplate includes push notification support via `expo-notifications`, wi
 - ✅ Automatic token refresh handling
 - ✅ Android notification channel configuration
 - ✅ Automatic initialization and cleanup
+- ✅ Push token backend sync to Supabase
 
 ---
 
@@ -642,6 +643,97 @@ await setBadgeCount(5) // Shows "5" on app icon
 
 // Clear badge
 await setBadgeCount(0)
+```
+
+---
+
+## Push Token Backend Sync
+
+Push tokens are automatically synced to Supabase when registered. This enables:
+- Sending push notifications from your backend
+- Managing tokens across multiple devices per user
+- Deactivating tokens on logout
+
+### Database Schema
+
+Create the `push_tokens` table in Supabase:
+
+```sql
+CREATE TABLE push_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  token TEXT NOT NULL,
+  device_id TEXT,
+  device_name TEXT,
+  platform TEXT CHECK (platform IN ('ios', 'android', 'web')),
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, token)
+);
+
+-- RLS policies
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own tokens"
+  ON push_tokens FOR ALL
+  USING (auth.uid() = user_id);
+```
+
+### Usage
+
+Token sync happens automatically when you call `registerForPush()`:
+
+```typescript
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const { registerForPush } = useNotificationStore()
+
+// Token is synced to Supabase automatically
+await registerForPush()
+```
+
+### Manual Sync Functions
+
+```typescript
+import {
+  syncPushToken,
+  deactivatePushToken,
+  deactivateAllPushTokens,
+} from '@/services/preferencesSync'
+
+// Sync token manually
+syncPushToken(userId, 'ExponentPushToken[xxx]')
+
+// Deactivate specific token (e.g., on logout)
+deactivatePushToken(userId, 'ExponentPushToken[xxx]')
+
+// Deactivate all user's tokens (e.g., on account deletion)
+deactivateAllPushTokens(userId)
+```
+
+### Sending Notifications from Backend
+
+Query active tokens from Supabase:
+
+```typescript
+// In your backend (Node.js / Edge Function)
+const { data: tokens } = await supabase
+  .from('push_tokens')
+  .select('token')
+  .eq('user_id', userId)
+  .eq('is_active', true)
+
+// Send via Expo Push API
+const expo = new Expo()
+const messages = tokens.map(({ token }) => ({
+  to: token,
+  title: 'Hello!',
+  body: 'You have a new message',
+}))
+
+await expo.sendPushNotificationsAsync(messages)
 ```
 
 ---

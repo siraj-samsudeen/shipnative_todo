@@ -226,13 +226,15 @@ const ko: Translations = {
     // Success state
     successTitle: "이메일을 확인하세요",
     successSubtitle: "{{email}}(으)로 비밀번호 재설정 링크를 보냈습니다",
-    successDescription: "이메일의 링크를 클릭하여 비밀번호를 재설정하세요. 보이지 않으면 스팸 폴더를 확인해주세요.",
+    successDescription:
+      "이메일의 링크를 클릭하여 비밀번호를 재설정하세요. 보이지 않으면 스팸 폴더를 확인해주세요.",
   },
   emailVerificationScreen: {
     title: "이메일 인증",
     subtitle: "{{email}}(으)로 확인 이메일을 보냈습니다",
     checkInbox: "받은 편지함을 확인하세요",
-    description: "{{email}}(으)로 확인 링크를 보냈습니다. 이메일의 링크를 클릭하여 계정을 인증하세요.",
+    description:
+      "{{email}}(으)로 확인 링크를 보냈습니다. 이메일의 링크를 클릭하여 계정을 인증하세요.",
     checkingStatus: "인증 상태 확인 중...",
     resendSuccess: "확인 이메일이 전송되었습니다! 받은 편지함을 확인하세요.",
     resendError: "이메일 재전송에 실패했습니다. 다시 시도해주세요.",
@@ -247,7 +249,8 @@ const ko: Translations = {
   onboardingScreen: {
     // Step 0: Welcome
     welcomeTitle: "환영합니다!",
-    welcomeSubtitle: "다음 멋진 앱을 만드는 것을 도와드리게 되어 기쁩니다. 몇 초 만에 설정을 완료해드리겠습니다.",
+    welcomeSubtitle:
+      "다음 멋진 앱을 만드는 것을 도와드리게 되어 기쁩니다. 몇 초 만에 설정을 완료해드리겠습니다.",
     letsGo: "시작하기",
     // Step 1: Goals
     goalsTitle: "목표",

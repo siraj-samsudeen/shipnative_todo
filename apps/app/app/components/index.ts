@@ -15,6 +15,8 @@ export * from "./IconButton"
 // Form Inputs
 export * from "./TextField"
 export * from "./Toggle/Toggle"
+export * from "./DatePicker"
+export * from "./FilePicker"
 
 // Layout
 export * from "./Card"
@@ -30,6 +32,9 @@ export * from "./Avatar"
 export * from "./Badge"
 export * from "./Icon"
 export * from "./ListItem"
+
+// Charts & Data Visualization
+export * from "./Charts"
 
 // Feedback
 export * from "./Spinner"

@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { useAuth } from "./AuthContext"
 import { revenueCat } from "../services/revenuecat"
 import type { SubscriptionInfo } from "../types/subscription"
+import { logger } from "../utils/Logger"
 
 type SubscriptionContextType = {
   isPro: boolean
@@ -62,7 +63,7 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       const { subscriptionInfo: info, error } = await revenueCat.restorePurchases()
 
       if (error) {
-        console.error("Restore failed:", error)
+        logger.error("Restore failed", { error })
         return null
       }
 
@@ -70,7 +71,7 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       setIsPro(info.isActive)
       return info
     } catch (e) {
-      console.error(e)
+      logger.error("Restore failed", { error: e })
       return null
     }
   }
