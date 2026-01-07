@@ -73,7 +73,10 @@ export const PaywallScreen = () => {
   const [hasAutoPresented, setHasAutoPresented] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
   const [isRestoring, setIsRestoring] = useState(false)
-  const [restoreMessage, setRestoreMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [restoreMessage, setRestoreMessage] = useState<{
+    type: "success" | "error"
+    text: string
+  } | null>(null)
   const loadErrorMessage = t("paywallScreen:loadFailed")
   const purchaseErrorMessage = t("paywallScreen:purchaseFailed")
   const noWebOfferingMessage = t("paywallScreen:noWebOfferingError")
