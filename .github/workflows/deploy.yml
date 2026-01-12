@@ -114,8 +114,10 @@ jobs:
       # Option 1: Deploy to Vercel
       - name: Deploy to Vercel
         id: deploy
-        if: ${{ secrets.VERCEL_TOKEN }}
+        if: ${{ env.HAS_VERCEL_TOKEN == 'true' }}
         uses: amondnet/vercel-action@v25
+        env:
+          HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -125,7 +127,9 @@ jobs:
 
       # Option 2: Upload artifact for manual deployment
       - name: Upload build artifact
-        if: ${{ !secrets.VERCEL_TOKEN }}
+        if: ${{ env.HAS_VERCEL_TOKEN != 'true' }}
+        env:
+          HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: web-app-build
@@ -167,8 +171,10 @@ jobs:
       # Deploy to Vercel (if configured)
       - name: Deploy to Vercel
         id: deploy
-        if: ${{ secrets.VERCEL_MARKETING_PROJECT_ID }}
+        if: ${{ env.HAS_VERCEL_MARKETING == 'true' }}
         uses: amondnet/vercel-action@v25
+        env:
+          HAS_VERCEL_MARKETING: ${{ secrets.VERCEL_MARKETING_PROJECT_ID != '' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -177,7 +183,9 @@ jobs:
           vercel-args: "--prod"
 
       - name: Upload build artifact
-        if: ${{ !secrets.VERCEL_MARKETING_PROJECT_ID }}
+        if: ${{ env.HAS_VERCEL_MARKETING != 'true' }}
+        env:
+          HAS_VERCEL_MARKETING: ${{ secrets.VERCEL_MARKETING_PROJECT_ID != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: marketing-site-build
