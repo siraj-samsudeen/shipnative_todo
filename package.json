@@ -2,6 +2,7 @@
   "name": "react-native-starter-kit",
   "private": true,
   "scripts": {
+    "postinstall": "patch-package",
     "setup": "tsx --tsconfig tsconfig.setup.json setup.ts",
     "build": "turbo run build",
     "dev": "cd apps/app && EXPO_IOS_SIMULATOR_DEVICE_NAME=D44A1507-3E39-4AA2-9662-F1CC7C832D68 yarn dev",
@@ -39,6 +40,7 @@
     "chalk": "^5.3.0",
     "inquirer": "^9.2.15",
     "ora": "^7.0.1",
+    "patch-package": "^8.0.1",
     "prettier": "^3.3.3",
     "tsx": "^4.20.3",
     "turbo": "latest"

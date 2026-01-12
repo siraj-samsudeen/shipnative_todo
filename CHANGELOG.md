@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Expo Widgets Patch Application**: Fixed `@bittingz/expo-widgets` Logger conflict patch not being applied in monorepo setup
+  - Root cause: `patch-package` was only configured in `apps/app/` but dependencies are hoisted to root `node_modules/`
+  - Added `patch-package` to root `devDependencies` and `postinstall` script to root `package.json`
+  - Patches in `/patches/` directory now apply correctly during `yarn install` at root level
+  - Fixes iOS build error: `missing argument for parameter 'logHandlers' in call`
+
 ### Fixed - App Store Compliance
 - **iOS Privacy Manifest**: Added proper data collection declarations
   - Declares `NSPrivacyCollectedDataTypeProductInteraction` for PostHog analytics
