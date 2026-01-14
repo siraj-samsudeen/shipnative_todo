@@ -2,6 +2,7 @@
  * Environment Configuration
  *
  * Type-safe access to environment variables with validation.
+ * Supports multiple backend providers (Supabase, Convex).
  */
 
 import Constants from "expo-constants"
@@ -39,11 +40,21 @@ const resolvedAppEnv =
     ? appEnvValue
     : fallbackAppEnv
 
+// Determine backend provider from env
+const backendProviderValue = readStringEnv("backend_provider")?.toLowerCase()
+const resolvedBackendProvider = backendProviderValue === "convex" ? "convex" : "supabase"
+
 const EnvSchema = z
   .object({
-    // Supabase
+    // Backend Provider Selection
+    backendProvider: z.enum(["supabase", "convex"]).default("supabase"),
+
+    // Supabase (only required when backendProvider is "supabase")
     supabaseUrl: z.string().url().optional(),
     supabasePublishableKey: z.string().optional(),
+
+    // Convex (only required when backendProvider is "convex")
+    convexUrl: z.string().url().optional(),
 
     // RevenueCat
     revenueCatIosKey: z.string().optional(),
@@ -80,27 +91,47 @@ const EnvSchema = z
   .superRefine((values, ctx) => {
     if (values.appEnv !== "production") return
 
-    const required = [
-      ["supabaseUrl", values.supabaseUrl],
-      ["supabasePublishableKey", values.supabasePublishableKey],
-    ] as const
+    // Validate based on selected backend provider
+    if (values.backendProvider === "supabase") {
+      const required = [
+        ["supabaseUrl", values.supabaseUrl],
+        ["supabasePublishableKey", values.supabasePublishableKey],
+      ] as const
 
-    required.forEach(([key, value]) => {
-      if (!value) {
+      required.forEach(([key, value]) => {
+        if (!value) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `${key} is required in production when using Supabase`,
+            path: [key],
+          })
+        }
+      })
+    } else if (values.backendProvider === "convex") {
+      if (!values.convexUrl) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `${key} is required in production`,
-          path: [key],
+          message: "convexUrl is required in production when using Convex",
+          path: ["convexUrl"],
         })
       }
-    })
+    }
   })
 
 export type EnvConfig = z.infer<typeof EnvSchema>
 
 const envInput: Partial<EnvConfig> = {
+  // Backend provider
+  backendProvider: resolvedBackendProvider,
+
+  // Supabase
   supabaseUrl: readStringEnv("supabase_url"),
   supabasePublishableKey: readStringEnv("supabase_publishable_key"),
+
+  // Convex
+  convexUrl: readStringEnv("convex_url"),
+
+  // RevenueCat
   revenueCatIosKey: readStringEnv("revenuecat_ios_key"),
   revenueCatAndroidKey: readStringEnv("revenuecat_android_key"),
   revenueCatWebKey: readStringEnv("revenuecat_web_key"),
@@ -127,6 +158,7 @@ const env: EnvConfig = parsedEnv.success
   ? parsedEnv.data
   : {
       ...envInput,
+      backendProvider: resolvedBackendProvider,
       appEnv: resolvedAppEnv,
       appVersion: Constants.expoConfig?.version || "1.0.0",
       posthogHost: envInput.posthogHost || "https://app.posthog.com",
@@ -154,12 +186,32 @@ export const isDevelopment = env.appEnv === "development"
 export const isProduction = env.appEnv === "production"
 export const isStaging = env.appEnv === "staging"
 
+// Backend provider helpers
+export const isSupabase = env.backendProvider === "supabase"
+export const isConvex = env.backendProvider === "convex"
+
 export function isServiceConfigured(
-  service: "supabase" | "revenuecat" | "posthog" | "sentry" | "google" | "apple",
+  service:
+    | "supabase"
+    | "convex"
+    | "revenuecat"
+    | "posthog"
+    | "sentry"
+    | "google"
+    | "apple"
+    | "backend",
 ): boolean {
   switch (service) {
+    case "backend":
+      // Check if the selected backend is properly configured
+      if (env.backendProvider === "supabase") {
+        return !!(env.supabaseUrl && env.supabasePublishableKey)
+      }
+      return !!env.convexUrl
     case "supabase":
       return !!(env.supabaseUrl && env.supabasePublishableKey)
+    case "convex":
+      return !!env.convexUrl
     case "revenuecat":
       return !!(env.revenueCatIosKey || env.revenueCatAndroidKey || env.revenueCatWebKey)
     case "posthog":

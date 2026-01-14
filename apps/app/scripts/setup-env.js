@@ -18,10 +18,19 @@ const rl = readline.createInterface({
 })
 
 const questions = [
-  { key: "EXPO_PUBLIC_SUPABASE_URL", question: "Enter your Supabase URL: " },
+  {
+    key: "EXPO_PUBLIC_BACKEND_PROVIDER",
+    question: "Choose your backend provider (supabase/convex) [default: supabase]: ",
+    default: "supabase",
+  },
+  { key: "EXPO_PUBLIC_SUPABASE_URL", question: "Enter your Supabase URL (skip if using Convex): " },
   {
     key: "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    question: "Enter your Supabase publishable key (sb_publishable_...): ",
+    question: "Enter your Supabase publishable key (skip if using Convex): ",
+  },
+  {
+    key: "EXPO_PUBLIC_CONVEX_URL",
+    question: "Enter your Convex deployment URL (skip if using Supabase): ",
   },
   {
     key: "EXPO_PUBLIC_GOOGLE_CLIENT_ID",
@@ -91,7 +100,8 @@ const askQuestion = (index) => {
     console.log("   • apps/app/vibe/STYLE_GUIDE.md - Code style and best practices")
 
     console.log("\n🔧 Setup & Integration:")
-    console.log("   • docs/SUPABASE.md - Authentication and database setup")
+    console.log("   • docs/SUPABASE.md - Authentication and database (if using Supabase)")
+    console.log("   • docs/CONVEX.md - Authentication and database (if using Convex)")
     console.log("   • docs/MONETIZATION.md - Payment setup (RevenueCat for iOS, Android & Web)")
     console.log("   • docs/ANALYTICS.md - PostHog analytics and Sentry error tracking")
     console.log("   • docs/NOTIFICATIONS.md - Push notifications (local & remote)")
@@ -145,7 +155,8 @@ console.log("\n" + "=".repeat(70))
 console.log("🚀 Welcome to Shipnative Starter Kit Setup!")
 console.log("=".repeat(70))
 console.log("\nWe'll help you configure your app with:")
-console.log("  • Supabase (Authentication & Database)")
+console.log("  • Backend Provider (Supabase or Convex)")
+console.log("  • Supabase (PostgreSQL + REST API) OR Convex (TypeScript-native)")
 console.log("  • Google OAuth (Social Login)")
 console.log("  • Apple Sign-In (Social Login)")
 console.log("  • RevenueCat (iOS, Android & Web Payments)")

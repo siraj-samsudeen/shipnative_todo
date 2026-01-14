@@ -60,8 +60,13 @@
   },
   "version": "1.0.0",
   "dependencies": {
+    "@auth/core": "~0.37.0",
+    "@convex-dev/auth": "^0.0.90",
+    "convex": "^1.31.4",
     "expo": "~54.0.25",
+    "expo-clipboard": "~8.0.8",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "resend": "^4.0.0"
   }
 }

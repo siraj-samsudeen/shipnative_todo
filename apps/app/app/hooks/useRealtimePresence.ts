@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import type { RealtimeChannel } from "@supabase/supabase-js"
 
-import { supabase, isUsingMockSupabase } from "../services/supabase"
+import { getBackend, isUsingMockBackend } from "../services/backend"
+import type { PresenceChannel } from "../services/backend/types"
 import type { PresenceState } from "../types/realtime"
 import { logger } from "../utils/Logger"
 
@@ -41,6 +41,8 @@ export interface UseRealtimePresenceReturn {
 
 /**
  * Hook for real-time presence tracking (online users, activity status)
+ *
+ * Uses the backend abstraction layer for provider-agnostic presence functionality.
  *
  * @example
  * ```tsx
@@ -96,21 +98,21 @@ export function useRealtimePresence(
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const channelRef = useRef<PresenceChannel | null>(null)
   const currentUserIdRef = useRef<string | null>(null)
   const currentStatusRef = useRef<PresenceState["status"]>(initialStatus)
   const currentCustomDataRef = useRef<Record<string, unknown>>(customData)
 
   // Track presence and sync state
   const syncPresence = useCallback(
-    (state: Record<string, PresenceState[]>) => {
+    (state: Record<string, unknown[]>) => {
       const users: PresenceState[] = []
 
       // Flatten presence state (each user can have multiple connections)
       Object.values(state).forEach((presences) => {
         // Take the most recent presence for each user
         if (presences.length > 0) {
-          users.push(presences[0])
+          users.push(presences[0] as PresenceState)
         }
       })
 
@@ -122,7 +124,7 @@ export function useRealtimePresence(
 
   // Set up presence channel
   useEffect(() => {
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setIsConnected(true)
       // Mock: show current user as present
       const mockPresence: PresenceState = {
@@ -136,33 +138,26 @@ export function useRealtimePresence(
     }
 
     let isMounted = true
+    const backend = getBackend()
 
     const setupPresence = async () => {
       try {
         // Get current user
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (!user || !isMounted) return
+        const { data } = await backend.auth.getUser()
+        if (!data?.user || !isMounted) return
 
-        currentUserIdRef.current = user.id
+        currentUserIdRef.current = data.user.id
 
-        const channel = supabase.channel(channelName, {
-          config: {
-            presence: {
-              key: user.id,
-            },
-          },
-        })
+        const channel = backend.realtime.createPresenceChannel(channelName)
 
         channel
-          .on("presence", { event: "sync" }, () => {
-            const state = channel.presenceState<PresenceState>()
+          .onSync(() => {
+            const state = channel.presenceState()
             syncPresence(state)
           })
-          .on("presence", { event: "join" }, ({ newPresences }) => {
+          .onJoin((_key, _currentPresences, newPresences) => {
             newPresences.forEach((presence) => {
-              const presenceData = presence as unknown as PresenceState
+              const presenceData = presence as PresenceState
               onUserJoin?.(presenceData)
               logger.debug("[useRealtimePresence] User joined", {
                 userId: presenceData.user_id,
@@ -170,9 +165,9 @@ export function useRealtimePresence(
               })
             })
           })
-          .on("presence", { event: "leave" }, ({ leftPresences }) => {
+          .onLeave((_key, _currentPresences, leftPresences) => {
             leftPresences.forEach((presence) => {
-              const presenceData = presence as unknown as PresenceState
+              const presenceData = presence as PresenceState
               onUserLeave?.(presenceData.user_id)
               logger.debug("[useRealtimePresence] User left", {
                 userId: presenceData.user_id,
@@ -180,24 +175,24 @@ export function useRealtimePresence(
               })
             })
           })
-          .subscribe(async (status) => {
+          .subscribe(async (status, err) => {
             if (!isMounted) return
 
             if (status === "SUBSCRIBED") {
               // Track our presence
               const presenceState: PresenceState = {
-                user_id: user.id,
+                user_id: data.user.id,
                 online_at: new Date().toISOString(),
                 status: currentStatusRef.current,
                 custom: currentCustomDataRef.current,
               }
 
-              await channel.track(presenceState)
+              await channel.track(presenceState as unknown as Record<string, unknown>)
               setIsConnected(true)
               logger.debug("[useRealtimePresence] Connected to presence channel", { channelName })
-            } else if (status === "CHANNEL_ERROR") {
+            } else if (status === "ERROR") {
               setIsConnected(false)
-              setError(new Error("Failed to connect to presence channel"))
+              setError(err ?? new Error("Failed to connect to presence channel"))
               logger.error("[useRealtimePresence] Channel error", { channelName })
             }
           })
@@ -227,7 +222,7 @@ export function useRealtimePresence(
   const updateStatus = useCallback(async (status: PresenceState["status"]) => {
     currentStatusRef.current = status
 
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setPresentUsers((prev) => prev.map((u) => (u.user_id === "mock-user" ? { ...u, status } : u)))
       return
     }
@@ -242,7 +237,7 @@ export function useRealtimePresence(
         custom: currentCustomDataRef.current,
       }
 
-      await channelRef.current.track(presenceState)
+      await channelRef.current.track(presenceState as unknown as Record<string, unknown>)
     } catch (err) {
       logger.error("[useRealtimePresence] Failed to update status", {}, err as Error)
     }
@@ -252,7 +247,7 @@ export function useRealtimePresence(
   const updateCustomData = useCallback(async (data: Record<string, unknown>) => {
     currentCustomDataRef.current = { ...currentCustomDataRef.current, ...data }
 
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setPresentUsers((prev) =>
         prev.map((u) =>
           u.user_id === "mock-user" ? { ...u, custom: currentCustomDataRef.current } : u,
@@ -271,7 +266,7 @@ export function useRealtimePresence(
         custom: currentCustomDataRef.current,
       }
 
-      await channelRef.current.track(presenceState)
+      await channelRef.current.track(presenceState as unknown as Record<string, unknown>)
     } catch (err) {
       logger.error("[useRealtimePresence] Failed to update custom data", {}, err as Error)
     }

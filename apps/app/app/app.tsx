@@ -31,7 +31,7 @@ import { logEnvValidation } from "./config/env"
 import { initI18n, initializeLanguage } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
 import { useNavigationPersistence } from "./navigators/navigationUtilities"
-import { QueryProvider } from "./providers"
+import { BackendProvider } from "./providers"
 import { LoadingScreen } from "./screens/LoadingScreen"
 import { certificatePinning } from "./services/certificatePinning"
 import { logMockServicesStatus } from "./services/mocks"
@@ -317,7 +317,7 @@ export function App() {
   return (
     <GestureHandlerRootView style={$gestureHandlerRoot}>
       <SafeAreaProvider initialMetrics={initialWindowMetrics} style={$safeAreaProvider}>
-        <QueryProvider>
+        <BackendProvider>
           {Platform.OS === "web" ? (
             <ThemeProvider>{content}</ThemeProvider>
           ) : (
@@ -325,7 +325,7 @@ export function App() {
               <ThemeProvider>{content}</ThemeProvider>
             </KeyboardProvider>
           )}
-        </QueryProvider>
+        </BackendProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   )

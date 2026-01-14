@@ -4,9 +4,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { supabase } from "@/services/supabase"
-import { useAuthStore } from "@/stores"
-import type { SupabaseDatabase } from "@/types/supabase"
+import { useAuth } from "@/hooks"
 import { haptics } from "@/utils/haptics"
 import { logger } from "@/utils/Logger"
 
@@ -23,8 +21,6 @@ export interface EditProfileModalProps {
   onClose: () => void
 }
 
-type ProfilesInsert = SupabaseDatabase["public"]["Tables"]["profiles"]["Insert"]
-
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -32,8 +28,7 @@ type ProfilesInsert = SupabaseDatabase["public"]["Tables"]["profiles"]["Insert"]
 export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }) => {
   const { theme } = useUnistyles()
   const { t } = useTranslation()
-  const user = useAuthStore((state) => state.user)
-  const setUser = useAuthStore((state) => state.setUser)
+  const { user, updateProfile } = useAuth()
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -42,13 +37,9 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
 
   // Initialize form with user data
   useEffect(() => {
-    if (user?.user_metadata) {
-      const firstName =
-        typeof user.user_metadata.first_name === "string" ? user.user_metadata.first_name : ""
-      const lastName =
-        typeof user.user_metadata.last_name === "string" ? user.user_metadata.last_name : ""
-      setFirstName(firstName)
-      setLastName(lastName)
+    if (user) {
+      setFirstName(user.firstName ?? "")
+      setLastName(user.lastName ?? "")
     }
   }, [user])
 
@@ -58,47 +49,16 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
     haptics.buttonPress()
 
     try {
-      const updatedMetadata = {
-        first_name: firstName,
-        last_name: lastName,
-        full_name: `${firstName} ${lastName}`,
-      }
-
-      // Optimistic update: Update local state immediately for instant feedback
-      if (user) {
-        setUser({
-          ...user,
-          user_metadata: {
-            ...user.user_metadata,
-            ...updatedMetadata,
-          },
-        })
-      }
-
-      // Fire off the server updates in the background
-      // Note: Supabase updateUser can hang indefinitely but still succeeds on server
-      // We use fire-and-forget pattern to avoid blocking the UI
-      supabase.auth.updateUser({ data: updatedMetadata }).then(({ error: updateError }) => {
-        if (updateError) {
-          logger.warn("Auth user update error", { error: updateError.message })
-        }
+      const { error: updateError } = await updateProfile({
+        firstName,
+        lastName,
       })
 
-      // Update profiles table (optional - may not exist)
-      if (user?.id) {
-        Promise.resolve(
-          supabase.from("profiles").upsert({
-            id: user.id,
-            first_name: firstName,
-            last_name: lastName,
-            full_name: `${firstName} ${lastName}`,
-            updated_at: new Date().toISOString(),
-          } as ProfilesInsert),
-        ).then(({ error: profileError }) => {
-          if (profileError) {
-            logger.warn("Profile table update error", { error: profileError.message })
-          }
-        })
+      if (updateError) {
+        logger.error("Profile update error", { error: updateError })
+        setError(updateError.message || t("editProfileModal:errorGeneric"))
+        haptics.error()
+        return
       }
 
       haptics.success()

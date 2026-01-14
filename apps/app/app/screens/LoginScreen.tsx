@@ -15,10 +15,9 @@ import { Spinner } from "@/components/Spinner"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks"
 import { AppStackParamList } from "@/navigators/navigationTypes"
 import { loginSchema } from "@/schemas/authSchemas"
-import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
 
 // =============================================================================
@@ -31,11 +30,11 @@ export const LoginScreen = () => {
   const { theme } = useUnistyles()
   const { t } = useTranslation()
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
-  const signIn = useAuthStore((state) => state.signIn)
-  const { signInWithGoogle, signInWithApple, loading: oauthLoading } = useAuth()
+  const { signIn, signInWithGoogle, signInWithApple, isLoading: authLoading } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const oauthLoading = authLoading
 
   const {
     control,
@@ -123,9 +122,11 @@ export const LoginScreen = () => {
               onBlur={field.onBlur}
               placeholderTx="loginScreen:emailPlaceholder"
               autoCapitalize="none"
-              autoComplete="email"
+              autoComplete="off"
               autoCorrect={false}
+              spellCheck={false}
               keyboardType="email-address"
+              textContentType="emailAddress"
               returnKeyType="next"
               status={fieldState.error ? "error" : "default"}
               helper={fieldState.error?.message}
@@ -193,6 +194,16 @@ export const LoginScreen = () => {
         <Text size="sm" color="secondary" weight="medium">
           Forgot Password?
         </Text>
+      </TouchableOpacity>
+
+      {/* Magic Link / Passwordless Option */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate("MagicLink")}
+        style={styles.magicLinkButton}
+        activeOpacity={0.6}
+      >
+        <Ionicons name="mail-outline" size={18} color={theme.colors.foregroundSecondary} />
+        <Text size="sm" color="secondary" weight="medium" tx="loginScreen:signInWithEmail" />
       </TouchableOpacity>
 
       {/* Social Login Section */}
@@ -283,6 +294,14 @@ const styles = StyleSheet.create((theme) => ({
   forgotButton: {
     alignItems: "center",
     paddingVertical: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  magicLinkButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
   },
   divider: {

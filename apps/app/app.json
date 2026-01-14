@@ -2,6 +2,7 @@
   "name": "reactnativestarterkit",
   "slug": "reactnativestarterkit",
   "scheme": "shipnative",
+  "entryPoint": "./index.tsx",
   "version": "1.0.0",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
@@ -60,6 +61,7 @@
   "plugins": [
     "expo-localization",
     "expo-font",
+    "@react-native-google-signin/google-signin",
     [
       "expo-image-picker",
       {

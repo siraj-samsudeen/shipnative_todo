@@ -4,14 +4,16 @@
  * Custom hook that polls for email confirmation status.
  * Extracted from EmailVerificationScreen to simplify the component.
  *
- * This hook automatically polls Supabase to check if the user's email has been confirmed.
+ * This hook automatically polls the backend to check if the user's email has been confirmed.
  * It pauses polling briefly after resending the confirmation email to avoid conflicts.
+ *
+ * Uses the backend abstraction layer for provider-agnostic auth functionality.
  */
 
 import { useEffect, useState } from "react"
 
 import { POLLING } from "../config/constants"
-import { supabase } from "../services/supabase"
+import { getBackend } from "../services/backend"
 import { useAuthStore } from "../stores/auth"
 import type { User } from "../types/auth"
 
@@ -29,7 +31,7 @@ interface UseEmailVerificationPollingOptions {
 /**
  * Hook to poll for email verification status.
  *
- * Polls Supabase every few seconds to check if email has been confirmed.
+ * Polls the backend every few seconds to check if email has been confirmed.
  * Automatically stops polling when email is confirmed or user is not available.
  *
  * @param options - Configuration options for polling
@@ -80,14 +82,13 @@ export function useEmailVerificationPolling({
         // Refresh user data to get latest email confirmation status
         // This is important when email is confirmed from another device/browser
         try {
-          const {
-            data: { user: refreshedUser },
-            error: getUserError,
-          } = await supabase.auth.getUser()
+          const backend = getBackend()
+          const { data, error: getUserError } = await backend.auth.getUser()
 
-          if (refreshedUser) {
+          if (data?.user) {
             // Update user in store if email was confirmed
-            useAuthStore.getState().setUser(refreshedUser)
+            // Convert from BackendUser to User type expected by the store
+            useAuthStore.getState().setUser(data.user as unknown as User)
           } else if (getUserError && currentUser) {
             // If getUser fails but we have a current user, preserve it
             // Don't update the store - keep existing user state

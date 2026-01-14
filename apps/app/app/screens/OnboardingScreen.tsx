@@ -7,8 +7,8 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { OnboardingScreenLayout } from "@/components/layouts/OnboardingScreenLayout"
 import { Text } from "@/components/Text"
+import { useAuth } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
-import { useAuthStore } from "@/stores/auth"
 import { useNotificationStore } from "@/stores/notificationStore"
 import { logger } from "@/utils/Logger"
 
@@ -26,7 +26,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation<AppStackScreenProps<"Onboarding">["navigation"]>()
-  const setHasCompletedOnboarding = useAuthStore((state) => state.setHasCompletedOnboarding)
+  const { completeOnboarding } = useAuth()
   const togglePush = useNotificationStore((state) => state.togglePush)
   const [step, setStep] = useState(0)
   const [isRequestingPermission, setIsRequestingPermission] = useState(false)
@@ -38,7 +38,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
     } else {
       // Mark onboarding as complete BEFORE navigation
       // This ensures the state is saved before the navigator re-evaluates routes
-      await setHasCompletedOnboarding(true)
+      await completeOnboarding()
       // Navigate to Paywall after saving onboarding status
       // The Paywall screen will handle navigation to Main
       navigation.replace("Paywall", { fromOnboarding: true })

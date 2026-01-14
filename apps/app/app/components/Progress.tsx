@@ -338,19 +338,19 @@ export function Progress(props: ProgressProps) {
 const styles = StyleSheet.create((theme) => ({
   container: {
     width: "100%",
-    backgroundColor: theme.colors.backgroundSecondary,
+    backgroundColor: theme.colors.backgroundTertiary,
     borderRadius: theme.radius.full,
     overflow: "hidden",
     variants: {
       size: {
         sm: {
-          height: 4,
+          height: 6,
         },
         md: {
-          height: 8,
+          height: 10,
         },
         lg: {
-          height: 12,
+          height: 14,
         },
       },
     },
@@ -360,7 +360,7 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: theme.radius.full,
   },
   indeterminate: {
-    width: "30%",
+    width: "35%",
     position: "absolute",
   },
   stripesContainer: {
@@ -391,7 +391,8 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: "center",
   },
   circularValue: {
-    fontFamily: theme.typography.fonts.semiBold,
+    fontFamily: theme.typography.fonts.bold,
     color: theme.colors.foreground,
+    letterSpacing: -0.5,
   },
 }))

@@ -51,12 +51,13 @@ Tooling:
 
 ## Environment
 Runtime env lives in `apps/app/.env` (Expo uses `EXPO_PUBLIC_` vars).
-- Copy `apps/app/.env.example` → `apps/app/.env`
-- Required in production: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `yarn setup` creates `.env` and configures your chosen backend
+- Required in production: Backend URL + key (Supabase or Convex)
 - Optional services: PostHog, RevenueCat, Sentry, OAuth providers
-- Optional redirects: `EXPO_PUBLIC_EMAIL_REDIRECT_URL`, `EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL`
 
 The app validates env at startup and will fail fast in production if required keys are missing.
+
+**Note:** After running `yarn setup`, the unused backend code is automatically removed—you'll only see code for the backend you chose.
 
 ## Deep Links
 Examples:

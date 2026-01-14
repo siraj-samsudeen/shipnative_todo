@@ -29,10 +29,11 @@ import {
 } from "./authConstants"
 import { syncOnboardingStatus, syncOnboardingToDatabase, updateUserState } from "./authHelpers"
 import type { AuthState } from "./authTypes"
-import { env } from "../../config/env"
+import { env, isConvex } from "../../config/env"
 import { fetchAndApplyUserPreferences } from "../../services/preferencesSync"
 import { supabase, isUsingMockSupabase } from "../../services/supabase"
 import { isEmailConfirmed } from "../../types/auth"
+import { isNetworkError, getNetworkErrorMessage } from "../../types/supabaseErrors"
 import { logger } from "../../utils/Logger"
 import { loadString, saveString } from "../../utils/storage"
 
@@ -121,16 +122,29 @@ export const useAuthStore = create<AuthState>()(
        * Initialize authentication state.
        *
        * This method:
-       * 1. Retrieves the current session from Supabase
+       * 1. Retrieves the current session from Supabase (if using Supabase backend)
        * 2. Syncs onboarding status between local storage and database
        * 3. Sets up auth state change listeners
        * 4. Updates store with current user and session state
+       *
+       * For Convex backend, auth state is managed by ConvexAuthProvider and synced
+       * via the ConvexAuthSync component. This initialize just sets loading to false.
        *
        * Should be called once on app startup.
        */
       initialize: async () => {
         try {
           set({ loading: true })
+
+          // If using Convex, skip Supabase initialization
+          // Convex auth state is managed by ConvexAuthProvider and synced via ConvexAuthSync
+          if (isConvex) {
+            if (__DEV__) {
+              logger.debug("[AuthStore] Using Convex backend - skipping Supabase initialization")
+            }
+            set({ loading: false })
+            return
+          }
 
           const currentSupabaseUrl = env.supabaseUrl ?? ""
           const storedSupabaseUrl = loadString(SUPABASE_URL_STORAGE_KEY)
@@ -161,6 +175,22 @@ export const useAuthStore = create<AuthState>()(
           } catch (error) {
             if (isInvalidRefreshToken(error)) {
               await signOutAction(get, set, GUEST_USER_KEY)
+              set({ loading: false })
+              return
+            }
+            // Check for network errors and log with helpful context
+            if (isNetworkError(error)) {
+              const friendlyMessage = getNetworkErrorMessage(error, "Supabase")
+              logger.error(
+                "Auth initialization failed - network error",
+                {
+                  friendlyMessage,
+                  supabaseUrl: env.supabaseUrl?.substring(0, 50),
+                  hint: "Check if your Supabase project is active and the URL is correct",
+                },
+                error as Error,
+              )
+              // Continue without session - app can still work in offline mode
               set({ loading: false })
               return
             }
@@ -313,7 +343,21 @@ export const useAuthStore = create<AuthState>()(
             authStateSubscription = subscription
           }
         } catch (error) {
-          logger.error("Auth initialization failed", {}, error as Error)
+          // Provide more helpful error messages for common issues
+          if (isNetworkError(error)) {
+            const friendlyMessage = getNetworkErrorMessage(error, "Supabase")
+            logger.error(
+              "Auth initialization failed - network error",
+              {
+                friendlyMessage,
+                supabaseUrl: env.supabaseUrl?.substring(0, 50),
+                hint: "Check if your Supabase project is active and the URL is correct",
+              },
+              error as Error,
+            )
+          } else {
+            logger.error("Auth initialization failed", {}, error as Error)
+          }
           set({ loading: false })
         }
       },

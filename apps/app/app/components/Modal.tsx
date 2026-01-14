@@ -432,11 +432,11 @@ const styles = StyleSheet.create((theme) => ({
       size: {
         sm: {
           width: "85%",
-          maxWidth: 320,
+          maxWidth: 340,
         },
         md: {
           width: "90%",
-          maxWidth: 400,
+          maxWidth: 420,
         },
         lg: {
           width: "95%",
@@ -453,20 +453,23 @@ const styles = StyleSheet.create((theme) => ({
   modal: {
     backgroundColor: theme.colors.card,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     ...theme.shadows.xl,
     variants: {
       size: {
         sm: {
-          borderRadius: theme.radius["2xl"],
+          borderRadius: 28,
         },
         md: {
-          borderRadius: theme.radius["3xl"],
+          borderRadius: 32,
         },
         lg: {
-          borderRadius: theme.radius["3xl"],
+          borderRadius: 36,
         },
         full: {
           borderRadius: 0,
+          borderWidth: 0,
           flex: 1,
         },
       },
@@ -477,7 +480,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing["2xl"],
     paddingBottom: theme.spacing.md,
     gap: theme.spacing.md,
   },
@@ -486,17 +489,21 @@ const styles = StyleSheet.create((theme) => ({
   },
   title: {
     color: theme.colors.foreground,
+    letterSpacing: -0.3,
   },
   description: {
-    marginTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
+    letterSpacing: 0.1,
   },
   closeButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   scrollView: {
     maxHeight: 400,
@@ -520,13 +527,13 @@ const styles = StyleSheet.create((theme) => ({
   },
   content: {
     paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
   },
   footer: {
     flexDirection: "row",
     gap: theme.spacing.md,
     paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
     borderTopWidth: 1,
     borderTopColor: theme.colors.separator,
   },

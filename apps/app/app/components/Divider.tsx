@@ -126,6 +126,9 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.separator,
   },
   label: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    fontSize: 11,
   },
 }))

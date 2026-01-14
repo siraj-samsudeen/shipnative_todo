@@ -23,7 +23,18 @@ interface WelcomeScreenProps extends AppStackScreenProps<"Welcome"> {}
 export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen(_props) {
   const { navigation } = _props
   const { theme } = useUnistyles()
+
+  // DEBUG: Log when component renders
+  if (__DEV__) {
+    console.log("[WelcomeScreen] Component rendering, about to call useAuth")
+  }
+
   const { signInWithGoogle, signInWithApple, loading } = useAuth()
+
+  // DEBUG: Log after useAuth
+  if (__DEV__) {
+    console.log("[WelcomeScreen] useAuth returned successfully", { loading })
+  }
 
   const handleGoToLogin = () => {
     navigation.navigate("Login" as never)
@@ -53,6 +64,11 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen(_pro
     } catch {
       Alert.alert("Sign In Error", "Failed to sign in with Google")
     }
+  }
+
+  // DEBUG: Log all children
+  if (__DEV__) {
+    console.log("[WelcomeScreen] About to render AuthScreenLayout")
   }
 
   return (

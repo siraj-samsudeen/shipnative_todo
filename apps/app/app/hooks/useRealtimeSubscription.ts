@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import type { RealtimeChannel } from "@supabase/supabase-js"
 
-import { supabase, isUsingMockSupabase } from "../services/supabase"
-import type {
-  RealtimeEventType,
-  RealtimePayload,
-  RealtimeSubscriptionConfig,
-} from "../types/realtime"
+import { getBackend, isUsingMockBackend } from "../services/backend"
+import type { RealtimeChannel, RealtimePayload as BackendRealtimePayload } from "../services/backend/types"
+import type { RealtimeEventType, RealtimeSubscriptionConfig } from "../types/realtime"
 import { logger } from "../utils/Logger"
+
+/** Internal payload type that matches what handlers need */
+interface InternalPayload<T> {
+  eventType: RealtimeEventType
+  new: T | null
+  old: T | null
+}
 
 export interface UseRealtimeSubscriptionOptions<T> extends RealtimeSubscriptionConfig {
   /** Called when data changes (INSERT, UPDATE, DELETE) */
@@ -15,7 +18,7 @@ export interface UseRealtimeSubscriptionOptions<T> extends RealtimeSubscriptionC
   onUpdate?: (record: T, oldRecord: T | null) => void
   onDelete?: (oldRecord: T) => void
   /** Called for any change event */
-  onChange?: (payload: RealtimePayload<T>) => void
+  onChange?: (payload: InternalPayload<T>) => void
   /** Whether to auto-connect on mount */
   enabled?: boolean
 }
@@ -32,8 +35,9 @@ export interface UseRealtimeSubscriptionReturn {
 }
 
 /**
- * Generic hook for subscribing to Supabase Realtime postgres_changes
+ * Generic hook for subscribing to backend realtime changes
  *
+ * Uses the backend abstraction layer for provider-agnostic realtime subscriptions.
  * Use this for custom tables or when you need more control than the
  * specialized hooks (useRealtimeMessages, useRealtimePresence).
  *
@@ -92,11 +96,11 @@ export function useRealtimeSubscription<T = Record<string, unknown>>(
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const channelsRef = useRef<RealtimeChannel[]>([])
 
   // Handle realtime events
   const handleChange = useCallback(
-    (payload: RealtimePayload<T>) => {
+    (payload: InternalPayload<T>) => {
       onChange?.(payload)
 
       switch (payload.eventType) {
@@ -122,66 +126,76 @@ export function useRealtimeSubscription<T = Record<string, unknown>>(
 
   // Connect to realtime
   const connect = useCallback(() => {
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setIsConnected(true)
       logger.debug("[useRealtimeSubscription] Mock mode - simulating connection", { table })
       return
     }
 
-    // Disconnect existing channel
-    if (channelRef.current) {
-      channelRef.current.unsubscribe()
-    }
+    // Disconnect existing channels
+    channelsRef.current.forEach((ch) => ch.unsubscribe())
+    channelsRef.current = []
 
-    const channelName = filter ? `${table}:${filter.column}:${filter.value}` : `${table}:all`
+    const backend = getBackend()
 
-    const channel = supabase.channel(channelName)
-
-    // Build filter string for Supabase
+    // Build filter string
     const filterStr = filter ? `${filter.column}=eq.${filter.value}` : undefined
 
     // Subscribe to events
     const events: RealtimeEventType[] = event === "*" ? ["INSERT", "UPDATE", "DELETE"] : [event]
+    const channels: RealtimeChannel[] = []
+    let subscribedCount = 0
 
-    events.forEach((evt) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(channel as any).on(
-        "postgres_changes",
-        {
-          event: evt,
-          schema,
-          table,
-          ...(filterStr ? { filter: filterStr } : {}),
-        },
-        (payload: unknown) => handleChange(payload as RealtimePayload<T>),
-      )
-    })
-
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
+    const checkAllSubscribed = () => {
+      subscribedCount++
+      if (subscribedCount >= events.length) {
         setIsConnected(true)
         setError(null)
         logger.debug("[useRealtimeSubscription] Subscribed", { table, filter })
-      } else if (status === "CHANNEL_ERROR") {
-        setIsConnected(false)
-        setError(new Error(`Failed to subscribe to ${table}`))
-        logger.error("[useRealtimeSubscription] Channel error", { table })
-      } else if (status === "CLOSED") {
-        setIsConnected(false)
       }
+    }
+
+    events.forEach((evt) => {
+      const channel = backend.realtime.subscribeToTable<T>(
+        table,
+        (payload: BackendRealtimePayload<T>) => {
+          handleChange({
+            eventType: payload.eventType,
+            new: payload.new,
+            old: payload.old,
+          })
+        },
+        {
+          event: evt,
+          schema,
+          filter: filterStr,
+        },
+      )
+
+      channel.subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          checkAllSubscribed()
+        } else if (status === "ERROR") {
+          setIsConnected(false)
+          setError(err ?? new Error(`Failed to subscribe to ${table}`))
+          logger.error("[useRealtimeSubscription] Channel error", { table })
+        } else if (status === "CLOSED") {
+          setIsConnected(false)
+        }
+      })
+
+      channels.push(channel)
     })
 
-    channelRef.current = channel
+    channelsRef.current = channels
   }, [schema, table, event, filter, handleChange])
 
   // Disconnect from realtime
   const disconnect = useCallback(() => {
-    if (channelRef.current) {
-      channelRef.current.unsubscribe()
-      channelRef.current = null
-      setIsConnected(false)
-      logger.debug("[useRealtimeSubscription] Disconnected", { table })
-    }
+    channelsRef.current.forEach((ch) => ch.unsubscribe())
+    channelsRef.current = []
+    setIsConnected(false)
+    logger.debug("[useRealtimeSubscription] Disconnected", { table })
   }, [table])
 
   // Reconnect

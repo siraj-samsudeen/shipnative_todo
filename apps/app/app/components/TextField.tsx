@@ -346,55 +346,60 @@ export const TextField = forwardRef(function TextField(
 
 const styles = StyleSheet.create((theme) => ({
   label: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    letterSpacing: 0.3,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: theme.colors.input,
-    borderWidth: 1,
+    borderWidth: 1.5,
     overflow: "hidden",
     variants: {
       size: {
         sm: {
           minHeight: theme.sizes.input.sm,
-          borderRadius: theme.radius.md,
+          borderRadius: theme.radius.lg,
         },
         md: {
           minHeight: theme.sizes.input.md,
-          borderRadius: theme.radius.lg,
+          borderRadius: theme.radius.xl,
         },
         lg: {
           minHeight: theme.sizes.input.lg,
-          borderRadius: theme.radius.lg,
+          borderRadius: theme.radius.xl,
         },
       },
       status: {
         default: {
-          borderColor: theme.colors.inputBorder,
+          borderColor: theme.colors.border,
         },
         focused: {
           borderColor: theme.colors.inputBorderFocus,
           borderWidth: 2,
+          backgroundColor: theme.colors.background,
         },
         error: {
           borderColor: theme.colors.error,
           borderWidth: 2,
+          backgroundColor: theme.colors.errorBackground,
         },
         success: {
           borderColor: theme.colors.success,
           borderWidth: 2,
+          backgroundColor: theme.colors.successBackground,
         },
         disabled: {
           borderColor: theme.colors.border,
-          opacity: 0.6,
+          opacity: 0.5,
+          backgroundColor: theme.colors.backgroundSecondary,
         },
       },
       multiline: {
         true: {
           minHeight: 120,
           alignItems: "flex-start",
-          paddingVertical: theme.spacing.sm,
+          paddingVertical: theme.spacing.md,
         },
         false: {},
       },
@@ -404,19 +409,20 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     color: theme.colors.inputForeground,
     fontFamily: theme.typography.fonts.regular,
+    letterSpacing: 0.2,
     variants: {
       size: {
         sm: {
           fontSize: theme.typography.sizes.sm,
-          paddingHorizontal: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
         },
         md: {
           fontSize: theme.typography.sizes.base,
-          paddingHorizontal: theme.spacing.md,
+          paddingHorizontal: theme.spacing.lg,
         },
         lg: {
           fontSize: theme.typography.sizes.lg,
-          paddingHorizontal: theme.spacing.md,
+          paddingHorizontal: theme.spacing.lg,
         },
       },
       status: {
@@ -438,17 +444,17 @@ const styles = StyleSheet.create((theme) => ({
     },
   },
   leftAccessory: {
-    marginLeft: theme.spacing.sm,
+    marginLeft: theme.spacing.md,
     justifyContent: "center",
     alignItems: "center",
   },
   rightAccessory: {
-    marginRight: theme.spacing.sm,
+    marginRight: theme.spacing.md,
     justifyContent: "center",
     alignItems: "center",
   },
   clearButton: {
-    marginRight: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
     justifyContent: "center",
     alignItems: "center",
     padding: theme.spacing.xxs,
@@ -457,7 +463,7 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
   helper: {
     flex: 1,

@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import type { RealtimeChannel } from "@supabase/supabase-js"
 
-import { supabase, isUsingMockSupabase } from "../services/supabase"
-import type { RealtimeMessage, RealtimePayload, TypingState } from "../types/realtime"
+import { getBackend, isUsingMockBackend } from "../services/backend"
+import type { BroadcastChannel, RealtimeChannel } from "../services/backend/types"
+import type { RealtimeMessage, TypingState } from "../types/realtime"
 import { logger } from "../utils/Logger"
+
+/** Simplified payload type for internal handlers */
+interface MessagePayload {
+  new: RealtimeMessage | null
+  old: RealtimeMessage | null
+}
 
 export interface UseRealtimeMessagesOptions {
   /** Channel ID to subscribe to */
@@ -52,6 +58,8 @@ export interface UseRealtimeMessagesReturn {
 
 /**
  * Hook for real-time chat messages with typing indicators
+ *
+ * Uses the backend abstraction layer for provider-agnostic realtime functionality.
  *
  * @example
  * ```tsx
@@ -103,12 +111,14 @@ export function useRealtimeMessages(
   const [isConnected, setIsConnected] = useState(false)
   const [typingUsers, setTypingUsers] = useState<string[]>([])
 
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const tableChannelRef = useRef<RealtimeChannel | null>(null)
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null)
   const typingTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const currentUserIdRef = useRef<string | null>(null)
 
-  // Fetch initial messages
+  // Fetch initial messages using the database service
   const fetchMessages = useCallback(async () => {
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setLoading(false)
       setIsConnected(true)
       return
@@ -118,20 +128,23 @@ export function useRealtimeMessages(
       setLoading(true)
       setError(null)
 
-      const query = supabase
-        .from("messages")
-        .select(includeUser ? "*, user:profiles(id, full_name, avatar_url)" : "*")
-        .eq("channel_id", channelId)
-        .order("created_at", { ascending: true })
-        .limit(maxMessages)
+      const backend = getBackend()
 
-      const { data, error: fetchError } = await query
+      // Build select string based on includeUser option
+      const selectFields = includeUser ? "*, user:profiles(id, full_name, avatar_url)" : "*"
+
+      const { data, error: fetchError } = await backend.db.query<RealtimeMessage>("messages", {
+        filters: [{ column: "channel_id", operator: "eq", value: channelId }],
+        orderBy: [{ column: "created_at", ascending: true }],
+        limit: maxMessages,
+        select: selectFields,
+      })
 
       if (fetchError) {
         throw fetchError
       }
 
-      setMessages((data as RealtimeMessage[]) ?? [])
+      setMessages(data ?? [])
     } catch (err) {
       const resolvedError = err instanceof Error ? err : new Error(String(err))
       logger.error("[useRealtimeMessages] Failed to fetch messages", { channelId }, resolvedError)
@@ -143,7 +156,7 @@ export function useRealtimeMessages(
 
   // Handle new message from realtime
   const handleInsert = useCallback(
-    (payload: RealtimePayload<RealtimeMessage>) => {
+    (payload: MessagePayload) => {
       if (!payload.new) return
 
       setMessages((prev) => {
@@ -167,7 +180,7 @@ export function useRealtimeMessages(
 
   // Handle message update from realtime
   const handleUpdate = useCallback(
-    (payload: RealtimePayload<RealtimeMessage>) => {
+    (payload: MessagePayload) => {
       if (!payload.new) return
 
       setMessages((prev) => prev.map((m) => (m.id === payload.new!.id ? payload.new! : m)))
@@ -179,7 +192,7 @@ export function useRealtimeMessages(
 
   // Handle message deletion from realtime
   const handleDelete = useCallback(
-    (payload: RealtimePayload<RealtimeMessage>) => {
+    (payload: MessagePayload) => {
       if (!payload.old?.id) return
 
       setMessages((prev) => prev.filter((m) => m.id !== payload.old!.id))
@@ -191,8 +204,9 @@ export function useRealtimeMessages(
 
   // Handle typing broadcast
   const handleTyping = useCallback(
-    (payload: { payload: TypingState }) => {
-      const { user_id, is_typing } = payload.payload
+    (payload: Record<string, unknown>) => {
+      const typingPayload = payload as unknown as TypingState
+      const { user_id, is_typing } = typingPayload
 
       // Clear existing timeout for this user
       const existingTimeout = typingTimeoutsRef.current.get(user_id)
@@ -236,59 +250,107 @@ export function useRealtimeMessages(
 
   // Set up realtime subscription
   useEffect(() => {
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setIsConnected(true)
       setLoading(false)
       return
     }
 
+    const backend = getBackend()
+
+    // Fetch initial messages
     fetchMessages()
 
-    const channel = supabase
-      .channel(`messages:${channelId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `channel_id=eq.${channelId}`,
-        },
-        handleInsert as (payload: unknown) => void,
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-          filter: `channel_id=eq.${channelId}`,
-        },
-        handleUpdate as (payload: unknown) => void,
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "messages",
-          filter: `channel_id=eq.${channelId}`,
-        },
-        handleDelete as (payload: unknown) => void,
-      )
-      .on("broadcast", { event: "typing" }, handleTyping)
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setIsConnected(true)
-          logger.debug("[useRealtimeMessages] Subscribed to channel", { channelId })
-        } else if (status === "CHANNEL_ERROR") {
-          setIsConnected(false)
-          setError(new Error("Failed to connect to realtime channel"))
-          logger.error("[useRealtimeMessages] Channel error", { channelId })
-        }
-      })
+    // Get current user for typing broadcasts
+    backend.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        currentUserIdRef.current = data.user.id
+      }
+    })
 
-    channelRef.current = channel
+    // Subscribe to INSERT events
+    const insertChannel = backend.realtime.subscribeToTable<RealtimeMessage>(
+      "messages",
+      (payload) => {
+        handleInsert({
+          new: payload.new as RealtimeMessage | null,
+          old: payload.old as RealtimeMessage | null,
+        })
+      },
+      {
+        event: "INSERT",
+        filter: `channel_id=eq.${channelId}`,
+      },
+    )
+
+    // Subscribe to UPDATE events
+    const updateChannel = backend.realtime.subscribeToTable<RealtimeMessage>(
+      "messages",
+      (payload) => {
+        handleUpdate({
+          new: payload.new as RealtimeMessage | null,
+          old: payload.old as RealtimeMessage | null,
+        })
+      },
+      {
+        event: "UPDATE",
+        filter: `channel_id=eq.${channelId}`,
+      },
+    )
+
+    // Subscribe to DELETE events
+    const deleteChannel = backend.realtime.subscribeToTable<RealtimeMessage>(
+      "messages",
+      (payload) => {
+        handleDelete({
+          new: payload.new as RealtimeMessage | null,
+          old: payload.old as RealtimeMessage | null,
+        })
+      },
+      {
+        event: "DELETE",
+        filter: `channel_id=eq.${channelId}`,
+      },
+    )
+
+    // Create broadcast channel for typing indicators
+    const broadcastChannel = backend.realtime.createBroadcastChannel(`messages:${channelId}:typing`)
+    broadcastChannel.onBroadcast("typing", handleTyping)
+
+    // Subscribe to all channels
+    let subscribedCount = 0
+    const checkAllSubscribed = () => {
+      subscribedCount++
+      if (subscribedCount >= 4) {
+        setIsConnected(true)
+        logger.debug("[useRealtimeMessages] Subscribed to channel", { channelId })
+      }
+    }
+
+    insertChannel.subscribe((status, err) => {
+      if (status === "SUBSCRIBED") {
+        checkAllSubscribed()
+      } else if (status === "ERROR") {
+        setIsConnected(false)
+        setError(err ?? new Error("Failed to connect to realtime channel"))
+        logger.error("[useRealtimeMessages] Channel error", { channelId })
+      }
+    })
+
+    updateChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") checkAllSubscribed()
+    })
+
+    deleteChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") checkAllSubscribed()
+    })
+
+    broadcastChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") checkAllSubscribed()
+    })
+
+    tableChannelRef.current = insertChannel
+    broadcastChannelRef.current = broadcastChannel
 
     // Copy ref value to local variable for cleanup (React hooks rule)
     const timeouts = typingTimeoutsRef.current
@@ -298,9 +360,14 @@ export function useRealtimeMessages(
       timeouts.forEach((timeout) => clearTimeout(timeout))
       timeouts.clear()
 
-      // Unsubscribe
-      channel.unsubscribe()
-      channelRef.current = null
+      // Unsubscribe from all channels
+      insertChannel.unsubscribe()
+      updateChannel.unsubscribe()
+      deleteChannel.unsubscribe()
+      broadcastChannel.unsubscribe()
+
+      tableChannelRef.current = null
+      broadcastChannelRef.current = null
       setIsConnected(false)
     }
   }, [channelId, fetchMessages, handleInsert, handleUpdate, handleDelete, handleTyping])
@@ -308,7 +375,7 @@ export function useRealtimeMessages(
   // Send a new message
   const sendMessage = useCallback(
     async (content: string, metadata?: Record<string, unknown>) => {
-      if (isUsingMockSupabase) {
+      if (isUsingMockBackend()) {
         // Mock: add message locally
         const mockMessage: RealtimeMessage = {
           id: `mock-${Date.now()}`,
@@ -324,23 +391,19 @@ export function useRealtimeMessages(
       }
 
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (!user) {
+        const backend = getBackend()
+        const { data: userData } = await backend.auth.getUser()
+
+        if (!userData?.user) {
           return { error: new Error("Not authenticated") }
         }
 
-        // Note: Add 'messages' table to your Supabase types if using TypeScript strict mode
-        // See vibe/SUPABASE.md for the messages table schema
-        const { error: insertError } = await (
-          supabase.from("messages") as ReturnType<typeof supabase.from>
-        ).insert({
+        const { error: insertError } = await backend.db.insert("messages", {
           channel_id: channelId,
-          user_id: user.id,
+          user_id: userData.user.id,
           content,
           metadata,
-        } as Record<string, unknown>)
+        })
 
         if (insertError) {
           return { error: insertError }
@@ -358,7 +421,7 @@ export function useRealtimeMessages(
 
   // Update an existing message
   const updateMessage = useCallback(async (messageId: string, content: string) => {
-    if (isUsingMockSupabase) {
+    if (isUsingMockBackend()) {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId ? { ...m, content, updated_at: new Date().toISOString() } : m,
@@ -368,11 +431,12 @@ export function useRealtimeMessages(
     }
 
     try {
-      const { error: updateError } = await (
-        supabase.from("messages") as ReturnType<typeof supabase.from>
+      const backend = getBackend()
+      const { error: updateError } = await backend.db.update(
+        "messages",
+        { content, updated_at: new Date().toISOString() },
+        [{ column: "id", operator: "eq", value: messageId }],
       )
-        .update({ content, updated_at: new Date().toISOString() } as Record<string, unknown>)
-        .eq("id", messageId)
 
       if (updateError) {
         return { error: updateError }
@@ -389,14 +453,17 @@ export function useRealtimeMessages(
   // Delete a message
   const deleteMessage = useCallback(
     async (messageId: string) => {
-      if (isUsingMockSupabase) {
+      if (isUsingMockBackend()) {
         setMessages((prev) => prev.filter((m) => m.id !== messageId))
         onMessageDeleted?.(messageId)
         return { error: null }
       }
 
       try {
-        const { error: deleteError } = await supabase.from("messages").delete().eq("id", messageId)
+        const backend = getBackend()
+        const { error: deleteError } = await backend.db.delete("messages", [
+          { column: "id", operator: "eq", value: messageId },
+        ])
 
         if (deleteError) {
           return { error: deleteError }
@@ -415,23 +482,14 @@ export function useRealtimeMessages(
   // Broadcast typing state
   const setTyping = useCallback(
     async (isTyping: boolean) => {
-      if (isUsingMockSupabase || !channelRef.current) return
+      if (isUsingMockBackend() || !broadcastChannelRef.current || !currentUserIdRef.current) return
 
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (!user) return
-
-        channelRef.current.send({
-          type: "broadcast",
-          event: "typing",
-          payload: {
-            user_id: user.id,
-            channel_id: channelId,
-            is_typing: isTyping,
-          } satisfies TypingState,
-        })
+        await broadcastChannelRef.current.send("typing", {
+          user_id: currentUserIdRef.current,
+          channel_id: channelId,
+          is_typing: isTyping,
+        } satisfies TypingState)
       } catch (err) {
         logger.error("[useRealtimeMessages] Failed to broadcast typing", {}, err as Error)
       }

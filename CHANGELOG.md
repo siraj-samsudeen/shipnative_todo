@@ -7,7 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - Simplified Backend DX
+
+- **Renamed `useAppAuth()` to `useAuth()`**: Clearer naming for the unified auth hook
+  - `useAuth()` is now THE hook to use in screens (imports from `@/hooks`)
+  - `useAppAuth()` still works as a deprecated alias
+  - Helper hooks renamed: `useAppUser()` → `useUser()`, `useAppAuthState()` → `useAuthState()`
+  - Old names remain as deprecated aliases for backwards compatibility
+
+- **Native Hooks as First-Class Escape Hatches**:
+  - Supabase: `import { useSupabaseAuth } from '@/hooks/supabase'`
+  - Convex: `import { useQuery, useMutation, useConvexAuth } from '@/hooks/convex'`
+  - Clear documentation on when to use unified vs native hooks
+
+- **Deprecated `backend.db.query()` for Convex**:
+  - Added clear warnings that this abstraction doesn't match Convex's reactive paradigm
+  - Documentation now recommends native `useQuery()` for Convex data fetching
+  - Still works in mock mode for development
+
+- **Setup Wizard: Remove Unused Backend Code**:
+  - After selecting a backend, setup now offers to remove the unused provider's code
+  - Removes `services/backend/{unused}/`, `hooks/{unused}/`, and related folders
+  - Creates backups before removal
+  - Simplifies codebase for developers who pick one backend
+
+- **New Documentation**: Added `vibe/BACKEND_PATTERNS.md`
+  - Clear guidance on when to use unified vs native APIs
+  - Data fetching patterns for each provider
+  - Security patterns (RLS vs function guards)
+  - Migration considerations between providers
+
+### Added - DataDemoScreen Template
+
+- **Provider-Specific Data Fetching Examples**:
+  - `DataDemoScreen.supabase.tsx` - React Query + Supabase SDK pattern with optimistic updates
+  - `DataDemoScreen.convex.tsx` - Reactive queries with auto-updates (no manual refetching)
+  - Conditional export in `DataDemoScreen.tsx` loads correct version based on backend
+  - Added to navigation: `navigation.navigate('DataDemo')` from any authenticated screen
+- **Complete Working Examples**: Both screens demonstrate:
+  - Data fetching (list posts)
+  - Creating records (new posts)
+  - Deleting records (with ownership check)
+  - Loading states and error handling
+  - The key paradigm differences between Supabase and Convex
+
+### Added - Unified Auth Hook (Backend-Agnostic)
+- **Enhanced `useAuth()` Hook**: Now the PRIMARY auth hook for all screens and components
+  - Full `AppUser` interface that normalizes user data across Supabase and Convex
+  - `updateProfile()` action for profile updates (works with both backends)
+  - `completeOnboarding()` action for onboarding state
+  - Unified state: `user`, `userId`, `isAuthenticated`, `isLoading`, `isEmailVerified`, `hasCompletedOnboarding`
+  - All auth actions: `signIn`, `signUp`, `signOut`, `signInWithGoogle`, `signInWithApple`, `resetPassword`
+- **Migrated All Screens to `useAuth()`**: Screens no longer use backend-specific hooks directly
+  - ProfileScreen, HomeScreen, LoginScreen, RegisterScreen, OnboardingScreen, ForgotPasswordScreen
+  - EditProfileModal now uses `updateProfile()` instead of direct Supabase calls
+  - OTPVerificationScreen uses unified auth actions
+- **Backend-Agnostic Account Deletion**: `DeleteAccountModal` now works with both backends
+  - Supabase: Uses Edge Function with fallback to direct API deletion
+  - Convex: Uses `api.users.deleteAccount` mutation
+  - Automatically detects backend and uses appropriate deletion method
+- **Backend-Agnostic Preferences & Onboarding**:
+  - `preferencesSync.ts` gracefully skips sync when using Convex (uses mutations instead)
+  - `authHelpers.ts` conditionally syncs onboarding status based on backend
+  - Dark theme, notifications, and push tokens all work with both backends
+  - Supabase: Uses `profiles` table and `push_tokens` table
+  - Convex: Uses `users.preferences` object and `pushTokens` table via mutations
+- **Conditional Service Imports**: Services now use lazy imports for backend-specific code
+  - `preferencesSync.ts` - Skips Supabase calls when using Convex
+  - `accountDeletion.ts` - Only imports Supabase when needed
+  - `authHelpers.ts` - Conditionally imports Supabase for onboarding sync
+  - Enables proper code splitting and prevents errors when using Convex
+
+### Added - Convex Social Sign-In
+- **Full Convex OAuth Implementation**: Complete social sign-in support for Convex Auth
+  - `useConvexSocialAuth` hook for Google, Apple, and GitHub OAuth
+  - Native Google Sign-In integration on iOS/Android (falls back to OAuth)
+  - Proper in-app browser OAuth flow via `expo-web-browser`
+  - Automatic OAuth callback handling with code extraction
+  - Error handling distinguishes user cancellation from actual failures
+- **Modular Convex Auth Hooks**: Separated auth functionality for better DX
+  - `useConvexSocialAuth` - Social providers (Google, Apple, GitHub)
+  - `useConvexPasswordAuth` - Email/password authentication
+  - `useConvexMagicLink` - OTP/magic link authentication
+- **Unified useAuth Hook**: Full Convex implementation (was previously stub)
+  - Works identically to Supabase `useAuth` hook
+  - Same interface: `signIn`, `signUp`, `signInWithGoogle`, `signInWithApple`, etc.
+  - Automatic backend detection based on `EXPO_PUBLIC_BACKEND_PROVIDER`
+- **Updated AuthCallbackScreen**: Now handles both Supabase and Convex OAuth callbacks
+
 ### Fixed
+- **Convex Auth Provider**: Fixed `ResendOTP` provider (doesn't exist) → Use `Email` provider with custom Resend integration
+- **Convex Realtime**: Fixed TypeScript errors in `realtime.ts` for presence auto-join and broadcast sender nullability
+- **Convex Dependencies**: Added `convex`, `@convex-dev/auth`, and `@auth/core` to both root and app workspace
 - **Setup Wizard yarn.lock Regeneration**: Fixed "Package not found in project" error after renaming app
   - Root cause: `yarn.lock` contained old package name references after `package.json` was updated
   - Setup wizard now automatically runs `yarn install` after renaming to regenerate workspace references
@@ -32,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Supabase Native Hooks**: Consistent hook API matching Convex patterns
   - Native hooks: `useSupabaseAuth`, `useSupabaseUser`, `useSupabaseAuthState`
   - Full OAuth support for Google and Apple Sign-In
-- **Unified Auth Hook**: Backend-agnostic `useAppAuth` hook
+- **Unified Auth Hook**: Backend-agnostic `useAuth()` hook
   - Automatically selects correct backend based on configuration
   - Provides common interface (`AppAuthState`, `AppAuthActions`) for both backends
   - Re-exports all native hooks for convenience

@@ -236,20 +236,85 @@ export const useUpdateProfile = () => {
 
 ## Backend Services
 
-### Supabase (Authentication + Database)
-- **Auth**: Email/password, social auth (Google, Apple)
-- **Database**: PostgreSQL with real-time subscriptions
-- **Storage**: File uploads (avatars, etc.)
-- **Pattern**: Use via `/services/supabase.ts`
+### Backend Provider Selection
+During `yarn setup`, you choose your backend provider:
+
+- **Supabase** (default) - PostgreSQL, REST API, real-time subscriptions
+- **Convex** - TypeScript-native, reactive queries, real-time by default
+
+The app uses a unified backend abstraction layer that provides the same API regardless of provider. Code splitting ensures only the selected provider's code is loaded.
 
 ```typescript
-// ✅ DO THIS
+// ✅ DO THIS - Use the unified backend hook
+import { useBackend } from '@/providers'
+
+const { backend, isReady } = useBackend()
+const { data, error } = await backend.auth.signInWithPassword({ email, password })
+```
+
+### Supabase (Authentication + Database)
+- **Auth**: Email/password, social auth (Google, Apple), magic links
+- **Database**: PostgreSQL with real-time subscriptions
+- **Storage**: File uploads (avatars, etc.)
+- **Pattern**: Use via `useBackend()` hook or `/services/backend`
+
+```typescript
+// ✅ DO THIS - Via unified hook
+import { useAuth } from '@/hooks/useAuth'
+
+const { signIn, signOut, user, isAuthenticated } = useAuth()
+await signIn({ email, password })
+
+// ✅ Also valid - Direct Supabase access (when needed)
 import { supabase } from '@/services/supabase'
 
 const { data, error } = await supabase.auth.signInWithPassword({
   email,
   password
 })
+```
+
+### Convex (Authentication + Database)
+- **Auth**: Password, Google, Apple via @convex-dev/auth
+- **Database**: TypeScript-native reactive queries
+- **Storage**: Integrated file storage
+- **Pattern**: Use native Convex hooks for best experience
+
+```typescript
+// ✅ DO THIS - Convex native pattern (recommended)
+import { useAuthActions } from '@convex-dev/auth/react'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../convex/_generated/api'
+
+// Authentication
+const { signIn, signOut } = useAuthActions()
+await signIn('password', { email, password })
+await signIn('google') // OAuth
+
+// Data fetching
+const user = useQuery(api.users.me)
+const updateProfile = useMutation(api.users.updateProfile)
+
+// ✅ Also works - Via unified hook (compatibility layer)
+import { useAuth } from '@/hooks/useAuth'
+
+const { user, isAuthenticated, provider } = useAuth()
+// Note: provider === 'convex' when using Convex
+```
+
+### Backend Provider Configuration
+Set via environment variable in `.env`:
+
+```bash
+# Choose your backend (default: supabase)
+EXPO_PUBLIC_BACKEND_PROVIDER=supabase  # or 'convex'
+
+# Supabase config (when using Supabase)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-key
+
+# Convex config (when using Convex)
+EXPO_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 ```
 
 ### RevenueCat (Subscriptions)

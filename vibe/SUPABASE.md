@@ -51,7 +51,7 @@ Shipnative includes a production-ready database schema. To set it up:
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
-3. Open the `supabase-schema.sql` file from the root of this repository
+3. Open the `supabase/schema.sql` file from the repository
 4. Copy and paste the entire file into the SQL Editor
 5. Click **Run** to execute
 
@@ -68,41 +68,51 @@ See [BACKEND.md](./BACKEND.md) for detailed database documentation.
 
 ## Usage
 
-### Using the Hook (Recommended)
+### Using useAuth() (The Only Auth Hook You Need)
 
 ```typescript
-import { useAuth } from './hooks/useAuth'
+import { useAuth } from '@/hooks'
 
 function LoginScreen() {
-  const { user, signIn, signOut, loading, isAuthenticated } = useAuth()
-  
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
+    signInWithGoogle,
+    signInWithApple,
+    signInWithMagicLink,
+    verifyOtp,
+    updateProfile,
+  } = useAuth()
+
   const handleLogin = async () => {
-    const { error } = await signIn({
-      email: 'user@example.com',
-      password: 'password123',
-    })
-    
+    const { error } = await signIn('user@example.com', 'password123')
     if (error) {
       alert(error.message)
     }
   }
-  
-  if (loading) {
+
+  if (isLoading) {
     return <LoadingSpinner />
   }
-  
+
   if (isAuthenticated) {
     return (
       <View>
-        <Text>Welcome {user?.email}</Text>
+        <Text>Welcome {user?.displayName || user?.email}</Text>
         <Button onPress={signOut} title="Sign Out" />
       </View>
     )
   }
-  
+
   return <Button onPress={handleLogin} title="Sign In" />
 }
 ```
+
+`useAuth()` is the ONLY auth hook you need. It works with both Supabase and Convex backends.
 
 ### Direct Client Access
 
@@ -133,23 +143,15 @@ const { data: { session } } = await supabase.auth.getSession()
 
 ## Authentication
 
+All auth methods are available through `useAuth()`.
+
 ### Sign Up
 
 ```typescript
 const { signUp } = useAuth()
 
 const handleSignUp = async () => {
-  const { error } = await signUp({
-    email: 'user@example.com',
-    password: 'password123',
-    options: {
-      data: {
-        first_name: 'John',
-        last_name: 'Doe',
-      },
-    },
-  })
-  
+  const { error } = await signUp('user@example.com', 'password123')
   if (error) {
     console.error('Sign up error:', error)
   }
@@ -162,11 +164,7 @@ const handleSignUp = async () => {
 const { signIn } = useAuth()
 
 const handleSignIn = async () => {
-  const { error } = await signIn({
-    email: 'user@example.com',
-    password: 'password123',
-  })
-  
+  const { error } = await signIn('user@example.com', 'password123')
   if (error) {
     console.error('Sign in error:', error)
   }
@@ -180,32 +178,47 @@ const { signOut } = useAuth()
 
 const handleSignOut = async () => {
   const { error } = await signOut()
-
   if (error) {
     console.error('Sign out error:', error)
   }
 }
 ```
 
-### Social Login (Google & Apple)
+### OAuth Sign In (Google & Apple)
 
 ```typescript
 const { signInWithGoogle, signInWithApple } = useAuth()
 
 const handleGoogleSignIn = async () => {
   const { error } = await signInWithGoogle()
-
-  if (error) {
-    console.error('Google sign in error:', error)
-  }
+  if (error) console.error('Google sign in error:', error)
 }
 
 const handleAppleSignIn = async () => {
   const { error } = await signInWithApple()
+  if (error) console.error('Apple sign in error:', error)
+}
+```
 
-  if (error) {
-    console.error('Apple sign in error:', error)
+### Magic Link / OTP Sign In
+
+```typescript
+const { signInWithMagicLink, verifyOtp } = useAuth()
+const [codeSent, setCodeSent] = useState(false)
+
+// Step 1: Request magic link / OTP
+const handleRequestCode = async () => {
+  const { error } = await signInWithMagicLink('user@example.com')
+  if (!error) {
+    setCodeSent(true)
+    alert('Check your email for a login link or code!')
   }
+}
+
+// Step 2: Verify OTP (if using OTP mode)
+const handleVerify = async (code: string) => {
+  const { error } = await verifyOtp('user@example.com', code)
+  if (error) console.error('Verification error:', error)
 }
 ```
 
@@ -282,7 +295,6 @@ const { resetPassword } = useAuth()
 
 const handleResetPassword = async () => {
   const { error } = await resetPassword('user@example.com')
-  
   if (error) {
     console.error('Reset error:', error)
   } else {
@@ -291,19 +303,17 @@ const handleResetPassword = async () => {
 }
 ```
 
-### Update User
+### Update Profile
 
 ```typescript
-const { updateUser } = useAuth()
+const { updateProfile } = useAuth()
 
 const handleUpdateProfile = async () => {
-  const { error } = await updateUser({
-    data: {
-      first_name: 'Jane',
-      avatar_url: 'https://example.com/avatar.jpg',
-    },
+  const { error } = await updateProfile({
+    firstName: 'Jane',
+    lastName: 'Doe',
+    avatarUrl: 'https://example.com/avatar.jpg',
   })
-  
   if (error) {
     console.error('Update error:', error)
   }
@@ -487,7 +497,7 @@ const session = mockSupabaseHelpers.getCurrentSession()
 
 ### Core Tables
 
-For the complete schema, refer to `supabase-schema.sql` at the root of the repository. Below is an overview of the core tables.
+For the complete schema, refer to `supabase/schema.sql`. Below is an overview of the core tables.
 
 #### User Profiles
 
@@ -600,6 +610,8 @@ Shipnative includes ready-to-use hooks for common realtime patterns.
 
 ## Realtime Hooks
 
+> **Note:** All realtime hooks use the backend abstraction layer (`services/backend`), making them provider-agnostic. They work with both Supabase and Convex backends.
+
 ### useRealtimeMessages (Chat)
 
 Full-featured chat hook with typing indicators:
@@ -665,6 +677,7 @@ function ChatRoom({ channelId }: { channelId: string }) {
 - Optimistic updates
 - Connection status tracking
 - Mock mode support for development
+- Backend-agnostic (uses `services/backend` abstraction)
 
 ### useRealtimePresence (Online Users)
 
@@ -718,6 +731,7 @@ function OnlineUsers({ roomId }: { roomId: string }) {
 - Custom presence data (current screen, activity, etc.)
 - Join/leave callbacks
 - Status updates broadcast to all users
+- Backend-agnostic (uses `services/backend` abstraction)
 
 ### useRealtimeSubscription (Generic)
 
@@ -778,6 +792,7 @@ function ActivityFeed({ userId }: { userId: string }) {
 - Filter by column values
 - Connection management (connect, disconnect, reconnect)
 - Works with any table
+- Backend-agnostic (uses `services/backend` abstraction)
 
 ### Database Schema for Chat
 

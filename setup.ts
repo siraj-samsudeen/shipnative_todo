@@ -573,6 +573,160 @@ const getMetadataDefaults = (): Partial<MetadataConfig> => {
   }
 }
 
+// ========================================
+// BACKEND CLEANUP (Remove unused provider code)
+// ========================================
+
+const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promise<boolean> => {
+  const unusedProvider = selectedProvider === "supabase" ? "convex" : "supabase"
+
+  // Paths to clean up
+  const pathsToRemove = [
+    // Service layer
+    `apps/app/app/services/backend/${unusedProvider}`,
+    // Hooks
+    `apps/app/app/hooks/${unusedProvider}`,
+  ]
+
+  // Additional Convex-specific paths
+  if (unusedProvider === "convex") {
+    pathsToRemove.push(
+      "packages/backend/convex",
+      "convex", // Root convex folder
+    )
+  }
+
+  // Check which paths exist
+  const existingPaths = pathsToRemove
+    .map(p => path.join(__dirname, p))
+    .filter(p => fs.existsSync(p))
+
+  if (existingPaths.length === 0) {
+    return false // Nothing to clean up
+  }
+
+  // Auto-cleanup: no prompt, just do it
+  console.log(chalk.cyan(`\n🧹 Cleaning up unused ${unusedProvider} code...`))
+  console.log(chalk.dim("   Removing folders:"))
+  for (const p of existingPaths) {
+    console.log(chalk.dim(`   • ${path.relative(__dirname, p)}/`))
+  }
+
+  const stopSpinner = createSpinner(`Removing ${unusedProvider} backend code`)
+
+  try {
+    for (const fullPath of existingPaths) {
+      // Remove directory recursively (no backup needed - they can re-clone if needed)
+      fs.rmSync(fullPath, { recursive: true, force: true })
+    }
+
+    stopSpinner(true)
+    console.log(chalk.green(`✅ Removed ${unusedProvider} code. Your codebase is now ${selectedProvider}-only!`))
+    return true
+  } catch (error) {
+    stopSpinner(false)
+    console.error(chalk.red(`\n❌ Failed to remove some files: ${error.message}`))
+    console.log(chalk.yellow("   You can manually remove these folders later."))
+    return false
+  }
+}
+
+// Generate backend-specific .env.example (remove the other backend's section)
+const updateEnvExample = (selectedProvider: BackendProvider): boolean => {
+  const envExamplePath = path.join(__dirname, "apps/app/.env.example")
+  if (!fs.existsSync(envExamplePath)) {
+    return false
+  }
+
+  try {
+    let content = fs.readFileSync(envExamplePath, "utf8")
+
+    if (selectedProvider === "supabase") {
+      // Remove Convex section
+      content = content.replace(
+        /# ============================================\n# Convex Configuration \(when using Convex\)\n# ============================================\n# Get this from:.*\n# Only needed if.*\n# Leave empty to.*\nEXPO_PUBLIC_CONVEX_URL=.*\n\n/,
+        ""
+      )
+      // Update the backend provider comment
+      content = content.replace(
+        /# Options: "supabase" \(default\) or "convex"\n# This determines which backend.*\n# If not set, defaults to "supabase"/,
+        "# Your app uses Supabase for backend services"
+      )
+    } else {
+      // Remove Supabase section
+      content = content.replace(
+        /# ============================================\n# Supabase Configuration \(when using Supabase\)\n# ============================================\n# Get these from:.*\n# Use the publishable key.*\n# Leave empty to.*\nEXPO_PUBLIC_SUPABASE_URL=.*\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=.*\n\n/,
+        ""
+      )
+      // Update the backend provider comment
+      content = content.replace(
+        /# Options: "supabase" \(default\) or "convex"\n# This determines which backend.*\n# If not set, defaults to "supabase"/,
+        "# Your app uses Convex for backend services"
+      )
+      // Update the value
+      content = content.replace(
+        /EXPO_PUBLIC_BACKEND_PROVIDER=supabase/,
+        "EXPO_PUBLIC_BACKEND_PROVIDER=convex"
+      )
+    }
+
+    fs.writeFileSync(envExamplePath, content)
+    console.log(chalk.dim(`   • Updated .env.example for ${selectedProvider}`))
+    return true
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update .env.example: ${error.message}`))
+    return false
+  }
+}
+
+// Remove unused backend packages from package.json files
+const removeUnusedBackendPackages = (selectedProvider: BackendProvider): boolean => {
+  const unusedProvider = selectedProvider === "supabase" ? "convex" : "supabase"
+
+  // Packages to remove based on unused provider
+  const packagesToRemove = unusedProvider === "convex"
+    ? ["convex", "@convex-dev/auth", "@auth/core"]
+    : ["@supabase/supabase-js"]
+
+  const packageJsonPaths = [
+    path.join(__dirname, "package.json"),
+    path.join(__dirname, "apps/app/package.json"),
+  ]
+
+  let anyUpdated = false
+
+  for (const pkgPath of packageJsonPaths) {
+    if (!fs.existsSync(pkgPath)) continue
+
+    try {
+      const content = fs.readFileSync(pkgPath, "utf8")
+      const pkg = JSON.parse(content)
+      let updated = false
+
+      for (const depToRemove of packagesToRemove) {
+        if (pkg.dependencies && pkg.dependencies[depToRemove]) {
+          delete pkg.dependencies[depToRemove]
+          updated = true
+        }
+        if (pkg.devDependencies && pkg.devDependencies[depToRemove]) {
+          delete pkg.devDependencies[depToRemove]
+          updated = true
+        }
+      }
+
+      if (updated) {
+        fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n")
+        console.log(chalk.dim(`   • Removed ${unusedProvider} packages from ${path.relative(__dirname, pkgPath)}`))
+        anyUpdated = true
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`   ⚠️ Could not update ${path.relative(__dirname, pkgPath)}: ${error.message}`))
+    }
+  }
+
+  return anyUpdated
+}
+
 const serviceLabels = {
   appEnv: "App Environment & Links",
   backend: "Backend Provider",
@@ -822,12 +976,13 @@ const configureConvex = async (
     "",
     "💡 Your deployment URL looks like: https://xxx-xxx-xxx.convex.cloud",
     "",
-    "⏭️  You can skip this now and set it up later - your app will work in 'mock mode'.",
+    "⚠️  Unlike Supabase, Convex requires 'npx convex dev' running locally.",
+    "   There's no mock mode - but local dev is fast and gives you a real database!",
   ])
 
   const shouldConfigure = options.skipConfirm || (await askYesNo("Do you want to set up Convex now?", true))
   if (!shouldConfigure) {
-    console.log(chalk.dim("\n   ✅ Skipped. Your app will use mock data. You can add Convex later!"))
+    console.log(chalk.dim("\n   ✅ Skipped. Run 'npx convex dev' when ready to start your backend."))
     return false
   }
 
@@ -841,10 +996,10 @@ const configureConvex = async (
   )
 
   console.log(chalk.yellow("\n📝 Important Next Steps:"))
-  console.log(chalk.dim("   1. Install Convex CLI: npm install -g convex"))
-  console.log(chalk.dim("   2. Initialize Convex: npx convex dev (in apps/app directory)"))
+  console.log(chalk.dim("   1. Run 'npx convex dev' to start local backend"))
+  console.log(chalk.dim("   2. Run 'npx @convex-dev/auth' to set up auth keys (JWT_PRIVATE_KEY & JWKS)"))
   console.log(chalk.dim("   3. The schema is already set up in convex/schema.ts"))
-  console.log(chalk.dim("   4. See docs/CONVEX.md for authentication setup"))
+  console.log(chalk.dim("   4. See vibe/CONVEX.md for authentication setup"))
 
   return true
 }
@@ -1450,6 +1605,21 @@ async function setup(): Promise<void> {
     const { env: updatedMarketingEnv, updated: marketingUpdated, requested: marketingRequested } = await configureMarketingPage(marketingEnv)
 
     // ========================================
+    // CLEANUP UNUSED BACKEND CODE & DEPENDENCIES
+    // ========================================
+    const selectedBackend = (services.EXPO_PUBLIC_BACKEND_PROVIDER || "supabase") as BackendProvider
+    let backendCodeRemoved = false
+    let packagesRemoved = false
+    if (!isDryRun && services.EXPO_PUBLIC_BACKEND_PROVIDER) {
+      backendCodeRemoved = await removeUnusedBackendCode(selectedBackend)
+      if (backendCodeRemoved) {
+        // Also clean up .env.example and package dependencies
+        updateEnvExample(selectedBackend)
+        packagesRemoved = removeUnusedBackendPackages(selectedBackend)
+      }
+    }
+
+    // ========================================
     // APPLY CHANGES
     // ========================================
     if (!isDryRun) {
@@ -1568,11 +1738,15 @@ async function setup(): Promise<void> {
         console.log(`\n📋 Setup summary saved to: ${path.relative(__dirname, summaryPath)}`)
       }
 
-      // CRITICAL: When package.json name changes, yarn install MUST run to regenerate yarn.lock
-      // Otherwise yarn workspace references will fail (e.g., "old-name@workspace:apps/app not found")
-      if (metadataConfigured && config.projectName) {
-        console.log(chalk.yellow("\n⚠️  Package name changed - regenerating yarn.lock..."))
-        console.log(chalk.dim("   This is required to update workspace references."))
+      // CRITICAL: When package.json changes, yarn install MUST run to regenerate yarn.lock
+      // This happens when: metadata changes (project name) OR when backend packages are removed
+      const needsYarnInstall = (metadataConfigured && config.projectName) || packagesRemoved
+      if (needsYarnInstall) {
+        const reason = packagesRemoved
+          ? "Backend packages removed"
+          : "Package name changed"
+        console.log(chalk.yellow(`\n⚠️  ${reason} - regenerating yarn.lock...`))
+        console.log(chalk.dim("   This is required to update dependencies."))
         const stopSpinner = createSpinner("Running yarn install to regenerate yarn.lock")
         try {
           execSync("yarn install", { stdio: "inherit", cwd: __dirname })
@@ -1580,8 +1754,7 @@ async function setup(): Promise<void> {
         } catch (error) {
           stopSpinner(false)
           console.error(chalk.red("   ❌ Failed to regenerate yarn.lock"))
-          console.error(chalk.yellow("   ⚠️  Run 'yarn install' manually before building, or you may see errors like:"))
-          console.error(chalk.dim("      'Package for yourapp@workspace:apps/app not found in the project'"))
+          console.error(chalk.yellow("   ⚠️  Run 'yarn install' manually before building"))
         }
       }
     } else {

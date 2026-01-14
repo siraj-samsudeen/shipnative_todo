@@ -4,11 +4,16 @@ This document explains the mock service architecture to help AI assistants under
 
 ## Overview
 
-This project uses **automatic mock services** that activate when API keys are missing in development. This allows:
-- ✅ Full-stack development without external dependencies
-- ✅ Frontend development without backend setup
-- ✅ Testing UI flows without real API calls
-- ✅ Rapid prototyping and iteration
+This project uses **automatic mock services** for Supabase and other services (PostHog, Sentry, RevenueCat) that activate when API keys are missing in development.
+
+> **Recommendation**: Set up real API keys from the start. Supabase, PostHog, and Sentry all have generous free tiers and take ~5 minutes to configure. This avoids surprises when you switch from mocks to production.
+
+> **Important**: Mock mode is available for **Supabase** backend only. If using **Convex**, run `npx convex dev` for local development instead.
+
+**When to use mock mode**:
+- Quick UI prototyping before backend is ready
+- Testing UI flows in isolation
+- CI/CD environments without credentials
 
 ## Mock Service Architecture
 
@@ -33,10 +38,12 @@ export const USE_MOCK_SENTRY = __DEV__ && !process.env.EXPO_PUBLIC_SENTRY_DSN
 
 | Service | Mock Location | Real Service | Purpose |
 |---------|--------------|--------------|---------|
-| Supabase | `services/mocks/supabase.ts` | `@supabase/supabase-js` | Auth & Database |
+| Supabase | `services/mocks/supabase/` | `@supabase/supabase-js` | Auth & Database |
 | PostHog | `services/mocks/posthog.ts` | `posthog-react-native` / `posthog-js` | Analytics |
 | Sentry | `services/mocks/sentry.ts` | `@sentry/react-native` / `@sentry/react` | Error Tracking |
 | RevenueCat | `services/mocks/revenueCat.ts` | `react-native-purchases` (mobile) / `@revenuecat/purchases-js` (web) | Payments (iOS, Android, Web) |
+
+> **Note**: Convex does not have mock services. Use `npx convex dev` for local Convex development.
 
 ---
 
@@ -586,27 +593,32 @@ The same code works with real services!
 
 ## Mock Service Limitations
 
-**✅ Mock services now simulate ~95% of common API usage!**
+> **Recommendation**: Set up real Supabase from the start. Free tier is generous, setup takes ~5 minutes, and you avoid mock/production drift.
 
 | Feature | Mock Support | Notes |
 |---------|--------------|-------|
 | Basic CRUD | ✅ Full | Works identically |
 | Auth (email/password) | ✅ Full | Session persistence included |
-| Auth (OAuth) | ✅ Full | Simulates Google, Apple, GitHub, Twitter |
-| Query filters (eq, gt, lt, etc.) | ✅ Full | All standard filters work |
+| Auth (OAuth) | ✅ Simulated | Simulates flow, no real provider |
+| Query filters (eq, gt, lt, etc.) | ✅ Full | Standard filters work |
 | Ordering & Limiting | ✅ Full | Works identically |
 | Storage API | ✅ Full | Upload, download, list, URLs |
-| Realtime Subscriptions | ✅ Full | Trigger events programmatically |
-| RPC (stored procedures) | ✅ Full | Register custom handlers |
-| Row Level Security | ❌ None | No permission checks |
-| Advanced filters (contains, overlaps) | ⚠️ Partial | Basic support only |
-| Database functions/triggers | ❌ None | Use RPC handlers instead |
+| Realtime Subscriptions | ⚠️ Manual | Must trigger events manually |
+| Row Level Security | ❌ None | **No permission checks** |
+| Complex joins/relations | ❌ None | Single table queries only |
+| Database functions/triggers | ❌ None | Not supported |
+| Full-text search | ❌ None | Not supported |
 
-**When to use real services**:
+**When mocks make sense**:
+- Quick UI prototyping (< 1 day)
+- CI/CD without credentials
+- Isolated component testing
+
+**When to use real services** (recommended):
+- Any serious development
+- Testing auth flows with real providers
 - Testing Row Level Security
-- Testing database triggers/functions
-- Performance testing
-- Production deployment
+- Anything beyond basic CRUD
 
 ---
 
@@ -614,24 +626,25 @@ The same code works with real services!
 
 **Key Takeaways**:
 
-1. **Mock services cover ~95% of use cases** - Use them confidently for all features
-2. **Write code as if backend exists** - Mocks handle everything
-3. **Same API for mock and real** - No code changes needed
-4. **Seed data for testing** - Use helper utilities
-5. **Test error handling** - Use `simulateError()` for edge cases
-6. **Test realtime** - Use `triggerRealtimeEvent()` for live updates
-7. **Test file uploads** - Storage API is fully mocked
-8. **Check console logs** - All operations are logged
+1. **Recommend real API keys** - Free tiers are generous, setup is quick, avoids mock/production drift
+2. **Mock services are for Supabase backend only** - Convex uses `npx convex dev` instead
+3. **Mocks cover basic CRUD, auth, and storage** - Enough to build and test UI
+4. **Same API for mock and real** - No code changes needed
+5. **Mocks have limitations** - No RLS, no complex joins, no DB triggers
 
-**New Features**:
-- 📁 **Storage**: Full file upload/download support
-- 📡 **Realtime**: Subscribe to and trigger database changes
-- 🔐 **OAuth**: Realistic Google/Apple/GitHub/Twitter flow
-- ⚡ **RPC**: Register custom stored procedure handlers
+**What mocks handle well**:
+- ✅ Basic CRUD operations
+- ✅ Auth flows (sign up, sign in, OAuth simulation)
+- ✅ File storage (upload, download, URLs)
+- ✅ Simple queries with filters
+
+**What mocks don't handle**:
+- ❌ Row Level Security (no permission checks)
+- ❌ Complex joins/relations
+- ❌ Database functions/triggers
+- ❌ Full-text search
 
 **When in doubt**:
-- Use the real service API (Supabase, PostHog, etc.)
-- Mocks will automatically handle it
-- Code will work in production without changes
-
-This architecture enables true **frontend-first development** where you can build complete features without any backend setup!
+- Recommend setting up real Supabase (5 min, free tier)
+- If user insists on no setup, mocks work for basic flows
+- If using Convex: `npx convex dev` is required (no mocks)

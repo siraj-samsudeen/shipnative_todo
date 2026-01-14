@@ -2,9 +2,10 @@
  * Preferences Sync Service
  *
  * Handles syncing user preferences (theme, notifications) between
- * local storage and the Supabase profiles table.
+ * local storage and the backend database.
  *
- * Also handles push token synchronization to the push_tokens table.
+ * - Supabase: Uses profiles table for preferences, push_tokens table for tokens
+ * - Convex: Preferences use Convex mutations, push tokens use convex/pushTokens.ts
  *
  * Uses fire-and-forget pattern for updates to avoid blocking UI.
  */
@@ -13,11 +14,24 @@ import { Platform } from "react-native"
 import * as Device from "expo-device"
 import { UnistylesRuntime } from "react-native-unistyles"
 
-import { supabase, isUsingMockSupabase } from "./supabase"
+import { isSupabase, isConvex } from "../config/env"
 import { useNotificationStore } from "../stores/notificationStore"
 import type { SupabaseDatabase, UserPreferences } from "../types/supabase"
 import { logger } from "../utils/Logger"
 import { storage } from "../utils/storage"
+
+// Conditionally import Supabase - only when using Supabase backend
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { supabase, isUsingMockSupabase } = isSupabase
+  ? require("./supabase")
+  : { supabase: null, isUsingMockSupabase: true }
+
+// Conditionally import Convex push token service
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const convexPushTokens = isConvex ? require("./backend/convex/pushTokens") : null
+
+// For preferences (theme, notifications settings), skip sync for Convex (use React mutations instead)
+const shouldSkipPreferenceSync = isConvex || isUsingMockSupabase
 
 type _ProfilesUpdate = SupabaseDatabase["public"]["Tables"]["profiles"]["Update"]
 type PushTokenInsert = SupabaseDatabase["public"]["Tables"]["push_tokens"]["Insert"]
@@ -27,10 +41,13 @@ const THEME_STORAGE_KEY = "shipnative.themeScheme"
 
 /**
  * Fetch user preferences from the database
- * Returns null if using mock Supabase or if fetch fails
+ * Returns null if using Convex, mock mode, or if fetch fails
+ *
+ * For Convex: Preferences are part of the user object from useQuery(api.users.me)
  */
 export async function fetchUserPreferences(userId: string): Promise<UserPreferences | null> {
-  if (isUsingMockSupabase) {
+  if (shouldSkipPreferenceSync) {
+    logger.debug("Skipping preference fetch (Convex or mock mode)")
     return null
   }
 
@@ -59,13 +76,16 @@ export async function fetchUserPreferences(userId: string): Promise<UserPreferen
 /**
  * Update a single preference in the database (fire-and-forget)
  * Does not block - updates happen in background
+ *
+ * For Convex: Use useMutation(api.users.updatePreferences) instead
  */
 export function updatePreference(
   userId: string,
   preference: keyof UserPreferences,
   value: boolean,
 ): void {
-  if (isUsingMockSupabase) {
+  if (shouldSkipPreferenceSync) {
+    logger.debug(`Skipping ${preference} sync (Convex or mock mode)`)
     return
   }
 
@@ -119,9 +139,12 @@ export function syncEmailNotificationsPreference(userId: string, enabled: boolea
 
 /**
  * Sync all preferences at once (fire-and-forget)
+ *
+ * For Convex: Use useMutation(api.users.updatePreferences) instead
  */
 export function syncAllPreferences(userId: string, preferences: Partial<UserPreferences>): void {
-  if (isUsingMockSupabase) {
+  if (shouldSkipPreferenceSync) {
+    logger.debug("Skipping all preferences sync (Convex or mock mode)")
     return
   }
 
@@ -226,17 +249,26 @@ function getPlatform(): "ios" | "android" | "web" {
  * Sync push token to the database
  * Uses upsert to handle both new tokens and updates
  *
- * @param userId - The authenticated user's ID
+ * Works with both Supabase and Convex backends.
+ *
+ * @param userId - The authenticated user's ID (ignored for Convex, uses auth context)
  * @param token - The Expo push token (e.g., ExponentPushToken[xxx])
  */
 export function syncPushToken(userId: string, token: string): void {
-  if (isUsingMockSupabase) {
-    logger.debug("Skipping push token sync (mock mode)")
+  if (!token) {
+    logger.debug("No push token to sync")
     return
   }
 
-  if (!token) {
-    logger.debug("No push token to sync")
+  // Use Convex push token service if available
+  if (isConvex && convexPushTokens) {
+    void convexPushTokens.syncPushToken(token)
+    return
+  }
+
+  // Skip if mock mode (no Supabase)
+  if (isUsingMockSupabase) {
+    logger.debug("Skipping push token sync (mock mode)")
     return
   }
 
@@ -271,15 +303,24 @@ export function syncPushToken(userId: string, token: string): void {
  * Deactivate push token when user logs out or disables notifications
  * Instead of deleting, we mark as inactive to maintain history
  *
- * @param userId - The authenticated user's ID
+ * Works with both Supabase and Convex backends.
+ *
+ * @param userId - The authenticated user's ID (ignored for Convex, uses auth context)
  * @param token - The Expo push token to deactivate
  */
 export function deactivatePushToken(userId: string, token: string): void {
-  if (isUsingMockSupabase) {
+  if (!token) {
     return
   }
 
-  if (!token) {
+  // Use Convex push token service if available
+  if (isConvex && convexPushTokens) {
+    void convexPushTokens.deactivatePushToken(token)
+    return
+  }
+
+  // Skip if mock mode (no Supabase)
+  if (isUsingMockSupabase) {
     return
   }
 
@@ -305,9 +346,18 @@ export function deactivatePushToken(userId: string, token: string): void {
 /**
  * Deactivate all push tokens for a user (e.g., on logout)
  *
- * @param userId - The authenticated user's ID
+ * Works with both Supabase and Convex backends.
+ *
+ * @param userId - The authenticated user's ID (ignored for Convex, uses auth context)
  */
 export function deactivateAllPushTokens(userId: string): void {
+  // Use Convex push token service if available
+  if (isConvex && convexPushTokens) {
+    void convexPushTokens.deactivateAllPushTokens()
+    return
+  }
+
+  // Skip if mock mode (no Supabase)
   if (isUsingMockSupabase) {
     return
   }

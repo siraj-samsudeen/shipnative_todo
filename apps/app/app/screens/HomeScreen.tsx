@@ -8,8 +8,9 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { Text, Avatar, Badge, PressableCard } from "@/components"
 import { ANIMATION } from "@/config/constants"
+import { useAuth } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
-import { useAuthStore, useNotificationStore } from "@/stores"
+import { useNotificationStore } from "@/stores"
 import { webDimension } from "@/types/webStyles"
 import { haptics } from "@/utils/haptics"
 
@@ -34,7 +35,7 @@ const CONTENT_MAX_WIDTH = 800
 export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
   const { navigation } = _props
   const { theme } = useUnistyles()
-  const user = useAuthStore((state) => state.user)
+  const { user } = useAuth()
   const { isPushEnabled, togglePush } = useNotificationStore()
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
@@ -57,12 +58,10 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
     togglePush()
   }
 
-  const firstName =
-    typeof user?.user_metadata?.first_name === "string" ? user.user_metadata.first_name : undefined
-  const userName = firstName ?? user?.email?.split("@")[0] ?? "User"
+  // Use unified user object from useAuth
+  const userName = user?.displayName ?? user?.email?.split("@")[0] ?? "User"
   const userInitials = userName.slice(0, 2).toUpperCase()
-  const avatarUrl =
-    typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : undefined
+  const avatarUrl = user?.avatarUrl ?? undefined
 
   return (
     <View style={styles.container}>

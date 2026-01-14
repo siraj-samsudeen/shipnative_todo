@@ -19,7 +19,17 @@ Make sure the code you write is compliant with App Store and play store policies
 - **Navigation**: React Navigation (type-safe via `navigationTypes.ts`)
 - **State**: Zustand (global) + React Query (server)
 - **Forms**: React Hook Form + Zod
-- **Backend**: Supabase, RevenueCat, PostHog, Sentry
+- **Backend**: Supabase OR Convex (choose one), RevenueCat, PostHog, Sentry
+
+### Backend Choice
+The boilerplate supports two backends with native-level integration:
+
+| Backend | Best For | Auth | Database | Realtime |
+|---------|----------|------|----------|----------|
+| **Supabase** | SQL apps, PostgreSQL fans | Email, OAuth, Magic Link | PostgreSQL + RLS | Postgres Changes |
+| **Convex** | TypeScript-first, reactive apps | Email, OAuth (Auth.js) | Document DB + Functions | Built-in reactivity |
+
+Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex` in `.env`.
 
 ### NEVER USE
 - NativeWind/Tailwind (use Unistyles)
@@ -35,7 +45,9 @@ Make sure the code you write is compliant with App Store and play store policies
 | Screens | `apps/app/app/screens/` |
 | Components | `apps/app/app/components/` |
 | Charts | `apps/app/app/components/Charts/` |
-| Hooks | `apps/app/app/hooks/` |
+| **Hooks (import from here)** | `apps/app/app/hooks/index.ts` |
+| Convex Native Hooks | `apps/app/app/hooks/convex/` |
+| Supabase Native Hooks | `apps/app/app/hooks/supabase/` |
 | Stores (Zustand) | `apps/app/app/stores/` |
 | Services | `apps/app/app/services/` |
 | Types | `apps/app/app/types/` |
@@ -69,6 +81,65 @@ Make sure the code you write is compliant with App Store and play store policies
 - `PricingCard` - Subscription pricing display with features list (uses Ionicons for checkmarks)
 - `SubscriptionStatus` - User subscription status display (uses Ionicons for plan icons)
 
+## Authentication
+
+**Use `useAuth()` in screens** - it works with both Supabase and Convex:
+
+```typescript
+import { useAuth } from '@/hooks'
+
+const {
+  user,                    // Unified AppUser object
+  isAuthenticated,
+  isLoading,
+  signIn, signUp, signOut,
+  signInWithGoogle, signInWithApple,
+  updateProfile,
+} = useAuth()
+```
+
+**For provider-specific features, use native hooks:**
+
+```typescript
+// Supabase-specific (magic link, OTP, direct SDK)
+import { useSupabaseAuth } from '@/hooks/supabase'
+
+// Convex-specific (reactive queries, mutations)
+import { useQuery, useMutation, useConvexAuth } from '@/hooks/convex'
+import { api } from '@convex/_generated/api'
+
+const users = useQuery(api.users.list)  // Reactive - auto-updates!
+const updateUser = useMutation(api.users.update)
+```
+
+## Data Fetching by Provider
+
+### Supabase (SQL-like, React Query)
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/services/supabase'
+
+const { data } = useQuery({
+  queryKey: ['users'],
+  queryFn: () => supabase.from('users').select('*')
+})
+```
+
+### Convex (Reactive, TypeScript-native)
+```typescript
+import { useQuery, useMutation } from '@/hooks/convex'
+import { api } from '@convex/_generated/api'
+
+// Reactive - auto-updates when data changes!
+const users = useQuery(api.users.list)
+const createUser = useMutation(api.users.create)
+```
+
+> **Note**: The `backend.db.query()` abstraction exists but is NOT recommended for Convex. Use native hooks for the best developer experience.
+
+### DataDemoScreen (Template)
+See `screens/DataDemoScreen.supabase.tsx` or `screens/DataDemoScreen.convex.tsx` for complete working examples of data fetching with your chosen backend.
+
 ## Subscription Features
 
 ### Helper Functions (from `@/utils/subscriptionHelpers`)
@@ -100,7 +171,9 @@ All packages include promotional pricing when configured in RevenueCat:
 | App architecture | `apps/app/vibe/ARCHITECTURE.md` |
 | Screen templates | `apps/app/vibe/SCREEN_TEMPLATES.md` |
 | Services & mocks | `vibe/SERVICES.md`, `vibe/MOCK_SERVICES.md` |
-| Auth & database | `vibe/SUPABASE.md` |
+| Backend overview | `vibe/BACKEND.md` |
+| Supabase (auth, database) | `vibe/SUPABASE.md` |
+| Convex (auth, database) | `vibe/CONVEX.md` |
 | Realtime (chat, presence) | `vibe/SUPABASE.md` (Realtime Hooks section) |
 | Payments | `vibe/MONETIZATION.md` |
 | Advanced subscriptions | `vibe/SUBSCRIPTION_ADVANCED.md` |
@@ -109,6 +182,21 @@ All packages include promotional pricing when configured in RevenueCat:
 ## Platform Support
 - iOS, Android, Web (via Expo Web)
 - `apps/web/` is a separate marketing site using Tailwind (not Unistyles)
+
+## Environment Variables
+
+| File | Purpose |
+|------|---------|
+| `apps/app/.env` | Mobile app config (Expo loads this) |
+| `apps/app/.env.example` | Template with all available variables |
+| `apps/web/.env` | Marketing site config (Vite loads this) |
+| Root `.env.local` | Shared/override config (NOT used by apps) |
+
+**For mobile app**: Edit `apps/app/.env` or run `yarn setup` to configure interactively.
+
+**For marketing site**: Edit `apps/web/.env`.
+
+> Note: Root-level `.env.local` exists for scripts/tooling but is NOT automatically loaded by the apps. Each app reads its own `.env` file.
 
 ## Rules
 - Check `apps/app/app/components/` before creating new components

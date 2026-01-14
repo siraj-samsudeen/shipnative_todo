@@ -12,7 +12,11 @@ import { env } from "../../config/env"
 import { queryClient } from "../../hooks/queries"
 import { supabase, isUsingMockSupabase } from "../../services/supabase"
 import { isEmailConfirmed } from "../../types/auth"
-import { extractSupabaseError } from "../../types/supabaseErrors"
+import {
+  extractSupabaseError,
+  isNetworkError,
+  enhanceNetworkError,
+} from "../../types/supabaseErrors"
 import { logger } from "../../utils/Logger"
 import {
   authRateLimiter,
@@ -90,6 +94,14 @@ export async function signInAction(
 
     return {}
   } catch (error) {
+    // Enhance network errors with helpful messages
+    if (isNetworkError(error)) {
+      logger.error("SignIn network error", {
+        supabaseUrl: env.supabaseUrl?.substring(0, 50),
+        hint: "Check if your Supabase project is active",
+      })
+      return { error: enhanceNetworkError(error, "Supabase") }
+    }
     return { error: error as Error }
   }
 }
@@ -178,83 +190,41 @@ export async function signUpAction(
         }
       }
     } catch (signUpError) {
-      // Handle network errors or other exceptions - log FULL error details
-      const errorMessage = signUpError instanceof Error ? signUpError.message : String(signUpError)
-      const errorStack = signUpError instanceof Error ? signUpError.stack : undefined
-      const errorCause =
-        signUpError instanceof Error && "cause" in signUpError
-          ? (signUpError as Error & { cause?: unknown }).cause
-          : undefined
-
-      logger.error(
-        "SignUp failed with exception - FULL ERROR DETAILS",
-        {
-          errorMessage,
-          errorStack,
-          errorCause: errorCause ? String(errorCause) : undefined,
-          errorType: signUpError?.constructor?.name,
-          fullError:
-            signUpError instanceof Error
-              ? JSON.stringify(signUpError, Object.getOwnPropertyNames(signUpError))
-              : String(signUpError),
+      // Handle network errors with helpful messages
+      if (isNetworkError(signUpError)) {
+        logger.error("SignUp network error", {
+          supabaseUrl: env.supabaseUrl?.substring(0, 50),
+          hint: "Check if your Supabase project is active",
           isUsingMock: isUsingMockSupabase,
           platform: Platform.OS,
-          hasEmailRedirectTo: !!emailRedirectTo,
-          supabaseUrl: env.supabaseUrl ? env.supabaseUrl.substring(0, 30) + "..." : undefined,
+        })
+        return { error: enhanceNetworkError(signUpError, "Supabase") }
+      }
+
+      // Log other errors with details
+      logger.error(
+        "SignUp failed with exception",
+        {
+          errorType: signUpError?.constructor?.name,
+          isUsingMock: isUsingMockSupabase,
+          platform: Platform.OS,
         },
         signUpError as Error,
       )
-
-      // In development, return the original error so user can see real details
-      if (__DEV__) {
-        return { error: signUpError as Error }
-      }
-
-      // In production, return user-friendly error message
-      if (
-        errorMessage.includes("Network request failed") ||
-        errorMessage.includes("fetch") ||
-        errorMessage.includes("Failed to fetch")
-      ) {
-        return {
-          error: new Error("Network error. Please check your internet connection and try again."),
-        }
-      }
 
       return { error: signUpError as Error }
     }
 
     if (error) {
-      // Log FULL error details from Supabase response
-      const errorMessage = error.message || String(error)
-      const supabaseError = extractSupabaseError(error)
-      const errorStatus = supabaseError?.status
-      const errorName = supabaseError?.name
-
-      if (
-        errorMessage.includes("Network request failed") ||
-        errorMessage.includes("fetch") ||
-        errorMessage.includes("Failed to fetch")
-      ) {
-        logger.error("SignUp network error from Supabase response - FULL ERROR DETAILS", {
-          errorMessage,
-          errorStatus,
-          errorName,
-          fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+      // Check for network errors and enhance the message
+      if (isNetworkError(error)) {
+        logger.error("SignUp network error from Supabase response", {
+          supabaseUrl: env.supabaseUrl?.substring(0, 50),
+          hint: "Check if your Supabase project is active",
           isUsingMock: isUsingMockSupabase,
           platform: Platform.OS,
-          supabaseUrl: env.supabaseUrl ? env.supabaseUrl.substring(0, 30) + "..." : undefined,
         })
-
-        // In development, return the original error so user can see real details
-        if (__DEV__) {
-          return { error }
-        }
-
-        // In production, return user-friendly error message
-        return {
-          error: new Error("Network error. Please check your internet connection and try again."),
-        }
+        return { error: enhanceNetworkError(error, "Supabase") }
       }
       return { error }
     }
@@ -333,6 +303,11 @@ export async function resendConfirmationEmailAction(email: string): Promise<{ er
     }
 
     if (error) {
+      // Check for network errors first
+      if (isNetworkError(error)) {
+        return { error: enhanceNetworkError(error, "Supabase") }
+      }
+
       // Provide more helpful error messages
       let errorMessage = error.message || "Failed to resend email. Please try again."
 
@@ -351,6 +326,10 @@ export async function resendConfirmationEmailAction(email: string): Promise<{ er
 
     return {}
   } catch (error) {
+    // Enhance network errors with helpful messages
+    if (isNetworkError(error)) {
+      return { error: enhanceNetworkError(error, "Supabase") }
+    }
     logger.error("Error in resendConfirmationEmail", { error, email })
     return { error: error as Error }
   }
@@ -379,6 +358,10 @@ export async function verifyEmailAction(code: string, set: SetState): Promise<{ 
     const { data, error } = response
 
     if (error) {
+      // Enhance network errors with helpful messages
+      if (isNetworkError(error)) {
+        return { error: enhanceNetworkError(error, "Supabase") }
+      }
       return { error }
     }
 
@@ -391,6 +374,10 @@ export async function verifyEmailAction(code: string, set: SetState): Promise<{ 
 
     return {}
   } catch (error) {
+    // Enhance network errors with helpful messages
+    if (isNetworkError(error)) {
+      return { error: enhanceNetworkError(error, "Supabase") }
+    }
     return { error: error as Error }
   }
 }
@@ -456,6 +443,10 @@ export async function resetPasswordAction(email: string): Promise<{ error?: Erro
     )
 
     if (error) {
+      // Enhance network errors with helpful messages
+      if (isNetworkError(error)) {
+        return { error: enhanceNetworkError(error, "Supabase") }
+      }
       return { error }
     }
 
@@ -463,6 +454,14 @@ export async function resetPasswordAction(email: string): Promise<{ error?: Erro
 
     return {}
   } catch (error) {
+    // Enhance network errors with helpful messages
+    if (isNetworkError(error)) {
+      logger.error("Password reset network error", {
+        supabaseUrl: env.supabaseUrl?.substring(0, 50),
+        hint: "Check if your Supabase project is active",
+      })
+      return { error: enhanceNetworkError(error, "Supabase") }
+    }
     return { error: error as Error }
   }
 }

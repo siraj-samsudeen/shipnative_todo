@@ -6,10 +6,22 @@ This document provides an overview of all external services integrated into the 
 
 | Service | Purpose | Platforms | Mock Available | Documentation |
 |---------|---------|-----------|----------------|---------------|
-| **Supabase** | Auth & Database | Web, iOS, Android | ✅ Yes | [SUPABASE.md](../docs/SUPABASE.md) |
-| **PostHog** | Analytics | Web, iOS, Android | ✅ Yes | [ANALYTICS.md](../docs/ANALYTICS.md) |
-| **Sentry** | Error Tracking | Web, iOS, Android | ✅ Yes | [ANALYTICS.md](../docs/ANALYTICS.md) |
-| **RevenueCat** | Mobile & Web Payments | iOS, Android, Web | ✅ Yes | [MONETIZATION.md](../docs/MONETIZATION.md) |
+| **Supabase** | Auth & Database (Option 1) | Web, iOS, Android | ✅ Yes | [SUPABASE.md](./SUPABASE.md) |
+| **Convex** | Auth & Database (Option 2) | Web, iOS, Android | ⚡ Local dev | [CONVEX.md](./CONVEX.md) |
+| **PostHog** | Analytics | Web, iOS, Android | ✅ Yes | [ANALYTICS.md](./ANALYTICS.md) |
+| **Sentry** | Error Tracking | Web, iOS, Android | ✅ Yes | [ANALYTICS.md](./ANALYTICS.md) |
+| **RevenueCat** | Mobile & Web Payments | iOS, Android, Web | ✅ Yes | [MONETIZATION.md](./MONETIZATION.md) |
+
+### Backend Choice
+
+Choose **one** backend for auth and database:
+
+| Backend | Best For | Local Development |
+|---------|----------|-------------------|
+| **Supabase** | SQL apps, PostgreSQL users | Mock mode (no setup required) |
+| **Convex** | TypeScript-first, reactive apps | `npx convex dev` (better DX than mocks) |
+
+Configure via `yarn setup` or `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`
 
 ---
 
@@ -62,15 +74,19 @@ if (Platform.OS === "web") {
 }
 ```
 
-### 3. Mock Fallback
+### 3. Mock Fallback (Supabase Only)
 
-Services automatically use mocks when API keys are missing:
+Supabase and other services (PostHog, Sentry, RevenueCat) automatically use mocks when API keys are missing:
 
 ```typescript
 const useMock = __DEV__ && !apiKey
 
 export const service = useMock ? mockService : realService
 ```
+
+> **Recommendation**: Set up real API keys from the start. All services have generous free tiers and take ~5 minutes to configure. Mocks are useful for quick prototyping but have limitations (no RLS, no complex queries).
+
+> **Note**: Convex does not have mock mode. Use `npx convex dev` for local development.
 
 ---
 
@@ -82,6 +98,7 @@ export const service = useMock ? mockService : realService
 
 **Features**:
 - Email/password authentication
+- OAuth (Google, Apple, GitHub)
 - PostgreSQL database
 - Row Level Security
 - Real-time subscriptions
@@ -97,16 +114,83 @@ export const service = useMock ? mockService : realService
 
 **Usage**:
 ```typescript
-import { supabase } from './services/supabase'
-import { useAuth } from './hooks/useAuth'
+// THE ONLY auth hook you need
+import { useAuth } from '@/hooks'
 
-// Hook (recommended)
-const { user, signIn, signOut } = useAuth()
+const {
+  // State
+  user,                    // Unified AppUser object
+  userId,                  // User ID string
+  isAuthenticated,         // Boolean: logged in?
+  isLoading,               // Boolean: loading?
+  isEmailVerified,         // Boolean: email confirmed?
+  hasCompletedOnboarding,  // Boolean: onboarding done?
 
-// Direct client
-const { data, error } = await supabase
-  .from('posts')
-  .select('*')
+  // Auth Actions
+  signIn,                  // Email/password sign in
+  signUp,                  // Email/password sign up
+  signOut,                 // Sign out
+  signInWithGoogle,        // Google OAuth
+  signInWithApple,         // Apple Sign-In
+  signInWithMagicLink,     // Magic link / OTP
+  verifyOtp,               // Verify OTP code
+  resetPassword,           // Password reset
+
+  // Profile Actions
+  updateProfile,           // Update user profile
+  completeOnboarding,      // Mark onboarding complete
+} = useAuth()
+
+// Update profile (works with both backends)
+await updateProfile({ firstName: 'Jane', avatarUrl: '...' })
+
+// Direct client for database queries (if using Supabase)
+import { supabase } from '@/services/supabase'
+const { data, error } = await supabase.from('posts').select('*')
+```
+
+---
+
+### Convex
+
+**Purpose**: TypeScript-first backend with built-in reactivity
+
+**Features**:
+- Email/password authentication
+- OAuth via Auth.js (Google, Apple, GitHub)
+- Document database with auto-generated types
+- Built-in real-time reactivity
+- Server functions (queries, mutations, actions)
+- File storage
+
+**SDK**: `convex/react`, `@convex-dev/auth`
+
+**Local Development**: Run `npx convex dev` for a local backend with hot reloading (no mock mode - real local backend is better)
+
+**Usage**:
+```typescript
+// THE ONLY auth hook you need
+import { useAuth } from '@/hooks'
+
+const {
+  user,                    // Unified AppUser object
+  isAuthenticated,
+  signIn, signUp, signOut,
+  signInWithGoogle, signInWithApple,
+  signInWithMagicLink, verifyOtp,  // Works on both backends!
+  updateProfile,
+  completeOnboarding,
+} = useAuth()
+
+// Data hooks (for Convex-specific features)
+import { useQuery, useMutation } from '@/hooks'
+import { api } from '@convex/_generated/api'
+
+// Database (automatically reactive)
+const posts = useQuery(api.posts.list)
+const createPost = useMutation(api.posts.create)
+
+await createPost({ title: 'Hello', content: 'World' })
 ```
 
 ---
@@ -230,8 +314,27 @@ if (isPro) {
 ### 1. Hooks (Recommended)
 
 ```typescript
-// Authentication
-const { user, signIn, signOut } = useAuth()
+// Authentication - THE ONLY auth hook you need
+import { useAuth } from '@/hooks'
+
+const {
+  user,                    // Unified AppUser (works with both backends)
+  userId,
+  isAuthenticated,
+  isLoading,
+  isEmailVerified,
+  hasCompletedOnboarding,
+  signIn,
+  signUp,
+  signOut,
+  signInWithGoogle,
+  signInWithApple,
+  signInWithMagicLink,     // Works on both backends!
+  verifyOtp,               // Works on both backends!
+  resetPassword,
+  updateProfile,
+  completeOnboarding,
+} = useAuth()
 
 // Analytics
 const { trackEvent, trackScreen } = useAnalytics()
@@ -255,12 +358,23 @@ identifyUser(userId, { email: 'user@example.com' })
 
 ```typescript
 // For advanced usage
-import { supabase } from './services/supabase'
-import { posthog } from './services/posthog'
-import { sentry } from './services/sentry'
 
+// Supabase (SQL queries)
+import { supabase } from '@/services/supabase'
 supabase.from('posts').select('*')
+
+// Convex (reactive queries)
+import { useQuery, useMutation } from '@/hooks'
+import { api } from '@convex/_generated/api'
+const posts = useQuery(api.posts.list)
+const createPost = useMutation(api.posts.create)
+
+// Analytics
+import { posthog } from '@/services/posthog'
 posthog.track('event')
+
+// Error tracking
+import { sentry } from '@/services/sentry'
 sentry.captureException(error)
 ```
 
@@ -271,9 +385,15 @@ sentry.captureException(error)
 All services are configured via environment variables:
 
 ```bash
-# Supabase
+# Backend Selection (choose one: supabase or convex)
+EXPO_PUBLIC_BACKEND_PROVIDER=supabase
+
+# Supabase (if using Supabase backend)
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+
+# Convex (if using Convex backend)
+EXPO_PUBLIC_CONVEX_URL=https://your-project-123.convex.cloud
 
 # PostHog
 EXPO_PUBLIC_POSTHOG_API_KEY=your-api-key
@@ -359,7 +479,9 @@ expect(data).toHaveLength(1)
 
 Before deploying to production:
 
-- [ ] Set up Supabase project and add credentials
+- [ ] Choose backend (Supabase or Convex) and set `EXPO_PUBLIC_BACKEND_PROVIDER`
+- [ ] Set up Supabase project and add credentials (if using Supabase)
+- [ ] Set up Convex project and add deployment URL (if using Convex)
 - [ ] Set up PostHog project and add API key
 - [ ] Set up Sentry project and add DSN
 - [ ] Set up RevenueCat and configure apps (iOS, Android, Web)
@@ -421,6 +543,7 @@ Before deploying to production:
 ## Further Reading
 
 - [Mock Services Guide](./MOCK_SERVICES.md) - Detailed mock service documentation
-- [SUPABASE.md](../docs/SUPABASE.md) - Supabase setup and usage
-- [ANALYTICS.md](../docs/ANALYTICS.md) - PostHog and Sentry guide
-- [MONETIZATION.md](../docs/MONETIZATION.md) - RevenueCat guide
+- [SUPABASE.md](./SUPABASE.md) - Supabase setup and usage
+- [CONVEX.md](./CONVEX.md) - Convex setup and usage
+- [ANALYTICS.md](./ANALYTICS.md) - PostHog and Sentry guide
+- [MONETIZATION.md](./MONETIZATION.md) - RevenueCat guide

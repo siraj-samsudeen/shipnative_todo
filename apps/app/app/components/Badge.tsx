@@ -94,41 +94,53 @@ const styles = StyleSheet.create((theme) => ({
       variant: {
         default: {
           backgroundColor: theme.colors.secondary,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
         },
         primary: {
           backgroundColor: theme.colors.primary,
         },
         secondary: {
           backgroundColor: theme.colors.backgroundTertiary,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
         },
         success: {
           backgroundColor: theme.colors.successBackground,
+          borderWidth: 1,
+          borderColor: "rgba(34, 197, 94, 0.2)",
         },
         error: {
           backgroundColor: theme.colors.errorBackground,
+          borderWidth: 1,
+          borderColor: "rgba(239, 68, 68, 0.2)",
         },
         warning: {
           backgroundColor: theme.colors.warningBackground,
+          borderWidth: 1,
+          borderColor: "rgba(245, 158, 11, 0.2)",
         },
         info: {
           backgroundColor: theme.colors.infoBackground,
+          borderWidth: 1,
+          borderColor: "rgba(59, 130, 246, 0.2)",
         },
       },
       size: {
         sm: {
-          paddingHorizontal: theme.spacing.xs,
-          paddingVertical: 2,
-          borderRadius: theme.radius.xs,
+          paddingHorizontal: theme.spacing.sm,
+          paddingVertical: 3,
+          borderRadius: theme.radius.full,
         },
         md: {
-          paddingHorizontal: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
           paddingVertical: theme.spacing.xxs,
-          borderRadius: theme.radius.sm,
+          borderRadius: theme.radius.full,
         },
         lg: {
-          paddingHorizontal: theme.spacing.md,
+          paddingHorizontal: theme.spacing.lg,
           paddingVertical: theme.spacing.xs,
-          borderRadius: theme.radius.md,
+          borderRadius: theme.radius.full,
         },
       },
       dot: {
@@ -138,7 +150,8 @@ const styles = StyleSheet.create((theme) => ({
     },
   },
   text: {
-    fontFamily: theme.typography.fonts.medium,
+    fontFamily: theme.typography.fonts.semiBold,
+    letterSpacing: 0.3,
     variants: {
       variant: {
         default: {
@@ -148,7 +161,7 @@ const styles = StyleSheet.create((theme) => ({
           color: theme.colors.primaryForeground,
         },
         secondary: {
-          color: theme.colors.foreground,
+          color: theme.colors.foregroundSecondary,
         },
         success: {
           color: theme.colors.successForeground,
@@ -169,12 +182,12 @@ const styles = StyleSheet.create((theme) => ({
           lineHeight: 14,
         },
         md: {
-          fontSize: 12,
-          lineHeight: 16,
+          fontSize: 11,
+          lineHeight: 15,
         },
         lg: {
-          fontSize: 14,
-          lineHeight: 20,
+          fontSize: 13,
+          lineHeight: 18,
         },
       },
       dot: {
@@ -220,9 +233,9 @@ const styles = StyleSheet.create((theme) => ({
           borderRadius: 4,
         },
         lg: {
-          width: 12,
-          height: 12,
-          borderRadius: 6,
+          width: 10,
+          height: 10,
+          borderRadius: 5,
         },
       },
       dot: {

@@ -86,15 +86,15 @@ function SwitchInput(props: SwitchInputProps) {
   )
 
   const offBackgroundColor = [
-    disabled && colors.palette.neutral400,
+    disabled && colors.palette.neutral600,
     status === "error" && colors.errorBackground,
-    colors.palette.neutral300,
+    colors.palette.neutral500,
   ].filter(Boolean)[0]
 
   const onBackgroundColor = [
-    disabled && colors.transparent,
+    disabled && colors.palette.neutral600,
     status === "error" && colors.errorBackground,
-    colors.palette.secondary500,
+    colors.palette.primary500,
   ].filter(Boolean)[0]
 
   const knobBackgroundColor = (function () {
@@ -103,14 +103,14 @@ function SwitchInput(props: SwitchInputProps) {
         $detailStyleOverride?.backgroundColor,
         status === "error" && colors.error,
         disabled && colors.palette.neutral600,
-        colors.palette.neutral100,
+        colors.palette.white,
       ].filter(Boolean)[0]
     } else {
       return [
         $innerStyleOverride?.backgroundColor,
         disabled && colors.palette.neutral600,
         status === "error" && colors.error,
-        colors.palette.neutral200,
+        colors.palette.white,
       ].filter(Boolean)[0]
     }
   })()
@@ -226,14 +226,14 @@ const $switchInner: ViewStyle = {
 
 const $inputOuter: StyleProp<ViewStyle> = [
   $inputOuterBase,
-  { height: 32, width: 56, borderRadius: 16, borderWidth: 0 },
+  { height: 34, width: 58, borderRadius: 17, borderWidth: 0 },
 ]
 
 const $switchDetail: SwitchToggleProps["inputDetailStyle"] = {
-  borderRadius: 12,
+  borderRadius: 13,
   position: "absolute",
-  width: 24,
-  height: 24,
+  width: 26,
+  height: 26,
 }
 
 const $switchAccessibility: ViewStyle = {

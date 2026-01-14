@@ -14,9 +14,8 @@ import { Spinner } from "@/components/Spinner"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks"
 import { registerSchema } from "@/schemas/authSchemas"
-import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
 import { analyzePasswordStrength } from "@/utils/validation"
 
@@ -30,11 +29,11 @@ export const RegisterScreen = () => {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation()
-  const signUp = useAuthStore((state) => state.signUp)
-  const { signInWithGoogle, signInWithApple, loading: oauthLoading } = useAuth()
+  const { signUp, signInWithGoogle, signInWithApple, isLoading: authLoading, isEmailVerified } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const oauthLoading = authLoading
 
   const {
     control,
@@ -65,9 +64,7 @@ export const RegisterScreen = () => {
       setError(formattedError)
     } else {
       // Signup successful
-      const isEmailConfirmed = useAuthStore.getState().isEmailConfirmed
-
-      if (!isEmailConfirmed) {
+      if (!isEmailVerified) {
         // Email confirmation required - navigate to verification screen
         // AppNavigator will handle this automatically, but we can navigate explicitly
         // to ensure smooth UX
@@ -166,9 +163,11 @@ export const RegisterScreen = () => {
               onBlur={field.onBlur}
               placeholderTx="registerScreen:emailPlaceholder"
               autoCapitalize="none"
-              autoComplete="email"
+              autoComplete="off"
               autoCorrect={false}
+              spellCheck={false}
               keyboardType="email-address"
+              textContentType="emailAddress"
               returnKeyType="next"
               status={fieldState.error ? "error" : "default"}
               helper={fieldState.error?.message}

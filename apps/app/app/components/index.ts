@@ -14,6 +14,7 @@ export * from "./IconButton"
 
 // Form Inputs
 export * from "./TextField"
+export * from "./OTPInput"
 export * from "./Toggle/Toggle"
 export * from "./DatePicker"
 export * from "./FilePicker"

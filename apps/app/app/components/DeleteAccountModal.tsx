@@ -12,8 +12,18 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { deleteAccount } from "@/services/accountDeletion"
+import { isConvex } from "@/config/env"
+import { deleteAccount as deleteSupabaseAccount } from "@/services/accountDeletion"
+import { useAuthStore, useSubscriptionStore } from "@/stores"
+import { GUEST_USER_KEY } from "@/stores/auth"
 import { haptics } from "@/utils/haptics"
+import { logger } from "@/utils/Logger"
+
+// Conditionally import Convex hooks
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { useMutation, api } = isConvex
+  ? { useMutation: require("@/hooks/convex").useMutation, api: require("@convex/_generated/api").api }
+  : { useMutation: null, api: null }
 
 import { Button } from "./Button"
 import { Text } from "./Text"
@@ -23,6 +33,47 @@ export interface DeleteAccountModalProps {
   onClose: () => void
 }
 
+/**
+ * Helper to clear subscription state during account deletion
+ */
+async function clearSubscriptionState() {
+  const subscriptionState = useSubscriptionStore.getState()
+  try {
+    const service = subscriptionState.getActiveService()
+    await service.logOut()
+  } catch (error) {
+    logger.warn("Failed to log out of subscription service", { error })
+  }
+  subscriptionState.setCustomerInfo(null)
+  subscriptionState.setWebSubscriptionInfo(null)
+  subscriptionState.setPackages([])
+  subscriptionState.checkProStatus()
+}
+
+/**
+ * Helper to reset auth state after account deletion
+ */
+function resetAuthState(userId: string) {
+  useAuthStore.setState((state) => {
+    // Remove onboarding entry for the deleted user while preserving guest state
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { [userId]: _removed, ...onboardingStatusByUserId } = state.onboardingStatusByUserId
+    const guestOnboarding =
+      onboardingStatusByUserId[GUEST_USER_KEY] ?? state.onboardingStatusByUserId[GUEST_USER_KEY]
+    return {
+      session: null,
+      user: null,
+      isAuthenticated: false,
+      hasCompletedOnboarding: guestOnboarding ?? true,
+      onboardingStatusByUserId: {
+        ...onboardingStatusByUserId,
+        [GUEST_USER_KEY]: guestOnboarding ?? true,
+      },
+      loading: false,
+    }
+  })
+}
+
 export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClose }) => {
   const { theme } = useUnistyles()
   const { t } = useTranslation()
@@ -30,6 +81,10 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
   const [confirmChecked, setConfirmChecked] = useState(false)
   const [error, setError] = useState("")
   const isMountedRef = useRef(true)
+
+  // Convex mutation - only defined when using Convex backend
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const convexDeleteAccount = isConvex && useMutation ? useMutation(api.users.deleteAccount) : null
 
   // Track mount state to prevent state updates after unmount
   useEffect(() => {
@@ -58,26 +113,55 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
     setLoading(true)
     haptics.delete()
 
-    const result = await deleteAccount()
+    const authState = useAuthStore.getState()
+    const userId = authState.user?.id
 
-    // Check if component is still mounted before updating state
-    if (!isMountedRef.current) {
-      // Component unmounted (likely due to successful deletion), nothing to do
-      return
-    }
-
-    if (result.error) {
-      setError(result.error.message || t("deleteAccountModal:errorGeneric"))
+    if (!userId) {
+      setError(t("deleteAccountModal:errorNoUser"))
       haptics.error()
       setLoading(false)
       return
     }
 
-    // Success - the auth state change will navigate away
-    haptics.success()
-    setLoading(false)
-    onClose()
-  }, [onClose, t])
+    try {
+      if (isConvex && convexDeleteAccount) {
+        // Convex backend: Use mutation
+        logger.debug("Deleting account via Convex mutation", { userId })
+        await convexDeleteAccount()
+
+        // Clear subscription state
+        await clearSubscriptionState()
+
+        // Reset auth state
+        resetAuthState(userId)
+      } else {
+        // Supabase backend: Use service
+        const result = await deleteSupabaseAccount()
+
+        if (!isMountedRef.current) {
+          return
+        }
+
+        if (result.error) {
+          throw result.error
+        }
+      }
+
+      // Success - the auth state change will navigate away
+      if (!isMountedRef.current) return
+
+      haptics.success()
+      setLoading(false)
+      onClose()
+    } catch (err) {
+      if (!isMountedRef.current) return
+
+      const message = err instanceof Error ? err.message : t("deleteAccountModal:errorGeneric")
+      setError(message)
+      haptics.error()
+      setLoading(false)
+    }
+  }, [onClose, t, convexDeleteAccount])
 
   return (
     <Modal

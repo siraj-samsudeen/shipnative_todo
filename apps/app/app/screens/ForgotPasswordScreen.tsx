@@ -10,8 +10,8 @@ import { z } from "zod"
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { useAuth } from "@/hooks"
 import { forgotPasswordSchema } from "@/schemas/authSchemas"
-import { useAuthStore } from "@/stores/auth"
 import { formatAuthError } from "@/utils/formatAuthError"
 
 // =============================================================================
@@ -23,7 +23,7 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export const ForgotPasswordScreen = () => {
   const { t } = useTranslation()
   const navigation = useNavigation()
-  const resetPassword = useAuthStore((state) => state.resetPassword)
+  const { resetPassword } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)

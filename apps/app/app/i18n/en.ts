@@ -39,6 +39,7 @@ const en = {
     cancelButton: "Cancel",
     deleteButton: "Delete my account",
     errorGeneric: "Unable to delete your account right now.",
+    errorNoUser: "No active user to delete.",
   },
   editProfileModal: {
     title: "Edit Profile",
@@ -254,6 +255,46 @@ const en = {
     alreadyConfirmed: "Already confirmed?",
     signIn: "Sign In",
   },
+  // OTP Input Component
+  otpInput: {
+    digitLabel: "Digit {{position}} of {{total}}",
+    digitHint: "Enter a single digit",
+    pasteFromClipboard: "Paste code from clipboard",
+  },
+  // Magic Link Screen (Passwordless Auth)
+  magicLinkScreen: {
+    title: "Sign In with Email",
+    subtitle: "No password needed. We'll send you a code.",
+    emailLabel: "Email",
+    emailPlaceholder: "Enter your email address",
+    sendCode: "Send Code",
+    infoText:
+      "We'll send a verification code to your email. Enter the code on the next screen to sign in.",
+    preferPassword: "Prefer using a password?",
+    signInWithPassword: "Sign in with password",
+    unexpectedError: "An unexpected error occurred. Please try again.",
+  },
+  // OTP Verification Screen
+  otpVerificationScreen: {
+    title: "Enter Code",
+    subtitle: "We sent a code to {{email}}",
+    instructions: "Enter the {{length}}-digit code we sent to your email.",
+    verifying: "Verifying code...",
+    resendSuccess: "New code sent! Check your inbox.",
+    resendCode: "Resend Code",
+    resendIn: "Resend in {{seconds}}s",
+    wrongEmail: "Wrong email?",
+    changeIt: "Change it",
+    preferPassword: "Prefer using a password?",
+    signInWithPassword: "Sign in with password",
+    unexpectedError: "An unexpected error occurred. Please try again.",
+    invalidCode: "Invalid code. Please check and try again.",
+    expiredCode: "This code has expired. Please request a new one.",
+    convexInstructions:
+      "For Convex, use the useAuthActions() hook to verify the code.",
+    convexResendInstructions:
+      "For Convex, use the useAuthActions() hook to resend the code.",
+  },
   onboardingScreen: {
     // Step 0: Welcome
     welcomeTitle: "Welcome Aboard!",
@@ -290,6 +331,7 @@ const en = {
     passwordPlaceholder: "Enter your password",
     signIn: "Sign In",
     forgotPassword: "Forgot Password?",
+    signInWithEmail: "Sign in with email code instead",
     orContinueWith: "or continue with",
     apple: "Apple",
     google: "Google",

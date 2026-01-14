@@ -83,3 +83,16 @@ export const resetPasswordSchema = z
       })
     }
   })
+
+// Magic link / OTP schemas
+export const magicLinkSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+})
+
+export const otpSchema = z.object({
+  code: z
+    .string()
+    .min(6, "Code must be at least 6 digits")
+    .max(8, "Code must be at most 8 digits")
+    .regex(/^\d+$/, "Code must contain only numbers"),
+})

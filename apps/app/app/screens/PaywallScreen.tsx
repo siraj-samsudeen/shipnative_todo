@@ -603,7 +603,7 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: "600",
   },
   featureDesc: {
-    color: theme.colors.foregroundTertiary,
+    color: theme.colors.foregroundSecondary,
     fontSize: 13,
     marginTop: 2,
   },

@@ -9,6 +9,7 @@ import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
 import { Spinner } from "@/components/Spinner"
 import { Text } from "@/components/Text"
 import { TIMING } from "@/config/constants"
+import { useAuth } from "@/hooks"
 import { useEmailVerificationPolling } from "@/hooks/useEmailVerificationPolling"
 import { useAuthStore } from "@/stores/auth"
 
@@ -20,10 +21,12 @@ export const EmailVerificationScreen = () => {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation()
+  const { isEmailVerified } = useAuth()
+  // Email verification polling uses the backend abstraction layer
   const user = useAuthStore((state) => state.user)
-  const isEmailConfirmed = useAuthStore((state) => state.isEmailConfirmed)
   const resendConfirmationEmail = useAuthStore((state) => state.resendConfirmationEmail)
   const initialize = useAuthStore((state) => state.initialize)
+  const isEmailConfirmed = isEmailVerified
 
   const [resending, setResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)

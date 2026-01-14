@@ -27,6 +27,8 @@ export type AppStackParamList = {
   ForgotPassword: undefined
   ResetPassword: { code?: string; token?: string } | undefined
   EmailVerification: undefined
+  MagicLink: undefined
+  OTPVerification: { email: string; isConvex?: boolean }
   AuthCallback:
     | {
         code?: string
@@ -40,6 +42,7 @@ export type AppStackParamList = {
   Profile: undefined
   Welcome: undefined
   ComponentShowcase: undefined
+  DataDemo: undefined
   Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // SHIPNATIVE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

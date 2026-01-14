@@ -1,6 +1,21 @@
 # Backend Setup Guide
 
+Shipnative supports two backend options: **Supabase** and **Convex**. Choose based on your needs:
+
+| Backend | Best For | Database | Auth | Real-time |
+|---------|----------|----------|------|-----------|
+| **Supabase** | SQL apps, PostgreSQL fans | PostgreSQL + RLS | Email, OAuth, Magic Link | Postgres Changes |
+| **Convex** | TypeScript-first, reactive apps | Document DB | Email, OAuth (Auth.js) | Built-in reactivity |
+
+Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`.
+
+---
+
+## Supabase Backend
+
 Complete guide for setting up your Shipnative backend with Supabase, including universal database schemas, Edge Functions, and best practices.
+
+> For Convex setup, see [CONVEX.md](./CONVEX.md).
 
 ## Quick Start
 
@@ -27,7 +42,7 @@ supabase db reset
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
-3. Open the `supabase-schema.sql` file from the root of this repository
+3. Open the `supabase/schema.sql` file from the repository
 4. Copy and paste the entire file into the SQL Editor
 5. Click **Run** to execute
 
@@ -35,7 +50,7 @@ supabase db reset
 
 ```bash
 # Copy the schema to migrations folder
-cp supabase-schema.sql supabase/migrations/20240101000000_initial_schema.sql
+cp supabase/schema.sql supabase/migrations/20240101000000_initial_schema.sql
 
 # Apply all migrations
 supabase db push
@@ -46,7 +61,7 @@ supabase migration up
 
 ### 3. Default Schema Includes
 
-The `supabase-schema.sql` file includes:
+The `supabase/schema.sql` file includes:
 
 - **profiles** - User profile information with preferences (dark mode, notifications, etc.)
 - **push_tokens** - Expo push notification tokens for multiple devices
@@ -60,7 +75,7 @@ The `supabase-schema.sql` file includes:
 
 ## Universal Database Schemas
 
-These are production-ready schemas that every app needs. The default schema is available in `supabase-schema.sql` at the root of this repository.
+These are production-ready schemas that every app needs. The default schema is available in `supabase/schema.sql`.
 
 ### User Profiles
 
@@ -245,7 +260,7 @@ create policy "Anyone can add to waitlist"
 
 ### Extension Tables (Optional)
 
-The following tables are not in the default `supabase-schema.sql` but are recommended for most applications.
+The following tables are not in the default `supabase/schema.sql` but are recommended for most applications.
 
 ### File Uploads / Media
 
@@ -713,7 +728,7 @@ values
 
 ---
 
-## Next Steps
+## Next Steps (Supabase)
 
 1. Copy the schemas you need to `supabase/migrations/`
 2. Run `supabase db push` to apply migrations
@@ -725,3 +740,16 @@ For more details, see:
 - [SUPABASE.md](./SUPABASE.md) - Authentication and database usage
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deploying to production
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
+
+---
+
+## Convex Backend
+
+For Convex setup and usage, see the dedicated guide: **[CONVEX.md](./CONVEX.md)**
+
+Key differences from Supabase:
+- **Schema**: Defined in TypeScript (`convex/schema.ts`)
+- **Auth**: Uses `@convex-dev/auth` with `authTables` spread
+- **Queries**: Reactive hooks (`useQuery`, `useMutation`)
+- **Real-time**: Built-in - all queries are automatically reactive
+- **Functions**: Server functions in `convex/*.ts`

@@ -275,26 +275,28 @@ export function Card(props: CardProps) {
 const styles = StyleSheet.create((theme) => ({
   container: {
     flexDirection: "row",
-    padding: theme.spacing.md,
+    padding: theme.spacing.lg,
     minHeight: 96,
     variants: {
       preset: {
         default: {
           backgroundColor: theme.colors.card,
-          borderRadius: theme.radius.xl,
+          borderRadius: theme.radius["2xl"],
           borderWidth: 1,
           borderColor: theme.colors.border,
         },
         elevated: {
           backgroundColor: theme.colors.card,
-          borderRadius: theme.radius.xl,
+          borderRadius: theme.radius["2xl"],
+          borderWidth: 1,
+          borderColor: theme.colors.border,
           ...theme.shadows.lg,
         },
         outlined: {
           backgroundColor: theme.colors.transparent,
-          borderRadius: theme.radius.xl,
+          borderRadius: theme.radius["2xl"],
           borderWidth: 1.5,
-          borderColor: theme.colors.border,
+          borderColor: theme.colors.borderSecondary,
         },
       },
       verticalAlignment: {
@@ -334,13 +336,19 @@ const styles = StyleSheet.create((theme) => ({
       },
     },
   },
-  heading: {},
+  heading: {
+    letterSpacing: -0.3,
+  },
   headingSpacing: {
-    marginBottom: theme.spacing.xxs,
+    marginBottom: theme.spacing.xs,
   },
-  content: {},
+  content: {
+    letterSpacing: 0.1,
+  },
   contentSpacing: {
-    marginBottom: theme.spacing.xxs,
+    marginBottom: theme.spacing.xs,
   },
-  footer: {},
+  footer: {
+    letterSpacing: 0.2,
+  },
 }))

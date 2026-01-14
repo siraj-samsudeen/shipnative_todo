@@ -1,26 +1,35 @@
 /**
  * Auth Store Helpers
  *
- * Helper functions for authentication operations
+ * Helper functions for authentication operations.
+ * Supports both Supabase and Convex backends.
  */
 
-import { env } from "../../config/env"
-import { supabase, isUsingMockSupabase } from "../../services/supabase"
+import { env, isSupabase, isConvex } from "../../config/env"
 import type { User, Session } from "../../types/auth"
 import { isEmailConfirmed } from "../../types/auth"
 import type { SupabaseDatabase } from "../../types/supabase"
 import { extractSupabaseError } from "../../types/supabaseErrors"
 import { logger } from "../../utils/Logger"
 
+// Conditionally import Supabase - only when using Supabase backend
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { supabase, isUsingMockSupabase } = isSupabase
+  ? require("../../services/supabase")
+  : { supabase: null, isUsingMockSupabase: true }
+
 // Track if we've shown the Supabase setup message
 let hasShownSupabaseSetupMessage = false
 
 /**
  * Sync onboarding status to database
+ * For Convex, this is a no-op as onboarding is synced through Convex mutations
  */
 export async function syncOnboardingToDatabase(userId: string, completed: boolean): Promise<void> {
-  if (isUsingMockSupabase) {
-    // Mock Supabase doesn't need database sync
+  // For Convex, onboarding status is synced through the completeOnboarding mutation
+  // which is called from useAuth().completeOnboarding()
+  if (isConvex || isUsingMockSupabase) {
+    logger.debug("Skipping onboarding sync (Convex or mock mode)", { isConvex })
     return
   }
 
@@ -60,7 +69,7 @@ export async function syncOnboardingToDatabase(userId: string, completed: boolea
               "To enable database features, create the required tables in your Supabase project:\n" +
               "1. Go to your Supabase project dashboard\n" +
               "2. Navigate to SQL Editor\n" +
-              "3. Open the `supabase-schema.sql` file from the root of this repository\n" +
+              "3. Open the `supabase/schema.sql` file from the repository\n" +
               "4. Copy and paste the entire file into the SQL Editor\n" +
               "5. Click Run to execute\n" +
               "\n" +
@@ -101,10 +110,11 @@ export async function syncOnboardingToDatabase(userId: string, completed: boolea
 
 /**
  * Fetch onboarding status from database
+ * For Convex, this returns null as onboarding is read from the user object
  */
 export async function fetchOnboardingFromDatabase(userId: string): Promise<boolean | null> {
-  if (isUsingMockSupabase) {
-    // Mock Supabase doesn't need database query
+  // For Convex, onboarding status is part of the user object from useQuery(api.users.me)
+  if (isConvex || isUsingMockSupabase) {
     return null
   }
 
@@ -134,7 +144,7 @@ export async function fetchOnboardingFromDatabase(userId: string): Promise<boole
               "To enable database features, create the required tables in your Supabase project:\n" +
               "1. Go to your Supabase project dashboard\n" +
               "2. Navigate to SQL Editor\n" +
-              "3. Open the `supabase-schema.sql` file from the root of this repository\n" +
+              "3. Open the `supabase/schema.sql` file from the repository\n" +
               "4. Copy and paste the entire file into the SQL Editor\n" +
               "5. Click Run to execute\n" +
               "\n" +

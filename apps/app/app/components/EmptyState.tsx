@@ -345,49 +345,54 @@ const styles = StyleSheet.create((theme) => ({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing["2xl"],
   },
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: 96,
-    height: 96,
+    width: 104,
+    height: 104,
     borderRadius: theme.radius.full,
     backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   image: {
     alignSelf: "center",
-    width: 80,
-    height: 80,
-    opacity: 0.8,
+    width: 88,
+    height: 88,
+    opacity: 0.7,
   },
   imageSpacing: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   heading: {
     textAlign: "center",
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    letterSpacing: -0.3,
   },
   headingAfterImage: {
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
   headingSpacing: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   content: {
     textAlign: "center",
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    letterSpacing: 0.1,
+    lineHeight: 22,
   },
   contentAfterHeading: {
     marginTop: theme.spacing.xs,
   },
   contentSpacing: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   button: {
     alignSelf: "center",
   },
   buttonSpacing: {
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing["2xl"],
   },
 }))

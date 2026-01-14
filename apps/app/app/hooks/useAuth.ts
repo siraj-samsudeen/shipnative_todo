@@ -1,10 +1,22 @@
+/**
+ * Universal Authentication Hook
+ *
+ * Provides a consistent authentication interface regardless of backend provider.
+ * Automatically detects whether Supabase or Convex is being used and provides
+ * the appropriate implementation.
+ *
+ * Usage:
+ * ```typescript
+ * const { user, signIn, signOut, isAuthenticated } = useAuth()
+ * ```
+ */
+
 import { useState, useEffect, useCallback } from "react"
 import { Platform } from "react-native"
 import { makeRedirectUri } from "expo-auth-session"
 import * as Linking from "expo-linking"
 
-import { env } from "../config/env"
-import { supabase } from "../services/supabase"
+import { env, isSupabase, isConvex } from "../config/env"
 import { useAuthStore } from "../stores/auth"
 import type {
   User,
@@ -15,7 +27,10 @@ import type {
 } from "../types/auth"
 import { logger } from "../utils/Logger"
 
-// Conditionally import expo-web-browser only on native platforms
+// ============================================================================
+// Web Browser Import (Platform-Specific)
+// ============================================================================
+
 const getWebBrowser = () => {
   if (Platform.OS === "web") {
     return null
@@ -33,6 +48,10 @@ const WebBrowser = getWebBrowser()
 if (WebBrowser?.maybeCompleteAuthSession) {
   WebBrowser.maybeCompleteAuthSession()
 }
+
+// ============================================================================
+// Google Sign-In Module (Platform-Specific)
+// ============================================================================
 
 type GoogleSigninModule = {
   GoogleSignin: {
@@ -61,15 +80,9 @@ const getGoogleSigninModule = (): GoogleSigninModule | null => {
   }
 }
 
-const waitForSession = async (timeoutMs: number): Promise<Session | null> => {
-  const start = Date.now()
-  while (Date.now() - start < timeoutMs) {
-    const { data } = await supabase.auth.getSession()
-    if (data.session) return data.session
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-  return null
-}
+// ============================================================================
+// Types
+// ============================================================================
 
 export interface UseAuthReturn {
   // State
@@ -90,29 +103,49 @@ export interface UseAuthReturn {
 
   // Helpers
   isAuthenticated: boolean
+
+  // Provider info
+  provider: "supabase" | "convex"
 }
 
-/**
- * Hook for authentication
- */
-export function useAuth(): UseAuthReturn {
+// ============================================================================
+// Supabase Implementation
+// ============================================================================
+
+function useSupabaseAuth(): UseAuthReturn {
+  // Lazy import supabase to enable code splitting
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { supabase } = require("../services/supabase")
+
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const waitForSession = async (timeoutMs: number): Promise<Session | null> => {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      const { data } = await supabase.auth.getSession()
+      if (data.session) return data.session
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    return null
+  }
+
   // Initialize auth state
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }: { data: { session: Session | null } }) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -185,7 +218,6 @@ export function useAuth(): UseAuthReturn {
         try {
           response = await googleModule.GoogleSignin.signIn()
         } catch (signInError) {
-          // Handle cancellation - Google Sign-In throws when user cancels
           const errorMessage =
             signInError instanceof Error ? signInError.message : String(signInError)
           if (
@@ -208,7 +240,6 @@ export function useAuth(): UseAuthReturn {
             idToken = tokens?.idToken ?? idToken
             accessToken = tokens?.accessToken ?? null
           } catch {
-            // getTokens can fail if sign-in was cancelled or incomplete
             return { error: new Error("OAuth flow cancelled") }
           }
         }
@@ -257,6 +288,8 @@ export function useAuth(): UseAuthReturn {
         provider: "google",
         options: {
           redirectTo,
+          // On web, allow Supabase to redirect the browser directly to Google
+          // On mobile, we handle the redirect ourselves via WebBrowser
           skipBrowserRedirect: Platform.OS !== "web",
         },
       })
@@ -265,6 +298,9 @@ export function useAuth(): UseAuthReturn {
         return { error }
       }
 
+      // Web: Browser will redirect to Google, then back to /auth/callback
+      // The AuthCallbackScreen will handle the token exchange
+      // Mobile: Handle OAuth flow via in-app browser
       if (Platform.OS !== "web" && data?.url) {
         if (__DEV__) {
           logger.debug("[useAuth] Google OAuth URL received", { url: data.url })
@@ -287,13 +323,13 @@ export function useAuth(): UseAuthReturn {
               return match ? decodeURIComponent(match[1]) : null
             }
 
-            const accessToken = getParam("access_token")
+            const accessTokenParam = getParam("access_token")
             const refreshToken = getParam("refresh_token")
             const code = getParam("code")
 
             if (__DEV__) {
               logger.debug("[useAuth] Google OAuth callback params", {
-                hasAccessToken: !!accessToken,
+                hasAccessToken: !!accessTokenParam,
                 hasRefreshToken: !!refreshToken,
                 hasCode: !!code,
               })
@@ -313,8 +349,12 @@ export function useAuth(): UseAuthReturn {
                     storageKey: storageKey ?? null,
                     hasVerifier: !!storedVerifier,
                   })
-                } catch (error) {
-                  logger.error("[useAuth] Google code verifier read failed", {}, error as Error)
+                } catch (verifierError) {
+                  logger.error(
+                    "[useAuth] Google code verifier read failed",
+                    {},
+                    verifierError as Error,
+                  )
                 }
                 logger.debug("[useAuth] Google exchanging code for session", {
                   codePrefix: code.slice(0, 8),
@@ -348,9 +388,9 @@ export function useAuth(): UseAuthReturn {
                 setUser(nextSession.user)
                 useAuthStore.getState().setSession(nextSession)
               }
-            } else if (accessToken && refreshToken) {
+            } else if (accessTokenParam && refreshToken) {
               const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                access_token: accessToken,
+                access_token: accessTokenParam,
                 refresh_token: refreshToken,
               })
               if (sessionError) {
@@ -427,6 +467,8 @@ export function useAuth(): UseAuthReturn {
         provider: "apple",
         options: {
           redirectTo,
+          // On web, allow Supabase to redirect the browser directly to Apple
+          // On mobile, we handle the redirect ourselves via WebBrowser
           skipBrowserRedirect: Platform.OS !== "web",
         },
       })
@@ -435,6 +477,9 @@ export function useAuth(): UseAuthReturn {
         return { error }
       }
 
+      // Web: Browser will redirect to Apple, then back to /auth/callback
+      // The AuthCallbackScreen will handle the token exchange
+      // Mobile: Handle OAuth flow via in-app browser
       if (Platform.OS !== "web" && data?.url) {
         if (__DEV__) {
           logger.debug("[useAuth] Apple OAuth URL received", { url: data.url })
@@ -457,13 +502,13 @@ export function useAuth(): UseAuthReturn {
               return match ? decodeURIComponent(match[1]) : null
             }
 
-            const accessToken = getParam("access_token")
+            const accessTokenParam = getParam("access_token")
             const refreshToken = getParam("refresh_token")
             const code = getParam("code")
 
             if (__DEV__) {
               logger.debug("[useAuth] Apple OAuth callback params", {
-                hasAccessToken: !!accessToken,
+                hasAccessToken: !!accessTokenParam,
                 hasRefreshToken: !!refreshToken,
                 hasCode: !!code,
               })
@@ -503,9 +548,9 @@ export function useAuth(): UseAuthReturn {
                 setUser(nextSession.user)
                 useAuthStore.getState().setSession(nextSession)
               }
-            } else if (accessToken && refreshToken) {
+            } else if (accessTokenParam && refreshToken) {
               const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                access_token: accessToken,
+                access_token: accessTokenParam,
                 refresh_token: refreshToken,
               })
               if (sessionError) {
@@ -582,9 +627,9 @@ export function useAuth(): UseAuthReturn {
       type: "email",
     })
     if (!error && data?.session) {
-      const { session } = data
-      setSession(session)
-      setUser(session?.user ?? null)
+      const verifiedSession = data.session
+      setSession(verifiedSession)
+      setUser(verifiedSession?.user ?? null)
     }
     setLoading(false)
     return { error }
@@ -604,5 +649,243 @@ export function useAuth(): UseAuthReturn {
     resetPassword,
     updateUser,
     isAuthenticated: !!session,
+    provider: "supabase",
   }
 }
+
+// ============================================================================
+// Convex Implementation
+// ============================================================================
+
+/**
+ * Convex authentication hook.
+ *
+ * Provides full authentication functionality using Convex Auth with proper
+ * OAuth handling for mobile (React Native) and web platforms.
+ *
+ * For more granular control, use these hooks directly:
+ * - useConvexSocialAuth() - for Google, Apple, GitHub sign-in with mobile OAuth handling
+ * - useConvexPasswordAuth() - for email/password authentication
+ * - useConvexMagicLink() - for OTP/magic link authentication
+ * - useConvexAuth() - for unified auth state and actions
+ */
+function useConvexAuthImpl(): UseAuthReturn {
+  // Import the modular Convex auth hooks
+  // Using require to avoid hook rules violation (conditional hook calls)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const {
+    useConvexAuth: useConvexAuthHook,
+    useConvexSocialAuth,
+    useConvexPasswordAuth,
+    useConvexMagicLink,
+  } = require("./convex")
+
+  // Get auth state from Convex
+  const convexAuth = useConvexAuthHook()
+  const socialAuth = useConvexSocialAuth()
+  const passwordAuth = useConvexPasswordAuth()
+  const magicLinkAuth = useConvexMagicLink()
+
+  // Convert Convex user to our User type
+  // Note: Convex users have a different shape than Supabase users
+  // We create a compatible object with the essential fields
+  const user: User | null = convexAuth.user
+    ? ({
+        id: convexAuth.user._id,
+        email: convexAuth.user.email,
+        created_at: new Date(convexAuth.user._creationTime).toISOString(),
+        aud: "authenticated",
+        app_metadata: {
+          provider: "convex",
+        },
+        user_metadata: {
+          name: convexAuth.user.name,
+          avatarUrl: convexAuth.user.avatarUrl,
+        },
+        // Convex-specific fields
+        email_confirmed_at: convexAuth.user.emailVerificationTime
+          ? new Date(convexAuth.user.emailVerificationTime).toISOString()
+          : undefined,
+      } as User)
+    : null
+
+  // Create session-like object for compatibility
+  // Convex manages tokens internally, so we provide a minimal session object
+  const session: Session | null =
+    convexAuth.isAuthenticated && user
+      ? ({
+          access_token: "convex-managed",
+          refresh_token: "convex-managed",
+          expires_in: 3600,
+          token_type: "bearer",
+          user,
+        } as Session)
+      : null
+
+  // Combined loading state
+  const loading =
+    convexAuth.isLoading || socialAuth.loading || passwordAuth.loading || magicLinkAuth.loading
+
+  // Sign up with email/password
+  const signUp = useCallback(
+    async (credentials: SignUpCredentials) => {
+      // Handle both email and phone credentials (Supabase types)
+      const email = "email" in credentials ? credentials.email : undefined
+      const password = credentials.password
+      const name =
+        credentials.options?.data && "name" in credentials.options.data
+          ? (credentials.options.data.name as string)
+          : undefined
+
+      if (!email) {
+        return { error: new Error("Email is required for Convex sign up") }
+      }
+
+      const result = await passwordAuth.signUp({ email, password, name })
+      return { error: result.error }
+    },
+    [passwordAuth],
+  )
+
+  // Sign in with email/password
+  const signIn = useCallback(
+    async (credentials: SignInCredentials) => {
+      // Handle both email and phone credentials (Supabase types)
+      const email = "email" in credentials ? credentials.email : undefined
+      const password = credentials.password
+
+      if (!email) {
+        return { error: new Error("Email is required for Convex sign in") }
+      }
+
+      const result = await passwordAuth.signIn({ email, password })
+      return { error: result.error }
+    },
+    [passwordAuth],
+  )
+
+  // Sign out
+  const signOut = useCallback(async () => {
+    const result = await passwordAuth.signOut()
+    // Clear session from auth store
+    useAuthStore.getState().setSession(null)
+    return { error: result.error }
+  }, [passwordAuth])
+
+  // Sign in with Google (handles native + OAuth flow)
+  const signInWithGoogle = useCallback(async () => {
+    const result = await socialAuth.signInWithGoogle()
+    return { error: result.error }
+  }, [socialAuth])
+
+  // Sign in with Apple
+  const signInWithApple = useCallback(async () => {
+    const result = await socialAuth.signInWithApple()
+    return { error: result.error }
+  }, [socialAuth])
+
+  // Sign in with magic link / OTP
+  const signInWithMagicLink = useCallback(
+    async (email: string, _captchaToken?: string) => {
+      const result = await magicLinkAuth.sendMagicLink(email)
+      return { error: result.error }
+    },
+    [magicLinkAuth],
+  )
+
+  // Verify OTP
+  const verifyOtp = useCallback(
+    async (email: string, token: string) => {
+      const result = await magicLinkAuth.verifyOtp(email, token)
+      return { error: result.error }
+    },
+    [magicLinkAuth],
+  )
+
+  // Reset password
+  const resetPassword = useCallback(
+    async (email: string) => {
+      const result = await passwordAuth.resetPassword(email)
+      return { error: result.error }
+    },
+    [passwordAuth],
+  )
+
+  // Update user
+  const updateUser = useCallback(
+    async (attributes: UpdateUserAttributes) => {
+      try {
+        // Extract name and avatarUrl from attributes.data if available
+        const data = attributes.data as Record<string, unknown> | undefined
+        const name = data?.name as string | undefined
+        const avatarUrl = (data?.avatarUrl ?? data?.avatar_url) as string | undefined
+
+        await convexAuth.updateProfile({ name, avatarUrl })
+        return { error: null }
+      } catch (error) {
+        return { error: error as Error }
+      }
+    },
+    [convexAuth],
+  )
+
+  return {
+    user,
+    session,
+    loading,
+    signUp,
+    signIn,
+    signInWithGoogle,
+    signInWithApple,
+    signInWithMagicLink,
+    verifyOtp,
+    signOut,
+    resetPassword,
+    updateUser,
+    isAuthenticated: convexAuth.isAuthenticated,
+    provider: "convex",
+  }
+}
+
+// ============================================================================
+// Main Hook Export
+// ============================================================================
+
+/**
+ * Universal authentication hook that works with both Supabase and Convex.
+ *
+ * Automatically detects the configured backend provider and returns
+ * the appropriate implementation.
+ *
+ * For Supabase: Full featured auth with all methods working directly.
+ *
+ * For Convex: Full featured auth with proper OAuth handling for mobile.
+ *   For more control, use the modular hooks directly:
+ *   - useConvexSocialAuth() - Google, Apple, GitHub with mobile OAuth
+ *   - useConvexPasswordAuth() - email/password authentication
+ *   - useConvexMagicLink() - OTP/magic link authentication
+ */
+export function useAuth(): UseAuthReturn {
+  if (isConvex) {
+    return useConvexAuthImpl()
+  }
+
+  // Default to Supabase
+  return useSupabaseAuth()
+}
+
+// ============================================================================
+// Provider-Specific Hook Exports
+// ============================================================================
+
+/**
+ * Force use of Supabase auth regardless of env config.
+ * Useful for migration or testing scenarios.
+ */
+export { useSupabaseAuth }
+
+/**
+ * Force use of Convex auth regardless of env config.
+ * Useful for migration or testing scenarios.
+ */
+export { useConvexAuthImpl as useConvexAuth }

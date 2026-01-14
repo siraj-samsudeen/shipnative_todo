@@ -335,19 +335,21 @@ const styles = StyleSheet.create((theme) => ({
   touchable: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   textContainer: {
     flex: 1,
     justifyContent: "center",
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
   },
   text: {
     flexGrow: 1,
     flexShrink: 1,
+    letterSpacing: 0.1,
   },
   subtitle: {
     marginTop: theme.spacing.xxs,
+    letterSpacing: 0.2,
   },
   iconContainer: {
     justifyContent: "center",
@@ -356,7 +358,7 @@ const styles = StyleSheet.create((theme) => ({
     flexShrink: 0,
   },
   iconContainerLeft: {
-    marginRight: theme.spacing.md,
+    marginRight: theme.spacing.lg,
   },
   iconContainerRight: {
     marginLeft: theme.spacing.md,

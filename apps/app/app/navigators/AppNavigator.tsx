@@ -180,6 +180,13 @@ const AppStack = () => {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="DataDemo"
+            component={Screens.DataDemoScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         // ------------------------------------------------------------------
@@ -232,6 +239,20 @@ const AppStack = () => {
           <Stack.Screen
             name="EmailVerification"
             component={Screens.EmailVerificationScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="MagicLink"
+            component={Screens.MagicLinkScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="OTPVerification"
+            component={Screens.OTPVerificationScreen}
             options={{
               animation: "slide_from_right",
             }}

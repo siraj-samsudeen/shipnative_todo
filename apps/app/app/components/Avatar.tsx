@@ -392,9 +392,11 @@ const styles = StyleSheet.create((theme) => ({
     zIndex: 1,
   },
   fallback: {
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: theme.colors.backgroundTertiary,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     variants: {
       size: {
         xs: {
@@ -423,26 +425,27 @@ const styles = StyleSheet.create((theme) => ({
           borderRadius: theme.radius.full,
         },
         rounded: {
-          borderRadius: theme.radius.lg,
+          borderRadius: theme.radius.xl,
         },
         square: {
-          borderRadius: theme.radius.sm,
+          borderRadius: theme.radius.md,
         },
       },
     },
   },
   border: {
-    borderWidth: 2,
-    borderColor: theme.colors.background,
+    borderWidth: 2.5,
+    borderColor: theme.colors.card,
   },
   initials: {
-    color: theme.colors.foreground,
-    fontFamily: theme.typography.fonts.semiBold,
+    color: theme.colors.foregroundSecondary,
+    fontFamily: theme.typography.fonts.bold,
+    letterSpacing: 0.5,
     variants: {
       size: {
         xs: {
-          fontSize: 10,
-          lineHeight: 12,
+          fontSize: 9,
+          lineHeight: 11,
         },
         sm: {
           fontSize: theme.typography.sizes.xs,
@@ -453,12 +456,12 @@ const styles = StyleSheet.create((theme) => ({
           lineHeight: theme.typography.sizes.sm * 1.2,
         },
         lg: {
-          fontSize: theme.typography.sizes.xl,
-          lineHeight: theme.typography.sizes.xl * 1.2,
+          fontSize: theme.typography.sizes.lg,
+          lineHeight: theme.typography.sizes.lg * 1.2,
         },
         xl: {
-          fontSize: theme.typography.sizes["2xl"],
-          lineHeight: theme.typography.sizes["2xl"] * 1.2,
+          fontSize: theme.typography.sizes.xl,
+          lineHeight: theme.typography.sizes.xl * 1.2,
         },
       },
       shape: {

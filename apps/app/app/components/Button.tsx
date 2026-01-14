@@ -272,46 +272,55 @@ const styles = StyleSheet.create((theme) => ({
       variant: {
         filled: {
           backgroundColor: theme.colors.primary,
+          // Subtle inner shadow effect via border
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.1)",
+          ...theme.shadows.md,
         },
         outlined: {
           backgroundColor: theme.colors.transparent,
           borderWidth: 1.5,
-          borderColor: theme.colors.border,
+          borderColor: theme.colors.borderSecondary,
         },
         ghost: {
           backgroundColor: theme.colors.transparent,
         },
         secondary: {
           backgroundColor: theme.colors.secondary,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
         },
         danger: {
           backgroundColor: theme.colors.error,
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.15)",
+          ...theme.shadows.md,
         },
       },
       size: {
         sm: {
           height: theme.sizes.button.sm,
           paddingHorizontal: theme.spacing.md,
-          borderRadius: theme.radius.md,
+          borderRadius: theme.radius.lg,
           gap: theme.spacing.xs,
         },
         md: {
           height: theme.sizes.button.md,
-          paddingHorizontal: theme.spacing.lg,
-          borderRadius: theme.radius.lg,
+          paddingHorizontal: theme.spacing.xl,
+          borderRadius: theme.radius.xl,
           gap: theme.spacing.sm,
         },
         lg: {
           height: theme.sizes.button.lg,
-          paddingHorizontal: theme.spacing.xl,
-          borderRadius: theme.radius.lg,
+          paddingHorizontal: theme.spacing["2xl"],
+          borderRadius: theme.radius.xl,
           gap: theme.spacing.sm,
         },
       },
     },
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   fullWidth: {
     width: "100%",

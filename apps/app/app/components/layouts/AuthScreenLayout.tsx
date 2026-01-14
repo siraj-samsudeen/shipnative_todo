@@ -177,39 +177,39 @@ export const AuthScreenLayout = ({
               cardStyle,
             ]}
           >
+            {/* Close Button (top right) - positioned outside ScrollView for fixed position */}
+            {showCloseButton && onClose && (
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={onClose}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t("authScreenLayout:closeButton")}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <View style={styles.closeButtonCircle}>
+                  <Ionicons name="close" size={20} color={theme.colors.foreground} />
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {/* Back Button (top left) - positioned outside ScrollView for fixed position */}
+            {showBackButton && onBack && (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={onBack}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t("authScreenLayout:backButton")}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <View style={styles.backButtonCircle}>
+                  <Ionicons name="arrow-back" size={20} color={theme.colors.foreground} />
+                </View>
+              </TouchableOpacity>
+            )}
+
             <ContentWrapper {...contentWrapperProps}>
-              {/* Close Button (top right) */}
-              {showCloseButton && onClose && (
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("authScreenLayout:closeButton")}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <View style={styles.closeButtonCircle}>
-                    <Ionicons name="close" size={24} color={theme.colors.foreground} />
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {/* Back Button (top left) */}
-              {showBackButton && onBack && (
-                <TouchableOpacity
-                  style={styles.backButton}
-                  onPress={onBack}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("authScreenLayout:backButton")}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <View style={styles.backButtonCircle}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.foreground} />
-                  </View>
-                </TouchableOpacity>
-              )}
-
               {/* Header Icon */}
               {headerIcon && (
                 <View style={styles.headerIconContainer}>
@@ -241,7 +241,9 @@ export const AuthScreenLayout = ({
               )}
 
               {/* Content */}
-              <View style={styles.content}>{safeChildren}</View>
+              <View style={styles.content}>
+                {safeChildren}
+              </View>
             </ContentWrapper>
           </View>
         </KeyboardAvoidingView>
@@ -277,7 +279,7 @@ const styles = StyleSheet.create((theme) => ({
     // On mobile, position card at bottom
     ...(Platform.OS !== "web" && {
       minHeight: 0,
-      paddingBottom: theme.spacing.xl,
+      paddingBottom: theme.spacing.lg,
     }),
     ...(Platform.OS === "web" && {
       minHeight: "100vh" as unknown as number,
@@ -288,40 +290,46 @@ const styles = StyleSheet.create((theme) => ({
   keyboardViewMobile: {
     // Mobile: position card at bottom
     justifyContent: "flex-end",
-    paddingTop: theme.spacing["2xl"],
+    paddingTop: theme.spacing["3xl"],
   },
   keyboardViewCentered: {
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
   },
   modalCard: {
     backgroundColor: theme.colors.card,
-    borderTopLeftRadius: theme.radius["3xl"],
-    borderTopRightRadius: theme.radius["3xl"],
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing["2xl"],
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: theme.colors.border,
     ...theme.shadows.xl,
     width: "100%",
   },
   modalCardMobile: {
     // On mobile, card slides up from bottom with rounded top corners only
-    // Note: borderTopLeftRadius and borderTopRightRadius are set in modalCard base style
     maxWidth: "100%",
     width: "100%",
     // Allow card to grow naturally, but prevent overflow beyond viewport
-    maxHeight: "90%",
+    maxHeight: "92%",
+    // flex: 1 allows the card to expand and give ScrollView a height to work with
+    flex: 1,
   },
   modalCardCentered: {
-    borderRadius: theme.radius["3xl"],
+    borderRadius: 36,
+    borderWidth: 1,
+    borderBottomWidth: 1,
     maxWidth: MODAL_MAX_WIDTH,
     width: "100%",
     // Size to fit content with reasonable limits
-    minHeight: 400,
-    maxHeight: "80%",
+    minHeight: 420,
+    maxHeight: "85%",
   },
   scrollContent: {
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
   },
   staticContent: {
     width: "100%",
@@ -329,9 +337,9 @@ const styles = StyleSheet.create((theme) => ({
   scrollArea: {
     width: "100%",
     // Use flexGrow to allow ScrollView to expand within percentage-based containers
-    // while still allowing content to determine minimum height
+    // flexShrink: 0 ensures the ScrollView doesn't collapse when parent has no fixed height
     flexGrow: 1,
-    flexShrink: 1,
+    flexShrink: 0,
   },
   scrollAreaWeb: {
     width: "100%",
@@ -347,10 +355,12 @@ const styles = StyleSheet.create((theme) => ({
     zIndex: 10,
   },
   closeButtonCircle: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -361,29 +371,33 @@ const styles = StyleSheet.create((theme) => ({
     zIndex: 10,
   },
   backButtonCircle: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
   headerIconContainer: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
     alignItems: "center",
   },
   headerIcon: {
-    fontSize: 48,
-    lineHeight: 56,
+    fontSize: 56,
+    lineHeight: 64,
     textAlign: "center",
   },
   title: {
     textAlign: "center",
     marginBottom: theme.spacing.sm,
+    letterSpacing: -0.5,
   },
   subtitle: {
     textAlign: "center",
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing["2xl"],
+    letterSpacing: 0.1,
   },
   content: {
     // No flex constraint - let content size naturally
