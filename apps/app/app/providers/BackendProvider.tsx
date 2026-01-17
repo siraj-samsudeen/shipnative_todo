@@ -15,14 +15,7 @@
  * ```
  */
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useMemo,
-  type ReactNode,
-} from "react"
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 
 import { env, isSupabase, isConvex } from "../config/env"

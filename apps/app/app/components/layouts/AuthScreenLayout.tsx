@@ -241,9 +241,7 @@ export const AuthScreenLayout = ({
               )}
 
               {/* Content */}
-              <View style={styles.content}>
-                {safeChildren}
-              </View>
+              <View style={styles.content}>{safeChildren}</View>
             </ContentWrapper>
           </View>
         </KeyboardAvoidingView>

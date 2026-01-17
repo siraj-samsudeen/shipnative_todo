@@ -8,9 +8,9 @@
 
 import { useCallback, useState } from "react"
 import { Platform } from "react-native"
-import { useAuthActions } from "@convex-dev/auth/react"
 import { makeRedirectUri } from "expo-auth-session"
 import * as Linking from "expo-linking"
+import { useAuthActions } from "@convex-dev/auth/react"
 
 import { logger } from "../../utils/Logger"
 

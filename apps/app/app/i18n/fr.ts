@@ -277,7 +277,8 @@ const fr: Translations = {
     invalidCode: "Code invalide. Veuillez vérifier et réessayer.",
     expiredCode: "Ce code a expiré. Veuillez en demander un nouveau.",
     convexInstructions: "Pour Convex, utilisez le hook useAuthActions() pour vérifier le code.",
-    convexResendInstructions: "Pour Convex, utilisez le hook useAuthActions() pour renvoyer le code.",
+    convexResendInstructions:
+      "Pour Convex, utilisez le hook useAuthActions() pour renvoyer le code.",
   },
   onboardingScreen: {
     welcomeTitle: "Bienvenue !",

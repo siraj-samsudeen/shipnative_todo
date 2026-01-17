@@ -29,7 +29,13 @@ export const RegisterScreen = () => {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const navigation = useNavigation()
-  const { signUp, signInWithGoogle, signInWithApple, isLoading: authLoading, isEmailVerified } = useAuth()
+  const {
+    signUp,
+    signInWithGoogle,
+    signInWithApple,
+    isLoading: authLoading,
+    isEmailVerified,
+  } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")

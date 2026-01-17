@@ -290,10 +290,8 @@ const en = {
     unexpectedError: "An unexpected error occurred. Please try again.",
     invalidCode: "Invalid code. Please check and try again.",
     expiredCode: "This code has expired. Please request a new one.",
-    convexInstructions:
-      "For Convex, use the useAuthActions() hook to verify the code.",
-    convexResendInstructions:
-      "For Convex, use the useAuthActions() hook to resend the code.",
+    convexInstructions: "For Convex, use the useAuthActions() hook to verify the code.",
+    convexResendInstructions: "For Convex, use the useAuthActions() hook to resend the code.",
   },
   onboardingScreen: {
     // Step 0: Welcome

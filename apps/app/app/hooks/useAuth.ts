@@ -16,7 +16,7 @@ import { Platform } from "react-native"
 import { makeRedirectUri } from "expo-auth-session"
 import * as Linking from "expo-linking"
 
-import { env, isSupabase, isConvex } from "../config/env"
+import { env, isConvex } from "../config/env"
 import { useAuthStore } from "../stores/auth"
 import type {
   User,
@@ -866,12 +866,13 @@ function useConvexAuthImpl(): UseAuthReturn {
  *   - useConvexMagicLink() - OTP/magic link authentication
  */
 export function useAuth(): UseAuthReturn {
-  if (isConvex) {
-    return useConvexAuthImpl()
-  }
+  // Call both hooks unconditionally to satisfy React's rules of hooks
+  // The unused hook's state will be ignored
+  const convexAuth = useConvexAuthImpl()
+  const supabaseAuth = useSupabaseAuth()
 
-  // Default to Supabase
-  return useSupabaseAuth()
+  // Return the appropriate auth based on backend config
+  return isConvex ? convexAuth : supabaseAuth
 }
 
 // ============================================================================

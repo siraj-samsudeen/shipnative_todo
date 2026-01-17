@@ -60,7 +60,7 @@ function getMockChannel(name: string) {
 // Channel Implementations
 // ============================================================================
 
-function createMockRealtimeChannel(channelName: string): RealtimeChannel {
+function _createMockRealtimeChannel(channelName: string): RealtimeChannel {
   const channel = getMockChannel(channelName)
 
   return {
@@ -186,7 +186,7 @@ export function createConvexRealtimeService(): RealtimeService {
     subscribeToTable<T = unknown>(
       table: string,
       callback: (payload: RealtimePayload<T>) => void,
-      options?: {
+      _options?: {
         event?: RealtimeEventType
         filter?: string
         schema?: string
@@ -257,13 +257,13 @@ export function createConvexRealtimeService(): RealtimeService {
         presenceState() {
           return {}
         },
-        onSync(callback) {
+        onSync(_callback) {
           return this
         },
-        onJoin(callback) {
+        onJoin(_callback) {
           return this
         },
-        onLeave(callback) {
+        onLeave(_callback) {
           return this
         },
       }

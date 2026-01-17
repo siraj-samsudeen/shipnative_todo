@@ -19,14 +19,17 @@ import { GUEST_USER_KEY } from "@/stores/auth"
 import { haptics } from "@/utils/haptics"
 import { logger } from "@/utils/Logger"
 
+import { Button } from "./Button"
+import { Text } from "./Text"
+
 // Conditionally import Convex hooks
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useMutation, api } = isConvex
-  ? { useMutation: require("@/hooks/convex").useMutation, api: require("@convex/_generated/api").api }
+  ? {
+      useMutation: require("@/hooks/convex").useMutation,
+      api: require("@convex/_generated/api").api,
+    }
   : { useMutation: null, api: null }
-
-import { Button } from "./Button"
-import { Text } from "./Text"
 
 export interface DeleteAccountModalProps {
   visible: boolean

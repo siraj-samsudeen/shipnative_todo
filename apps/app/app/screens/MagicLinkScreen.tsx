@@ -52,7 +52,6 @@ export const MagicLinkScreen = () => {
   const {
     control,
     handleSubmit,
-    getValues,
     formState: { isValid },
   } = useForm<MagicLinkFormData>({
     resolver: zodResolver(magicLinkSchema),
@@ -176,16 +175,16 @@ export const MagicLinkScreen = () => {
 
       {/* Info text */}
       <View style={styles.infoContainer}>
-        <Ionicons name="information-circle-outline" size={16} color={theme.colors.foregroundSecondary} />
+        <Ionicons
+          name="information-circle-outline"
+          size={16}
+          color={theme.colors.foregroundSecondary}
+        />
         <Text size="sm" color="secondary" style={styles.infoText} tx="magicLinkScreen:infoText" />
       </View>
 
       {/* Back to Login Link */}
-      <TouchableOpacity
-        onPress={handleBackToLogin}
-        style={styles.linkButton}
-        activeOpacity={0.6}
-      >
+      <TouchableOpacity onPress={handleBackToLogin} style={styles.linkButton} activeOpacity={0.6}>
         <Text color="secondary">
           <Text tx="magicLinkScreen:preferPassword" />{" "}
           <Text weight="semiBold" tx="magicLinkScreen:signInWithPassword" />

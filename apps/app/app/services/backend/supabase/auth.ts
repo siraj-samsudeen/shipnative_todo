@@ -60,7 +60,8 @@ function convertSession(session: SupabaseSession | null): BackendSession | null 
 }
 
 function convertAuthEvent(event: SupabaseAuthChangeEvent): AuthChangeEvent {
-  const eventMap: Partial<Record<SupabaseAuthChangeEvent, AuthChangeEvent>> & Record<string, AuthChangeEvent> = {
+  const eventMap: Partial<Record<SupabaseAuthChangeEvent, AuthChangeEvent>> &
+    Record<string, AuthChangeEvent> = {
     SIGNED_IN: "SIGNED_IN",
     SIGNED_OUT: "SIGNED_OUT",
     TOKEN_REFRESHED: "TOKEN_REFRESHED",

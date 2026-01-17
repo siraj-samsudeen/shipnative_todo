@@ -270,8 +270,10 @@ const hi: Translations = {
     unexpectedError: "एक अनपेक्षित त्रुटि हुई। कृपया पुनः प्रयास करें।",
     invalidCode: "अमान्य कोड। कृपया जांचें और पुनः प्रयास करें।",
     expiredCode: "यह कोड समाप्त हो गया है। कृपया नया कोड अनुरोध करें।",
-    convexInstructions: "Convex के लिए, कोड सत्यापित करने के लिए useAuthActions() हुक का उपयोग करें।",
-    convexResendInstructions: "Convex के लिए, कोड पुनः भेजने के लिए useAuthActions() हुक का उपयोग करें।",
+    convexInstructions:
+      "Convex के लिए, कोड सत्यापित करने के लिए useAuthActions() हुक का उपयोग करें।",
+    convexResendInstructions:
+      "Convex के लिए, कोड पुनः भेजने के लिए useAuthActions() हुक का उपयोग करें।",
   },
   onboardingScreen: {
     welcomeTitle: "स्वागत है!",

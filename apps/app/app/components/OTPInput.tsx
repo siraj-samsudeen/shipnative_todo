@@ -23,6 +23,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState } from "react"
+/* eslint-disable no-restricted-imports -- OTPInput is a core component that needs the underlying RN TextInput */
 import {
   View,
   TextInput,
@@ -31,6 +32,7 @@ import {
   TextInputKeyPressEventData,
   Platform,
 } from "react-native"
+/* eslint-enable no-restricted-imports */
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
@@ -248,7 +250,10 @@ export const OTPInput = ({
                 editable={!disabled}
                 selectTextOnFocus
                 caretHidden={Platform.OS === "ios"}
-                accessibilityLabel={t("otpInput:digitLabel", { position: index + 1, total: length })}
+                accessibilityLabel={t("otpInput:digitLabel", {
+                  position: index + 1,
+                  total: length,
+                })}
                 accessibilityHint={t("otpInput:digitHint")}
                 testID={`otp-input-${index}`}
               />

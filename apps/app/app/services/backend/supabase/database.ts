@@ -121,8 +121,10 @@ export function createSupabaseDatabaseService(): DatabaseService {
       data: Partial<T> | Partial<T>[],
       options?: { returning?: boolean },
     ): Promise<DatabaseResult<T>> {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query = getClient().from(table).insert(data as any)
+      const query = getClient()
+        .from(table)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(data as any)
 
       if (options?.returning !== false) {
         const { data: result, error } = await query.select()
@@ -179,10 +181,12 @@ export function createSupabaseDatabaseService(): DatabaseService {
       data: Partial<T> | Partial<T>[],
       options?: { onConflict?: string; returning?: boolean },
     ): Promise<DatabaseResult<T>> {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query = getClient().from(table).upsert(data as any, {
-        onConflict: options?.onConflict,
-      })
+      const query = getClient()
+        .from(table)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .upsert(data as any, {
+          onConflict: options?.onConflict,
+        })
 
       if (options?.returning !== false) {
         const { data: result, error } = await query.select()

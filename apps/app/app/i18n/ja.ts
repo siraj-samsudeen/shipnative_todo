@@ -252,8 +252,7 @@ const ja: Translations = {
     emailLabel: "メールアドレス",
     emailPlaceholder: "メールアドレスを入力してください",
     sendCode: "コードを送信",
-    infoText:
-      "メールに確認コードを送信します。次の画面でコードを入力してサインインしてください。",
+    infoText: "メールに確認コードを送信します。次の画面でコードを入力してサインインしてください。",
     preferPassword: "パスワードを使用しますか？",
     signInWithPassword: "パスワードでサインイン",
     unexpectedError: "予期しないエラーが発生しました。もう一度お試しください。",
@@ -274,7 +273,8 @@ const ja: Translations = {
     invalidCode: "無効なコードです。確認してもう一度お試しください。",
     expiredCode: "このコードは期限切れです。新しいコードをリクエストしてください。",
     convexInstructions: "Convexの場合、useAuthActions()フックを使用してコードを確認してください。",
-    convexResendInstructions: "Convexの場合、useAuthActions()フックを使用してコードを再送信してください。",
+    convexResendInstructions:
+      "Convexの場合、useAuthActions()フックを使用してコードを再送信してください。",
   },
   onboardingScreen: {
     welcomeTitle: "ようこそ！",

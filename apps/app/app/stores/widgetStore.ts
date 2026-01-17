@@ -9,8 +9,8 @@ import { Platform } from "react-native"
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
-import { features } from "@/config/features"
 import { isConvex } from "@/config/env"
+import { features } from "@/config/features"
 import { getWidgetConfig } from "@/services/widgets"
 import { logger } from "@/utils/Logger"
 import { storage } from "@/utils/storage"
@@ -75,14 +75,18 @@ async function writeWidgetCredentials(theme: WidgetTheme = "aurora"): Promise<vo
       // Clear Supabase keys if present
       storage.delete("supabase_url")
       storage.delete("supabase_key")
-      logger.info(`Widget credentials written to storage (${Platform.OS}) - Convex, theme: ${theme}`)
+      logger.info(
+        `Widget credentials written to storage (${Platform.OS}) - Convex, theme: ${theme}`,
+      )
     } else {
       // Supabase: Store URL and anon key for REST API access
       storage.set("supabase_url", config.supabaseUrl)
       storage.set("supabase_key", config.supabaseKey)
       // Clear Convex URL if present
       storage.delete("convex_url")
-      logger.info(`Widget credentials written to storage (${Platform.OS}) - Supabase, theme: ${theme}`)
+      logger.info(
+        `Widget credentials written to storage (${Platform.OS}) - Supabase, theme: ${theme}`,
+      )
     }
   } catch (error) {
     logger.error(`Failed to write widget credentials (${Platform.OS})`, { error })

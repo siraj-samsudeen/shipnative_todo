@@ -244,7 +244,9 @@ export const OTPVerificationScreen = () => {
 
       {/* Success Message */}
       {resendSuccess && (
-        <View style={[styles.messageContainer, { backgroundColor: theme.colors.successBackground }]}>
+        <View
+          style={[styles.messageContainer, { backgroundColor: theme.colors.successBackground }]}
+        >
           <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
           <Text
             size="sm"
@@ -273,24 +275,27 @@ export const OTPVerificationScreen = () => {
         ) : countdown > 0 ? (
           <>
             <Ionicons name="time-outline" size={20} color={theme.colors.foreground} />
-            <Text weight="semiBold" style={[styles.resendButtonText, styles.resendButtonTextDisabled]}>
+            <Text
+              weight="semiBold"
+              style={[styles.resendButtonText, styles.resendButtonTextDisabled]}
+            >
               {t("otpVerificationScreen:resendIn", { seconds: countdown })}
             </Text>
           </>
         ) : (
           <>
             <Ionicons name="refresh" size={20} color={theme.colors.primaryForeground} />
-            <Text weight="semiBold" style={styles.resendButtonText} tx="otpVerificationScreen:resendCode" />
+            <Text
+              weight="semiBold"
+              style={styles.resendButtonText}
+              tx="otpVerificationScreen:resendCode"
+            />
           </>
         )}
       </TouchableOpacity>
 
       {/* Change Email Link */}
-      <TouchableOpacity
-        onPress={handleChangeEmail}
-        style={styles.linkButton}
-        activeOpacity={0.6}
-      >
+      <TouchableOpacity onPress={handleChangeEmail} style={styles.linkButton} activeOpacity={0.6}>
         <Text color="secondary">
           <Text tx="otpVerificationScreen:wrongEmail" />{" "}
           <Text weight="semiBold" tx="otpVerificationScreen:changeIt" />

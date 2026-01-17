@@ -16,6 +16,8 @@
 
 import { FC, useState } from "react"
 import { View, FlatList, Platform } from "react-native"
+import { api } from "@convex/_generated/api"
+import type { Id } from "@convex/_generated/dataModel"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -23,8 +25,6 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { Text, Button, Card, TextField, Spinner, EmptyState } from "@/components"
 import { useAuth } from "@/hooks"
 import { useQuery, useMutation } from "@/hooks/convex"
-import { api } from "@convex/_generated/api"
-import type { Doc, Id } from "@convex/_generated/dataModel"
 
 // =============================================================================
 // TYPES
@@ -48,7 +48,7 @@ const isWeb = Platform.OS === "web"
 
 export const DataDemoScreen: FC = () => {
   const { theme } = useUnistyles()
-  const { user, userId } = useAuth()
+  const { userId } = useAuth()
 
   // Form state
   const [title, setTitle] = useState("")

@@ -263,8 +263,7 @@ const ko: Translations = {
     emailLabel: "이메일",
     emailPlaceholder: "이메일 주소를 입력하세요",
     sendCode: "코드 보내기",
-    infoText:
-      "이메일로 인증 코드를 보내드립니다. 다음 화면에서 코드를 입력하여 로그인하세요.",
+    infoText: "이메일로 인증 코드를 보내드립니다. 다음 화면에서 코드를 입력하여 로그인하세요.",
     preferPassword: "비밀번호를 사용하시겠습니까?",
     signInWithPassword: "비밀번호로 로그인",
     unexpectedError: "예기치 않은 오류가 발생했습니다. 다시 시도해주세요.",

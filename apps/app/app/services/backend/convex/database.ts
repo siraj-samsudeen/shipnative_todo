@@ -205,7 +205,7 @@ export function createConvexDatabaseService(): DatabaseService {
     async get<T = unknown>(
       table: string,
       id: string,
-      options?: { select?: string },
+      _options?: { select?: string },
     ): Promise<DatabaseResult<T>> {
       try {
         if (isUsingMockConvex) {
@@ -240,7 +240,7 @@ export function createConvexDatabaseService(): DatabaseService {
     async insert<T = unknown>(
       table: string,
       data: Partial<T> | Partial<T>[],
-      options?: { returning?: boolean },
+      _options?: { returning?: boolean },
     ): Promise<DatabaseResult<T>> {
       try {
         if (isUsingMockConvex) {

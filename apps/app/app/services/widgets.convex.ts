@@ -13,9 +13,9 @@
 import { Platform } from "react-native"
 import * as SecureStore from "expo-secure-store"
 
-import { convexUrl } from "./backend/convex/client"
 import { logger } from "../utils/Logger"
 import { webSecureStorage } from "../utils/webStorageEncryption"
+import { convexUrl } from "./backend/convex/client"
 
 /**
  * Widget data cache interface
@@ -127,11 +127,7 @@ export async function fetchWidgetData<T = unknown>(options: {
   requireAuth?: boolean
   cacheKey?: string
 }): Promise<{ data: T | null; error: Error | null }> {
-  const {
-    table,
-    limit = 10,
-    cacheKey,
-  } = options
+  const { table, limit = 10, cacheKey } = options
 
   // Generate cache key if not provided
   const key = cacheKey || `widget_${table}_${JSON.stringify(options.filters ?? {})}_${limit}`
@@ -171,7 +167,7 @@ export async function fetchWidgetData<T = unknown>(options: {
     const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     })

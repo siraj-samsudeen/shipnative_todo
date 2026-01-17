@@ -12,7 +12,7 @@
  * - Secure token storage for React Native
  */
 
-import React, { type ReactNode, useMemo } from "react"
+import { type ReactNode, useMemo } from "react"
 import { Platform } from "react-native"
 import * as SecureStore from "expo-secure-store"
 import { ConvexAuthProvider } from "@convex-dev/auth/react"
@@ -166,18 +166,19 @@ interface ConvexProviderProps {
  * ```
  */
 export function ConvexProvider({ children }: ConvexProviderProps): React.ReactElement {
-  // Check if Convex URL is configured before trying to create client
-  if (!convexUrl) {
-    return <ConvexConfigError />
-  }
-
   // Get or create client (memoized to prevent recreating on re-renders)
-  const client = useMemo(() => getConvexClient(), [])
+  // Must be called unconditionally to satisfy React's rules of hooks
+  const client = useMemo(() => (convexUrl ? getConvexClient() : null), [])
 
   // Use platform-specific storage
   // On web, we let Convex Auth use its default storage
   // On mobile, we use secure storage
   const storage = Platform.OS === "android" || Platform.OS === "ios" ? secureStorage : undefined
+
+  // Check if Convex URL is configured before trying to create client
+  if (!convexUrl || !client) {
+    return <ConvexConfigError />
+  }
 
   return (
     <ConvexAuthProvider client={client} storage={storage}>
@@ -256,7 +257,7 @@ function ConvexConfigError(): React.ReactElement {
       <Text style={styles.icon}>⚙️</Text>
       <Text style={styles.title}>Convex Not Configured</Text>
       <Text style={styles.message}>
-        You've set EXPO_PUBLIC_BACKEND_PROVIDER=convex{"\n"}
+        You&apos;ve set EXPO_PUBLIC_BACKEND_PROVIDER=convex{"\n"}
         but EXPO_PUBLIC_CONVEX_URL is missing.
       </Text>
 
@@ -291,4 +292,3 @@ function ConvexConfigError(): React.ReactElement {
     </View>
   )
 }
-

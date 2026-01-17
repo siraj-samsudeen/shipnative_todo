@@ -40,7 +40,8 @@ export function ConvexAuthSync({ children }: { children: React.ReactNode }) {
     logger.debug("[ConvexAuthSync] Auth state", {
       isAuthenticated,
       isLoading,
-      convexUserStatus: convexUser === undefined ? "loading" : convexUser === null ? "null" : "exists",
+      convexUserStatus:
+        convexUser === undefined ? "loading" : convexUser === null ? "null" : "exists",
       hasUser: !!convexUser,
     })
   }
@@ -76,7 +77,9 @@ export function ConvexAuthSync({ children }: { children: React.ReactNode }) {
         // This shouldn't happen normally - log warning but still mark as authenticated
         // to prevent getting stuck on login screen
         if (__DEV__) {
-          logger.warn("[ConvexAuthSync] Authenticated but users.me returned null - possible race condition")
+          logger.warn(
+            "[ConvexAuthSync] Authenticated but users.me returned null - possible race condition",
+          )
         }
 
         // Create a minimal user object to allow navigation to proceed

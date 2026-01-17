@@ -160,7 +160,7 @@ export const DataDemoScreen: FC = () => {
       await createPost.mutateAsync({ title, content })
       setTitle("")
       setContent("")
-    } catch (err) {
+    } catch {
       // Error handled by React Query
     }
   }
@@ -267,9 +267,7 @@ export const DataDemoScreen: FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderPost}
           contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
           ListEmptyComponent={
             <EmptyState
               icon="components"

@@ -25,9 +25,7 @@ import { isConvex } from "@/config/env"
 // This ensures tree-shaking removes the unused version in production
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const widgetService = isConvex
-  ? require("./widgets.convex")
-  : require("./widgets.supabase")
+const widgetService = isConvex ? require("./widgets.convex") : require("./widgets.supabase")
 
 export const fetchWidgetData = widgetService.fetchWidgetData
 export const clearWidgetCache = widgetService.clearWidgetCache

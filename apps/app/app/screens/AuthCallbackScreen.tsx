@@ -7,7 +7,7 @@ import { StyleSheet } from "react-native-unistyles"
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
 import { Text } from "@/components/Text"
 import { isConvex, isSupabase } from "@/config/env"
-import { useAuth } from "@/hooks"
+import { useAuth as _useAuth } from "@/hooks"
 import type { AppStackParamList, AppStackScreenProps } from "@/navigators/navigationTypes"
 import { LoadingScreen } from "@/screens/LoadingScreen"
 import { useAuthStore } from "@/stores/auth"
@@ -100,9 +100,9 @@ export const AuthCallbackScreen = () => {
             if (Platform.OS === "web") {
               try {
                 // Dynamic import to avoid loading Convex in Supabase builds
-                const { useAuthActions } = await import("@convex-dev/auth/react")
-                // Note: This won't work directly because we can't use hooks outside components
-                // The flow is actually handled by the ConvexAuthProvider detecting the code
+                // Dynamic import to ensure Convex auth is available
+                await import("@convex-dev/auth/react")
+                // Note: The flow is handled by the ConvexAuthProvider detecting the code
                 // and completing the flow automatically
 
                 // Clear the URL params

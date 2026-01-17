@@ -22,7 +22,7 @@ const { supabase, supabaseKey, supabaseUrl, isUsingMockSupabase } = isSupabase
 
 // Conditionally import Convex client - only when using Convex backend
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { convexClient } = isConvex
+const { convexClient: _convexClient } = isConvex
   ? require("./backend/convex/client")
   : { convexClient: null }
 

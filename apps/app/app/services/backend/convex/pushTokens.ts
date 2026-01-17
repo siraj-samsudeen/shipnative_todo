@@ -7,10 +7,10 @@
 
 import { Platform } from "react-native"
 import * as Device from "expo-device"
-
 import { api } from "@convex/_generated/api"
-import { logger } from "../../../utils/Logger"
+
 import { getConvexClient, convexUrl } from "./client"
+import { logger } from "../../../utils/Logger"
 
 /**
  * Get a unique device identifier

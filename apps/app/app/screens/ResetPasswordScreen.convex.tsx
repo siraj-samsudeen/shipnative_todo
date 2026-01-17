@@ -20,13 +20,13 @@
 
 import { useState } from "react"
 import { View, TouchableOpacity } from "react-native"
+import { useAuthActions } from "@convex-dev/auth/react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native-unistyles"
 import { z } from "zod"
-import { useAuthActions } from "@convex-dev/auth/react"
 
 import { AuthScreenLayout } from "@/components/layouts/AuthScreenLayout"
 import { Text } from "@/components/Text"
@@ -37,10 +37,7 @@ import { formatAuthError } from "@/utils/formatAuthError"
 // Schema for the Convex password reset form (includes code)
 const convexResetPasswordSchema = z
   .object({
-    code: z
-      .string()
-      .min(8, "Code must be 8 characters")
-      .max(8, "Code must be 8 characters"),
+    code: z.string().min(8, "Code must be 8 characters").max(8, "Code must be 8 characters"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -277,7 +274,7 @@ export const ResetPasswordScreen = () => {
       {/* Resend Code Link */}
       <TouchableOpacity onPress={handleResendCode} style={styles.linkButton} activeOpacity={0.6}>
         <Text color="secondary">
-          Didn't receive the code?{" "}
+          Didn&apos;t receive the code?{" "}
           <Text weight="semiBold" color="primary">
             Resend
           </Text>

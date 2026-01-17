@@ -87,7 +87,7 @@ export function createConvexAuthService(): AuthService {
   /**
    * Helper to convert Convex user to BackendUser
    */
-  const convertUser = (convexUser: Record<string, unknown>): BackendUser => ({
+  const _convertUser = (convexUser: Record<string, unknown>): BackendUser => ({
     id: convexUser._id as string,
     email: convexUser.email as string | undefined,
     emailConfirmedAt: convexUser.emailVerified ? new Date().toISOString() : null,
@@ -241,7 +241,7 @@ export function createConvexAuthService(): AuthService {
       }
     },
 
-    async signOut(options?: { scope?: "local" | "global" }): Promise<AuthResult<void>> {
+    async signOut(_options?: { scope?: "local" | "global" }): Promise<AuthResult<void>> {
       try {
         // Clear local state
         authState.user = null
@@ -307,7 +307,7 @@ export function createConvexAuthService(): AuthService {
       }
     },
 
-    async exchangeCodeForSession(code: string): Promise<AuthResult<{ session: BackendSession }>> {
+    async exchangeCodeForSession(_code: string): Promise<AuthResult<{ session: BackendSession }>> {
       // OAuth code exchange is handled by Convex Auth internally
       return {
         data: null,
@@ -322,7 +322,7 @@ export function createConvexAuthService(): AuthService {
     // Magic Link / OTP
     // ========================================================================
 
-    async signInWithOtp(options: {
+    async signInWithOtp(_options: {
       email: string
       options?: { emailRedirectTo?: string; captchaToken?: string }
     }): Promise<AuthResult<void>> {
@@ -336,7 +336,7 @@ export function createConvexAuthService(): AuthService {
       }
     },
 
-    async verifyOtp(options: {
+    async verifyOtp(_options: {
       email: string
       token: string
       type: "email" | "sms" | "phone_change" | "email_change"
@@ -357,8 +357,8 @@ export function createConvexAuthService(): AuthService {
     // ========================================================================
 
     async resetPasswordForEmail(
-      email: string,
-      options?: { redirectTo?: string },
+      _email: string,
+      _options?: { redirectTo?: string },
     ): Promise<AuthResult<void>> {
       // Convex Auth: signIn("password", { email, flow: "reset" })
       return {
@@ -371,7 +371,9 @@ export function createConvexAuthService(): AuthService {
       }
     },
 
-    async updateUser(attributes: UpdateUserAttributes): Promise<AuthResult<{ user: BackendUser }>> {
+    async updateUser(
+      _attributes: UpdateUserAttributes,
+    ): Promise<AuthResult<{ user: BackendUser }>> {
       // User updates would be handled via a custom Convex mutation
       return {
         data: null,

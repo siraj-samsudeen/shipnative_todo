@@ -22,21 +22,14 @@ import {
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { UnistylesRuntime } from "react-native-unistyles"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
-import {
-  Avatar,
-  Button,
-  DeleteAccountModal,
-  Text,
-  LanguageSelector,
-  MenuItem,
-} from "@/components"
+import { Avatar, Button, DeleteAccountModal, Text, LanguageSelector, MenuItem } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
 import { useAuth } from "@/hooks"
@@ -188,7 +181,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   // ============================================================
   const {
     data: profile,
-    isLoading: profileLoading,
+    isLoading: _profileLoading,
     refetch: refetchProfile,
     isRefetching,
   } = useProfile(userId ?? undefined)

@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 
 import { getBackend, isUsingMockBackend } from "../services/backend"
-import type { RealtimeChannel, RealtimePayload as BackendRealtimePayload } from "../services/backend/types"
+import type {
+  RealtimeChannel,
+  RealtimePayload as BackendRealtimePayload,
+} from "../services/backend/types"
 import type { RealtimeEventType, RealtimeSubscriptionConfig } from "../types/realtime"
 import { logger } from "../utils/Logger"
 

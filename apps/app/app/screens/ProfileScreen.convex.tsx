@@ -15,15 +15,9 @@
  */
 
 import { FC, useState } from "react"
-import {
-  ScrollView,
-  Switch,
-  Pressable,
-  View,
-  Platform,
-  useWindowDimensions,
-} from "react-native"
+import { ScrollView, Switch, Pressable, View, Platform, useWindowDimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { api } from "@convex/_generated/api"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import Animated, { FadeInDown } from "react-native-reanimated"
@@ -31,14 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { UnistylesRuntime } from "react-native-unistyles"
 
-import {
-  Avatar,
-  Button,
-  DeleteAccountModal,
-  Text,
-  LanguageSelector,
-  MenuItem,
-} from "@/components"
+import { Avatar, Button, DeleteAccountModal, Text, LanguageSelector, MenuItem } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
 import { useAuth } from "@/hooks"
@@ -50,7 +37,6 @@ import { useNotificationStore, useSubscriptionStore, useWidgetStore } from "@/st
 import { webDimension } from "@/types/webStyles"
 import { haptics } from "@/utils/haptics"
 import { testErrors } from "@/utils/testError"
-import { api } from "@convex/_generated/api"
 
 import { EditProfileModalConvex } from "../components/EditProfileModal.convex"
 
@@ -98,8 +84,8 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   // Mutations - auto-invalidate related queries
   const updateProfileMutation = useMutation(api.users.updateProfile)
 
-  // Loading state: undefined means loading
-  const isLoading = convexUser === undefined
+  // Loading state: undefined means loading (used by convexUser check)
+  const _isLoading = convexUser === undefined
 
   const isLargeScreen = windowWidth > 768
   const contentStyle = isLargeScreen

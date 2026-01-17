@@ -8,11 +8,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Platform } from "react-native"
 import { makeRedirectUri } from "expo-auth-session"
-import * as Linking from "expo-linking"
+import * as _Linking from "expo-linking"
 import type { User as SupabaseUser, Session as SupabaseSession } from "@supabase/supabase-js"
 
 import { env } from "../../config/env"
-import { supabase, isUsingMockSupabase } from "../../services/supabase"
+import { supabase } from "../../services/supabase"
 import { useAuthStore } from "../../stores/auth"
 import { logger } from "../../utils/Logger"
 

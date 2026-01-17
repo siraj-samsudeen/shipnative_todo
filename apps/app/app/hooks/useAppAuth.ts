@@ -31,7 +31,7 @@
 
 import { useCallback, useMemo } from "react"
 
-import { isSupabase, isConvex } from "../config/env"
+import { isConvex } from "../config/env"
 
 // ============================================================================
 // Types - Unified User Interface
@@ -137,10 +137,8 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
     if (!auth.user) return null
 
     const metadata = auth.user.user_metadata || {}
-    const firstName =
-      typeof metadata.first_name === "string" ? metadata.first_name : null
-    const lastName =
-      typeof metadata.last_name === "string" ? metadata.last_name : null
+    const firstName = typeof metadata.first_name === "string" ? metadata.first_name : null
+    const lastName = typeof metadata.last_name === "string" ? metadata.last_name : null
     const fullName =
       typeof metadata.full_name === "string"
         ? metadata.full_name
@@ -318,8 +316,7 @@ function useConvexAppAuth(): AppAuthState & AppAuthActions {
   const user: AppUser | null = useMemo(() => {
     if (!auth.user) return null
 
-    const displayName =
-      auth.user.name || auth.user.email?.split("@")[0] || null
+    const displayName = auth.user.name || auth.user.email?.split("@")[0] || null
 
     return {
       id: auth.user._id,
@@ -331,9 +328,7 @@ function useConvexAppAuth(): AppAuthState & AppAuthActions {
       avatarUrl: auth.user.avatarUrl || auth.user.image || null,
       bio: auth.user.bio || null,
       emailVerified: !!auth.user.emailVerificationTime,
-      createdAt: auth.user._creationTime
-        ? new Date(auth.user._creationTime).toISOString()
-        : null,
+      createdAt: auth.user._creationTime ? new Date(auth.user._creationTime).toISOString() : null,
       metadata: auth.user.preferences || {},
     }
   }, [auth.user])
@@ -487,12 +482,13 @@ function useConvexAppAuth(): AppAuthState & AppAuthActions {
  * ```
  */
 export function useAuth(): AppAuthState & AppAuthActions {
-  if (isConvex) {
-    return useConvexAppAuth()
-  }
+  // Call both hooks unconditionally to satisfy React's rules of hooks
+  // The unused hook's state will be ignored
+  const convexAuth = useConvexAppAuth()
+  const supabaseAuth = useSupabaseAppAuth()
 
-  // Default to Supabase
-  return useSupabaseAppAuth()
+  // Return the appropriate auth based on backend config
+  return isConvex ? convexAuth : supabaseAuth
 }
 
 /**
