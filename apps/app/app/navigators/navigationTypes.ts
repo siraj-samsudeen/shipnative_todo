@@ -25,7 +25,7 @@ export type AppStackParamList = {
   Login: undefined
   Register: undefined
   ForgotPassword: undefined
-  ResetPassword: { code?: string; token?: string } | undefined
+  ResetPassword: { code?: string; token?: string; email?: string } | undefined
   EmailVerification: undefined
   MagicLink: undefined
   OTPVerification: { email: string; isConvex?: boolean }

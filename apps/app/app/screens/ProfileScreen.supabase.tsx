@@ -92,7 +92,8 @@ const useProfile = (userId: string | undefined) => {
         }
         throw error
       }
-      return data as Profile
+      // Cast through unknown to handle Supabase type generation mismatch
+      return data as unknown as Profile
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
