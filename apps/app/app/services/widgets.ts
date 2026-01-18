@@ -56,6 +56,8 @@ export const getWidgetConfig: () => {
   supabaseUrl: string
   supabaseKey: string
   isMock: boolean
+  convexUrl?: string
+  backendType?: "convex" | "supabase"
 } = widgetService.getWidgetConfig
 
 export const validateWidgetData: <T>(data: T | null, validator?: (data: T) => boolean) => boolean =
