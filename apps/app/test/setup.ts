@@ -76,6 +76,147 @@ jest.mock("react-native-keyboard-controller", () => {
   }
 })
 
+// Mock react-native-worklets to avoid native module initialization errors
+jest.mock("react-native-worklets", () => ({
+  createWorklet: jest.fn((fn) => fn),
+  useWorklet: jest.fn((fn) => fn),
+  Worklet: {
+    create: jest.fn((fn) => fn),
+  },
+}))
+
+// Mock react-native-reanimated for components that use animations
+jest.mock("react-native-reanimated", () => {
+  const View = require("react-native").View
+  return {
+    default: {
+      View,
+      Text: require("react-native").Text,
+      Image: require("react-native").Image,
+      ScrollView: require("react-native").ScrollView,
+      FlatList: require("react-native").FlatList,
+      createAnimatedComponent: (component: unknown) => component,
+    },
+    View,
+    Text: require("react-native").Text,
+    Image: require("react-native").Image,
+    ScrollView: require("react-native").ScrollView,
+    FlatList: require("react-native").FlatList,
+    createAnimatedComponent: (component: unknown) => component,
+    useSharedValue: jest.fn((initialValue) => ({ value: initialValue })),
+    useAnimatedStyle: jest.fn(() => ({})),
+    useDerivedValue: jest.fn((fn) => ({ value: fn() })),
+    useAnimatedProps: jest.fn(() => ({})),
+    withSpring: jest.fn((value) => value),
+    withTiming: jest.fn((value) => value),
+    withDelay: jest.fn((_delay, value) => value),
+    withSequence: jest.fn((...values) => values[values.length - 1]),
+    withRepeat: jest.fn((value) => value),
+    runOnJS: jest.fn((fn) => fn),
+    runOnUI: jest.fn((fn) => fn),
+    interpolate: jest.fn((value, _input, output) => output[0] ?? value),
+    Extrapolation: {
+      CLAMP: "clamp",
+      EXTEND: "extend",
+      IDENTITY: "identity",
+    },
+    Easing: {
+      linear: jest.fn(),
+      ease: jest.fn(),
+      quad: jest.fn(),
+      cubic: jest.fn(),
+      poly: jest.fn(),
+      sin: jest.fn(),
+      circle: jest.fn(),
+      exp: jest.fn(),
+      elastic: jest.fn(),
+      back: jest.fn(),
+      bounce: jest.fn(),
+      bezier: jest.fn(() => jest.fn()),
+      in: jest.fn((fn) => fn),
+      out: jest.fn((fn) => fn),
+      inOut: jest.fn((fn) => fn),
+    },
+    Layout: {
+      duration: jest.fn().mockReturnThis(),
+      delay: jest.fn().mockReturnThis(),
+    },
+    FadeIn: {
+      duration: jest.fn().mockReturnThis(),
+      delay: jest.fn().mockReturnThis(),
+    },
+    FadeOut: {
+      duration: jest.fn().mockReturnThis(),
+      delay: jest.fn().mockReturnThis(),
+    },
+    SlideInRight: {
+      duration: jest.fn().mockReturnThis(),
+    },
+    SlideOutLeft: {
+      duration: jest.fn().mockReturnThis(),
+    },
+    ZoomIn: {
+      duration: jest.fn().mockReturnThis(),
+    },
+    ZoomOut: {
+      duration: jest.fn().mockReturnThis(),
+    },
+    cancelAnimation: jest.fn(),
+    measure: jest.fn(),
+    scrollTo: jest.fn(),
+  }
+})
+
+// Mock react-native-gesture-handler
+jest.mock("react-native-gesture-handler", () => {
+  const View = require("react-native").View
+  return {
+    GestureDetector: ({ children }: { children: unknown }) => children,
+    GestureHandlerRootView: View,
+    Gesture: {
+      Tap: jest.fn(() => ({
+        enabled: jest.fn().mockReturnThis(),
+        onBegin: jest.fn().mockReturnThis(),
+        onFinalize: jest.fn().mockReturnThis(),
+        onEnd: jest.fn().mockReturnThis(),
+      })),
+      LongPress: jest.fn(() => ({
+        enabled: jest.fn().mockReturnThis(),
+        minDuration: jest.fn().mockReturnThis(),
+        onStart: jest.fn().mockReturnThis(),
+        onFinalize: jest.fn().mockReturnThis(),
+      })),
+      Race: jest.fn(() => ({})),
+      Pan: jest.fn(() => ({
+        enabled: jest.fn().mockReturnThis(),
+        onBegin: jest.fn().mockReturnThis(),
+        onUpdate: jest.fn().mockReturnThis(),
+        onEnd: jest.fn().mockReturnThis(),
+        onFinalize: jest.fn().mockReturnThis(),
+      })),
+    },
+    Directions: {
+      RIGHT: 1,
+      LEFT: 2,
+      UP: 4,
+      DOWN: 8,
+    },
+    State: {
+      UNDETERMINED: 0,
+      FAILED: 1,
+      BEGAN: 2,
+      CANCELLED: 3,
+      ACTIVE: 4,
+      END: 5,
+    },
+    TapGestureHandler: View,
+    PanGestureHandler: View,
+    LongPressGestureHandler: View,
+    ScrollView: require("react-native").ScrollView,
+    FlatList: require("react-native").FlatList,
+  }
+})
+
 // Mock logger before other modules that depend on it
 jest.mock("../app/utils/Logger", () => ({
   logger: {
