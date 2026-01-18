@@ -40,7 +40,7 @@ import { useQuery } from '@tanstack/react-query'
 import { StyleSheet, useUnistyles } from 'react-native-unistyles'
 
 // 3. Stores and hooks
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 import { useUser } from '@/hooks/queries/useUser'
 
 // 4. Components
@@ -58,7 +58,7 @@ import type { User } from '@/types/user.types'
 import React from 'react'
 import { View } from 'react-native'
 import { StyleSheet, useUnistyles } from 'react-native-unistyles'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 import { Button, Text } from '@/components'
 
 // 2. Types/Interfaces

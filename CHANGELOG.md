@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Creates backups before removal
   - Simplifies codebase for developers who pick one backend
 
+- **Auth Store Reorganization**:
+  - Restructured auth store into backend-specific directories (`stores/auth/supabase/`, `stores/auth/convex/`)
+  - Shared types and constants remain at `stores/auth/authTypes.ts` and `stores/auth/authConstants.ts`
+  - Import path unchanged: `import { useAuthStore } from '@/stores/auth'`
+  - Setup wizard now removes unused backend's auth directory automatically
+
 - **New Documentation**: Added `vibe/BACKEND_PATTERNS.md`
   - Clear guidance on when to use unified vs native APIs
   - Data fetching patterns for each provider

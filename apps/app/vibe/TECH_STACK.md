@@ -16,7 +16,7 @@
 
 ```typescript
 // ✅ DO THIS
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 
 const user = useAuthStore((state) => state.user)
 const signOut = useAuthStore((state) => state.signOut)
