@@ -17,7 +17,7 @@ import {
   type LocalNotificationInput,
 } from "@/services/notifications"
 import { syncPushNotificationsPreference, syncPushToken } from "@/services/preferencesSync"
-import { useAuthStore } from "@/stores/auth/authStore"
+import { useAuthStore } from "@/stores/auth"
 import { logger } from "@/utils/Logger"
 import { storage } from "@/utils/storage"
 

@@ -600,12 +600,16 @@ const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promi
     `apps/app/app/services/backend/${unusedProvider}`,
     // Hooks
     `apps/app/app/hooks/${unusedProvider}`,
+    // Auth store - backend-specific directory
+    `apps/app/app/stores/auth/${unusedProvider}`,
+    // Auth store - root-level __tests__ (tests now in supabase/__tests__)
+    `apps/app/app/stores/auth/__tests__`,
   ]
 
   // Files to remove (individual files)
   const filesToRemove: string[] = []
 
-  // Additional Convex-specific paths
+  // Additional Convex-specific paths (when removing Convex)
   if (unusedProvider === "convex") {
     pathsToRemove.push(
       "packages/backend/convex",
@@ -621,6 +625,49 @@ const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promi
       "apps/app/app/screens/DataDemoScreen.convex.tsx",
       "apps/app/app/components/EditProfileModal.convex.tsx",
       "apps/app/app/services/widgets.convex.ts",
+      // Root-level auth store files (replaced by supabase/ subdirectory)
+      "apps/app/app/stores/auth/authStore.ts",
+      "apps/app/app/stores/auth/authActions.ts",
+      "apps/app/app/stores/auth/authHelpers.ts",
+    )
+  }
+
+  // Additional Supabase-specific paths (when removing Supabase)
+  if (unusedProvider === "supabase") {
+    // Remove Supabase provider files
+    filesToRemove.push(
+      "apps/app/app/providers/SupabaseProvider.tsx",
+      "apps/app/app/providers/SupabaseAuthSync.tsx",
+      // Supabase-specific screens and components
+      "apps/app/app/screens/ProfileScreen.supabase.tsx",
+      "apps/app/app/screens/ResetPasswordScreen.supabase.tsx",
+      "apps/app/app/screens/DataDemoScreen.supabase.tsx",
+      "apps/app/app/components/EditProfileModal.supabase.tsx",
+      "apps/app/app/services/widgets.supabase.ts",
+      // Supabase service files (these have direct @supabase/supabase-js imports)
+      "apps/app/app/services/supabase.ts",
+      "apps/app/app/services/api/index.ts",
+      "apps/app/app/services/accountDeletion.ts", // Has Supabase imports - Convex uses mutations instead
+      "apps/app/app/services/preferencesSync.ts", // Has Supabase imports - Convex uses mutations instead
+      // Root-level auth store files (replaced by convex/ subdirectory)
+      "apps/app/app/stores/auth/authStore.ts",
+      "apps/app/app/stores/auth/authActions.ts",
+      "apps/app/app/stores/auth/authHelpers.ts",
+      // Supabase types
+      "apps/app/app/types/supabase.ts",
+      "apps/app/app/types/supabaseErrors.ts",
+      "apps/app/app/types/auth.ts",
+      // Supabase hooks
+      "apps/app/app/hooks/useAuth.ts",
+      // Supabase mocks folder
+      "apps/app/app/services/mocks/supabase",
+      // Test files
+      "apps/app/app/services/__tests__/supabase.test.ts",
+      // Note: stores/auth/__tests__ directory is deleted in pathsToRemove
+      // Supabase-specific context (uses supabase imports directly)
+      "apps/app/app/context/AuthContext.tsx",
+      // Integration test that depends on Supabase
+      "apps/app/app/__tests__/integration/authFlow.test.tsx",
     )
   }
 
@@ -666,12 +713,19 @@ const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promi
       fs.rmSync(fullPath, { force: true })
     }
 
-    // Update source files to remove Convex references if removing Convex
+    // Update source files to remove unused backend references
     if (unusedProvider === "convex") {
+      // Removing Convex, keeping Supabase
       updateProvidersIndex(selectedProvider)
       updateBackendProviderImports(selectedProvider)
       updateBackendServiceIndex(selectedProvider)
       updateConditionalExports(selectedProvider)
+    } else if (unusedProvider === "supabase") {
+      // Removing Supabase, keeping Convex
+      updateProvidersIndexForConvex(selectedProvider)
+      updateBackendProviderImportsForConvex(selectedProvider)
+      updateBackendServiceIndexForConvex(selectedProvider)
+      updateConditionalExportsForConvex(selectedProvider)
     }
 
     stopSpinner(true)
@@ -827,6 +881,165 @@ const updateBackendServiceIndex = (selectedProvider: BackendProvider): void => {
   }
 }
 
+// Update providers/index.ts to remove Supabase exports when using Convex
+const updateProvidersIndexForConvex = (selectedProvider: BackendProvider): void => {
+  const indexPath = path.join(__dirname, "apps/app/app/providers/index.ts")
+  if (!fs.existsSync(indexPath)) return
+
+  try {
+    let content = fs.readFileSync(indexPath, "utf8")
+
+    if (selectedProvider === "convex") {
+      // Remove Supabase-related exports
+      content = content.replace(
+        /export \{ SupabaseProvider, getSupabaseClient \} from "\.\/SupabaseProvider"\n/g,
+        ""
+      )
+      content = content.replace(
+        /export \{ SupabaseAuthSync \} from "\.\/SupabaseAuthSync"\n/g,
+        ""
+      )
+    }
+
+    fs.writeFileSync(indexPath, content)
+    console.log(chalk.dim(`   • Updated providers/index.ts for Convex`))
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update providers/index.ts: ${error.message}`))
+  }
+}
+
+// Update backend provider imports when using Convex
+const updateBackendProviderImportsForConvex = (selectedProvider: BackendProvider): void => {
+  // For Convex, we want to remove Supabase imports from various files
+  const configEnvPath = path.join(__dirname, "apps/app/app/config/env.ts")
+  if (!fs.existsSync(configEnvPath)) return
+
+  try {
+    let content = fs.readFileSync(configEnvPath, "utf8")
+
+    if (selectedProvider === "convex") {
+      // No changes needed for env.ts when using Convex
+      // The isConvex check will return true
+    }
+
+    fs.writeFileSync(configEnvPath, content)
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update config/env.ts: ${error.message}`))
+  }
+}
+
+// Update services/backend/index.ts when using Convex
+const updateBackendServiceIndexForConvex = (selectedProvider: BackendProvider): void => {
+  const indexPath = path.join(__dirname, "apps/app/app/services/backend/index.ts")
+  if (!fs.existsSync(indexPath)) return
+
+  try {
+    let content = fs.readFileSync(indexPath, "utf8")
+
+    if (selectedProvider === "convex") {
+      // Remove Supabase-related exports
+      content = content.replace(
+        /export \{ supabase, getSupabaseClient \} from "\.\/supabase\/client"\n/g,
+        ""
+      )
+      content = content.replace(
+        /export type \{ Database \} from "\.\/supabase\/database\.types"\n?/g,
+        ""
+      )
+      // Remove TypedSupabaseClient type export (since supabase/client is deleted)
+      content = content.replace(
+        /export type \{ TypedSupabaseClient \} from "\.\/supabase\/client"\n?/g,
+        ""
+      )
+      // Remove the isSupabase dynamic import branch in getBackendAsync
+      content = content.replace(
+        /\s*if \(isSupabase\) \{\s*\/\/ Dynamically import Supabase backend\s*const \{ createSupabaseBackend \} = await import\("\.\/supabase"\)\s*backendInstance = createSupabaseBackend\(\)\s*\} else /gm,
+        "\n      "
+      )
+      // Remove the isSupabase synchronous require branch in getBackend
+      content = content.replace(
+        /\s*if \(isSupabase\) \{\s*\/\/ Supabase is available synchronously\s*const \{ createSupabaseBackend \} = require\("\.\/supabase"\)\s*backendInstance = createSupabaseBackend\(\)\s*\} else /gm,
+        "\n      "
+      )
+      // Remove isSupabase import if no longer needed
+      content = content.replace(
+        /import \{ env, isSupabase, isConvex \} from "\.\.\/\.\.\/config\/env"/,
+        'import { env, isConvex } from "../../config/env"'
+      )
+    }
+
+    fs.writeFileSync(indexPath, content)
+    console.log(chalk.dim(`   • Updated services/backend/index.ts for Convex`))
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update services/backend/index.ts: ${error.message}`))
+  }
+}
+
+// Update files with conditional exports to use only Convex versions
+const updateConditionalExportsForConvex = (selectedProvider: BackendProvider): void => {
+  if (selectedProvider !== "convex") return
+
+  // Files that have conditional exports - update them to use Convex versions
+  const filesToUpdate = [
+    {
+      file: "apps/app/app/screens/ProfileScreen.tsx",
+      exportName: "ProfileScreen",
+      convexPath: "./ProfileScreen.convex"
+    },
+    {
+      file: "apps/app/app/screens/ResetPasswordScreen.tsx",
+      exportName: "ResetPasswordScreen",
+      convexPath: "./ResetPasswordScreen.convex"
+    },
+    {
+      file: "apps/app/app/screens/DataDemoScreen.tsx",
+      exportName: "DataDemoScreen",
+      convexPath: "./DataDemoScreen.convex"
+    },
+    {
+      file: "apps/app/app/services/widgets.ts",
+      exportName: "widgetService",
+      convexPath: "./widgets.convex"
+    },
+  ]
+
+  for (const { file, exportName, convexPath } of filesToUpdate) {
+    const filePath = path.join(__dirname, file)
+    if (!fs.existsSync(filePath)) continue
+
+    try {
+      let content = fs.readFileSync(filePath, "utf8")
+
+      // Replace conditional export pattern with direct convex export
+      // Pattern matches: export const X = isConvex ? require("./X.convex").X : require("./X.supabase").X
+      const conditionalPattern = new RegExp(
+        `export\\s+const\\s+${exportName}\\s*=\\s*isConvex\\s*\\?\\s*require\\([^)]+\\.convex[^)]*\\)\\.${exportName}\\s*:\\s*require\\([^)]+\\.supabase[^)]*\\)\\.${exportName}`,
+        "m"
+      )
+
+      if (conditionalPattern.test(content)) {
+        content = content.replace(
+          conditionalPattern,
+          `export { ${exportName} } from "${convexPath}"`
+        )
+
+        // Remove the isConvex import if it's no longer used
+        if (!content.includes("isConvex") || content.match(/isConvex/g)?.length === 1) {
+          content = content.replace(/import\s*{\s*isConvex\s*}\s*from\s*["']@\/config\/env["']\s*\n?/, "")
+        }
+
+        fs.writeFileSync(filePath, content)
+        console.log(chalk.dim(`   • Updated ${file}`))
+      }
+    } catch (error) {
+      console.warn(chalk.yellow(`   ⚠️ Could not update ${file}: ${error.message}`))
+    }
+  }
+
+  // Also update files with inline conditional requires
+  updateInlineConditionalRequiresForConvex(selectedProvider)
+}
+
 // Update files with conditional exports to use only Supabase versions
 const updateConditionalExports = (selectedProvider: BackendProvider): void => {
   if (selectedProvider !== "supabase") return
@@ -920,41 +1133,33 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
     return content
   })
 
-  // useAppAuth.ts - replace useConvexAppAuth with a no-op stub and update useAuth export
+  // useAppAuth.ts - completely rewrite useAuth to only use Supabase
   updateFileContent("apps/app/app/hooks/useAppAuth.ts", (content) => {
-    // Replace the entire useConvexAppAuth function with a stub
+    // Remove the isConvex import
+    content = content.replace(/import \{ isConvex \} from "\.\.\/config\/env"\n/, "")
+
+    // Replace the entire Convex Implementation section with a placeholder comment
+    // Match from "// Convex Implementation" section to just before "// Main Hook" section
     content = content.replace(
-      /function useConvexAppAuth\(\): AppAuthState & AppAuthActions \{[\s\S]*?^}$/m,
-      `function useConvexAppAuth(): AppAuthState & AppAuthActions {
-  // Convex removed - returning no-op stub to satisfy React hooks rules
-  return {
-    isAuthenticated: false,
-    isLoading: false,
-    user: null,
-    session: null,
-    error: null,
-    signInWithEmail: async () => ({ success: false, error: "Convex not configured" }),
-    signUpWithEmail: async () => ({ success: false, error: "Convex not configured" }),
-    signInWithGoogle: async () => ({ success: false, error: "Convex not configured" }),
-    signInWithApple: async () => ({ success: false, error: "Convex not configured" }),
-    sendMagicLink: async () => ({ success: false, error: "Convex not configured" }),
-    verifyMagicLink: async () => ({ success: false, error: "Convex not configured" }),
-    signOut: async () => {},
-    updateProfile: async () => ({ success: false, error: "Convex not configured" }),
-    changePassword: async () => ({ success: false, error: "Convex not configured" }),
-    deleteAccount: async () => ({ success: false, error: "Convex not configured" }),
-    resetPassword: async () => ({ success: false, error: "Convex not configured" }),
-    refreshSession: async () => {},
-  }
+      /\/\/ ============================================================================\n\/\/ Convex Implementation\n\/\/ ============================================================================\n\nfunction useConvexAppAuth\(\): AppAuthState & AppAuthActions \{[\s\S]*?(?=\/\/ ============================================================================\n\/\/ Main Hook)/,
+      `// ============================================================================
+// Convex Implementation (removed - using Supabase only)
+// ============================================================================
+
+// Convex code has been removed. If you need Convex, restore from git or re-clone.
+
+`
+    )
+
+    // Replace the useAuth function to directly use Supabase without calling both hooks
+    content = content.replace(
+      /export function useAuth\(\): AppAuthState & AppAuthActions \{\n  \/\/ Call both hooks unconditionally to satisfy React's rules of hooks\n  \/\/ The unused hook's state will be ignored\n  const convexAuth = useConvexAppAuth\(\)\n  const supabaseAuth = useSupabaseAppAuth\(\)\n\n  \/\/ Return the appropriate auth based on backend config\n  return isConvex \? convexAuth : supabaseAuth\n\}/,
+      `export function useAuth(): AppAuthState & AppAuthActions {
+  // Using Supabase backend only (Convex code removed)
+  return useSupabaseAppAuth()
 }`
     )
-    // Update useAuth to always return supabase
-    content = content.replace(
-      /return isConvex \? convexAuth : supabaseAuth/,
-      "return supabaseAuth // Convex removed"
-    )
-    // Remove isConvex from imports if not used elsewhere
-    content = content.replace(/import \{ isConvex \} from "\.\.\/config\/env"\n/, "")
+
     return content
   })
 
@@ -1006,11 +1211,22 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
     return content
   })
 
-  // hooks/index.ts - remove convex example from comments
+  // hooks/index.ts - remove convex exports and examples
   updateFileContent("apps/app/app/hooks/index.ts", (content) => {
+    // Remove the entire Convex Data Hooks section (lines 82-94)
     content = content.replace(
-      / \* import \{ api \} from "@convex\/_generated\/api"\n/,
+      /\/\/ ============================================================================\n\/\/ Convex Data Hooks \(only needed if using Convex backend\)\n\/\/ ============================================================================\n\nexport \{[\s\S]*?\} from "\.\/convex"\n/,
       ""
+    )
+    // Remove convex example from comments (lines 19-27)
+    content = content.replace(
+      / \* ## Convex Data Hooks \(if using Convex backend\)\n \*\n \* ```tsx\n \* import \{ useQuery, useMutation \} from "@\/hooks"\n \* import \{ api \} from "@convex\/_generated\/api"\n \*\n \* const users = useQuery\(api\.users\.list\)  \/\/ Reactive!\n \* const updateUser = useMutation\(api\.users\.update\)\n \* ```\n \*\n/,
+      ""
+    )
+    // Update the comment about useAuth supporting both backends
+    content = content.replace(
+      /`useAuth\(\)` is the ONLY auth hook you need\. It works with both Supabase and Convex backends\./,
+      "`useAuth()` is the ONLY auth hook you need."
     )
     return content
   })
@@ -1063,6 +1279,386 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
     content = content.replace(
       /const convexClient = isConvex[\s\S]*?require\("\.\/backend\/convex\/client"\)[\s\S]*?: null/,
       "const convexClient = null // Convex removed"
+    )
+    return content
+  })
+
+  // Update stores/auth/index.ts to directly export from supabase subdirectory
+  // The convex subdirectory has been deleted (added to pathsToRemove)
+  const supabaseAuthStoreIndexContent = `/**
+ * Auth Store Exports
+ *
+ * Public exports for the authentication store (Supabase implementation).
+ */
+
+// Export shared types and constants
+export { GUEST_USER_KEY } from "./authConstants"
+export type { AuthState, PersistedAuthState } from "./authTypes"
+
+// Export from Supabase implementation
+export { useAuthStore } from "./supabase/authStore"
+export {
+  syncOnboardingToDatabase,
+  syncOnboardingStatus,
+  fetchOnboardingFromDatabase,
+  updateUserState,
+  getEmailRedirectUrl,
+  getPasswordResetRedirectUrl,
+} from "./supabase/authHelpers"
+`
+  const authStoreIndexPath = path.join(__dirname, "apps/app/app/stores/auth/index.ts")
+  try {
+    fs.writeFileSync(authStoreIndexPath, supabaseAuthStoreIndexContent)
+    console.log(chalk.dim("   • Updated stores/auth/index.ts to use Supabase implementation"))
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update stores/auth/index.ts: ${error.message}`))
+  }
+}
+
+// Update files with inline conditional requires when Convex is selected (remove Supabase references)
+const updateInlineConditionalRequiresForConvex = (selectedProvider: BackendProvider): void => {
+  if (selectedProvider !== "convex") return
+
+  // widgets.ts - replace conditional with direct convex import and remove supabase type export
+  updateFileContent("apps/app/app/services/widgets.ts", (content) => {
+    content = content.replace(
+      /const widgetService = isConvex \? require\("\.\/widgets\.convex"\) : require\("\.\/widgets\.supabase"\)/,
+      'const widgetService = require("./widgets.convex")'
+    )
+    content = content.replace(/import \{ isConvex \} from [^\n]+\n/, "")
+    // Remove the supabase type export since widgets.supabase.ts is deleted
+    content = content.replace(/export type \{ WidgetCache \} from "\.\/widgets\.supabase"\n/, "")
+    return content
+  })
+
+  // DeleteAccountModal.tsx - keep the convex imports since we're using Convex
+  // No changes needed - Convex code should stay
+
+  // useAppAuth.ts - completely rewrite useAuth to only use Convex
+  updateFileContent("apps/app/app/hooks/useAppAuth.ts", (content) => {
+    // Remove the isConvex import
+    content = content.replace(/import \{ isConvex \} from "\.\.\/config\/env"\n/, "")
+
+    // Replace the entire Supabase Implementation section with a placeholder comment
+    content = content.replace(
+      /\/\/ ============================================================================\n\/\/ Supabase Implementation\n\/\/ ============================================================================\n\nfunction useSupabaseAppAuth\(\): AppAuthState & AppAuthActions \{[\s\S]*?(?=\/\/ ============================================================================\n\/\/ Convex Implementation)/,
+      `// ============================================================================
+// Supabase Implementation (removed - using Convex only)
+// ============================================================================
+
+// Supabase code has been removed. If you need Supabase, restore from git or re-clone.
+
+`
+    )
+
+    // Replace the useAuth function to directly use Convex without calling both hooks
+    content = content.replace(
+      /export function useAuth\(\): AppAuthState & AppAuthActions \{\n  \/\/ Call both hooks unconditionally to satisfy React's rules of hooks\n  \/\/ The unused hook's state will be ignored\n  const convexAuth = useConvexAppAuth\(\)\n  const supabaseAuth = useSupabaseAppAuth\(\)\n\n  \/\/ Return the appropriate auth based on backend config\n  return isConvex \? convexAuth : supabaseAuth\n\}/,
+      `export function useAuth(): AppAuthState & AppAuthActions {
+  // Using Convex backend only (Supabase code removed)
+  return useConvexAppAuth()
+}`
+    )
+
+    return content
+  })
+
+  // accountDeletion.ts and preferencesSync.ts are now deleted when Convex is selected
+  // Convex handles account deletion via mutations in the profile screen
+  // Convex handles preferences via mutations directly in components
+
+  // hooks/index.ts - update comment about useAuth (keep Convex exports)
+  updateFileContent("apps/app/app/hooks/index.ts", (content) => {
+    // Update the comment about useAuth supporting both backends
+    content = content.replace(
+      /`useAuth\(\)` is the ONLY auth hook you need\. It works with both Supabase and Convex backends\./,
+      "`useAuth()` is the ONLY auth hook you need."
+    )
+    return content
+  })
+
+  // useAuth.ts - replace useSupabaseAuthImpl with stub
+  updateFileContent("apps/app/app/hooks/useAuth.ts", (content) => {
+    const stubFunction = `function useSupabaseAuthImpl(): UseAuthReturn {
+  // Supabase removed - returning no-op stub to satisfy React hooks rules
+  return {
+    user: null,
+    session: null,
+    loading: false,
+    signUp: async () => ({ error: new Error("Supabase not configured") }),
+    signIn: async () => ({ error: new Error("Supabase not configured") }),
+    signOut: async () => {},
+    refreshSession: async () => ({ error: new Error("Supabase not configured") }),
+    sendOtp: async () => ({ error: new Error("Supabase not configured") }),
+    verifyOtp: async () => ({ error: new Error("Supabase not configured") }),
+    sendResetPasswordEmail: async () => ({ error: new Error("Supabase not configured") }),
+    resetPassword: async () => ({ error: new Error("Supabase not configured") }),
+    sendMagicLink: async () => ({ error: new Error("Supabase not configured") }),
+    verifyMagicLink: async () => ({ error: new Error("Supabase not configured") }),
+    signInWithGoogle: async () => ({ error: new Error("Supabase not configured") }),
+    signInWithApple: async () => ({ error: new Error("Supabase not configured") }),
+    updateUser: async () => ({ error: new Error("Supabase not configured") }),
+    deleteAccount: async () => ({ error: new Error("Supabase not configured") }),
+  }
+}`
+    content = content.replace(
+      /function useSupabaseAuthImpl\(\): UseAuthReturn \{[\s\S]*?^}/m,
+      stubFunction
+    )
+    // Update the export to always use convex
+    content = content.replace(
+      /return isConvex \? convexAuth : supabaseAuth/g,
+      "return convexAuth // Supabase removed"
+    )
+    // Remove isConvex import
+    content = content.replace(/import \{ isConvex \} from "\.\.\/config\/env"\n/, "")
+    return content
+  })
+
+  // Replace types/auth.ts with Convex-compatible version
+  // The old file re-exports Supabase types, but we need backend-agnostic types
+  const convexAuthTypesContent = `/**
+ * Platform-agnostic authentication types
+ *
+ * Re-exports types from the backend service layer for backwards compatibility.
+ * These types work with the Convex backend.
+ */
+
+import type { BackendUser, BackendSession } from "@/services/backend/types"
+
+// Re-export for backwards compatibility
+export type User = BackendUser
+export type Session = BackendSession
+
+export type AuthProvider = "convex" | "mock"
+
+export interface ResetPasswordOptions {
+  redirectTo?: string
+}
+
+export type AuthChangeEvent =
+  | "SIGNED_IN"
+  | "SIGNED_OUT"
+  | "TOKEN_REFRESHED"
+  | "USER_UPDATED"
+  | "PASSWORD_RECOVERY"
+
+/**
+ * Helper to check if user is authenticated
+ */
+export function isAuthenticated(session: Session | null): boolean {
+  if (!session) return false
+  if (session.expiresAt && session.expiresAt < Date.now() / 1000) {
+    return false
+  }
+  return true
+}
+
+/**
+ * Helper to get user from session
+ */
+export function getUserFromSession(session: Session | null): User | null {
+  return session?.user || null
+}
+
+/**
+ * Helper to check if user's email is confirmed
+ */
+export function isEmailConfirmed(user: User | null): boolean {
+  if (!user) return false
+  return !!user.emailConfirmedAt
+}
+`
+  const authTypesPath = path.join(__dirname, "apps/app/app/types/auth.ts")
+  try {
+    fs.writeFileSync(authTypesPath, convexAuthTypesContent)
+    console.log(chalk.dim("   • Replaced types/auth.ts with Convex-compatible version"))
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update types/auth.ts: ${error.message}`))
+  }
+
+  // Update files that import @/hooks/useAuth to use @/hooks instead
+  const filesToUpdateHooksImport = [
+    "apps/app/app/screens/WelcomeScreen.tsx",
+    "apps/app/app/screens/MagicLinkScreen.tsx",
+  ]
+  for (const filePath of filesToUpdateHooksImport) {
+    updateFileContent(filePath, (content) => {
+      return content.replace(
+        /import \{ useAuth \} from ["']@\/hooks\/useAuth["']/g,
+        'import { useAuth } from "@/hooks"'
+      )
+    })
+  }
+
+  // AuthCallbackScreen imports from @/services/supabase - we need to remove or update this
+  // For Convex, the auth callback would be handled differently
+  updateFileContent("apps/app/app/screens/AuthCallbackScreen.tsx", (content) => {
+    // Remove the supabase import and update the code to use Convex
+    content = content.replace(
+      /import \{ supabase \} from ["']@\/services\/supabase["']\n?/g,
+      ""
+    )
+    // Replace supabase.auth.getSession() calls with null since Convex handles this differently
+    content = content.replace(
+      /await supabase\.auth\.getSession\(\)/g,
+      "{ data: { session: null }, error: null }"
+    )
+    content = content.replace(
+      /supabase\.auth\.exchangeCodeForSession\([^)]+\)/g,
+      "Promise.resolve({ data: { session: null }, error: null })"
+    )
+    return content
+  })
+
+  // Update files importing @/services/accountDeletion - DeleteAccountModal needs updating for Convex
+  updateFileContent("apps/app/app/components/DeleteAccountModal.tsx", (content) => {
+    // Remove accountDeletion import and add Convex mutation approach
+    content = content.replace(
+      /import \{ deleteAccount, AccountDeletionState \} from ["']@\/services\/accountDeletion["']/g,
+      `// Account deletion is handled via Convex mutations
+type AccountDeletionState = "idle" | "deleting" | "deleted" | "error"`
+    )
+    return content
+  })
+
+  // Update files importing @/services/preferencesSync
+  updateFileContent("apps/app/app/stores/notificationStore.ts", (content) => {
+    // Remove preferencesSync imports - Convex handles this via mutations
+    content = content.replace(
+      /import \{ syncPreferencesToServer \} from ["']@\/services\/preferencesSync["']\n?/g,
+      "// Note: Preferences sync is handled via Convex mutations\nconst syncPreferencesToServer = async () => { /* Convex handles this */ }\n"
+    )
+    // Also remove authStore import if present
+    content = content.replace(
+      /import \{ useAuthStore \} from ["']@\/stores\/auth\/authStore["']\n?/g,
+      "// Auth state is managed via Convex - use useAuth() hook instead\n"
+    )
+    return content
+  })
+
+  updateFileContent("apps/app/app/theme/context.tsx", (content) => {
+    // Remove preferencesSync import
+    content = content.replace(
+      /import \{ syncPreferencesToServer \} from ["']@\/services\/preferencesSync["']\n?/g,
+      "// Note: Theme preferences are synced via Convex mutations\nconst syncPreferencesToServer = async (_prefs: Record<string, unknown>) => { /* Convex handles this */ }\n"
+    )
+    return content
+  })
+
+  // Update SubscriptionContext that imports AuthContext (which was deleted)
+  updateFileContent("apps/app/app/context/SubscriptionContext.tsx", (content) => {
+    // Remove AuthContext import and use useAuth from hooks instead
+    content = content.replace(
+      /import \{ useAuth \} from ["']\.\/AuthContext["']/g,
+      'import { useAuth } from "@/hooks"'
+    )
+    return content
+  })
+
+  // Update ConvexAuthSync that imports types/auth
+  updateFileContent("apps/app/app/providers/ConvexAuthSync.tsx", (content) => {
+    // Update the import to use the new auth types location
+    content = content.replace(
+      /import type \{ [^}]+ \} from ["']\.\.\/types\/auth["']/g,
+      'import type { User, Session } from "@/types/auth"'
+    )
+    return content
+  })
+
+  // Update stores/auth files that import from types/auth or deleted files
+  updateFileContent("apps/app/app/stores/auth/authTypes.ts", (content) => {
+    content = content.replace(
+      /import type \{ User, Session \} from ["']\.\.\/\.\.\/types\/auth["']/g,
+      'import type { User, Session } from "@/types/auth"'
+    )
+    return content
+  })
+
+  updateFileContent("apps/app/app/stores/auth/authConstants.ts", (content) => {
+    content = content.replace(
+      /import type \{ [^}]+ \} from ["']\.\.\/\.\.\/types\/auth["']/g,
+      'import type { User } from "@/types/auth"'
+    )
+    return content
+  })
+
+  // Update stores/auth/index.ts to directly export from convex subdirectory
+  // The supabase subdirectory has been deleted (added to pathsToRemove)
+  const convexAuthStoreIndexContent = `/**
+ * Auth Store Exports
+ *
+ * For Convex backend, auth state is managed via useAuth() from @/hooks.
+ * This file re-exports from the Convex implementation.
+ *
+ * MIGRATION NOTE: Prefer using useAuth() from @/hooks directly.
+ * The useAuthStore exists for backwards compatibility.
+ */
+
+// Export shared types and constants
+export { GUEST_USER_KEY } from "./authConstants"
+export type { AuthState, PersistedAuthState } from "./authTypes"
+
+// Export from Convex implementation
+export {
+  useAuthStore,
+  syncOnboardingToDatabase,
+  syncOnboardingStatus,
+  fetchOnboardingFromDatabase,
+  updateUserState,
+  getEmailRedirectUrl,
+  getPasswordResetRedirectUrl,
+} from "./convex"
+`
+  const authStoreIndexPath = path.join(__dirname, "apps/app/app/stores/auth/index.ts")
+  try {
+    fs.writeFileSync(authStoreIndexPath, convexAuthStoreIndexContent)
+    console.log(chalk.dim("   • Updated stores/auth/index.ts to use Convex implementation"))
+  } catch (error) {
+    console.warn(chalk.yellow(`   ⚠️ Could not update stores/auth/index.ts: ${error.message}`))
+  }
+
+  // Update utils/authorization.ts
+  updateFileContent("apps/app/app/utils/authorization.ts", (content) => {
+    content = content.replace(
+      /import type \{ [^}]+ \} from ["']\.\.\/types\/auth["']/g,
+      'import type { User } from "@/types/auth"'
+    )
+    return content
+  })
+
+  // Update hooks/useEmailVerificationPolling.ts
+  updateFileContent("apps/app/app/hooks/useEmailVerificationPolling.ts", (content) => {
+    content = content.replace(
+      /import type \{ [^}]+ \} from ["']\.\.\/types\/auth["']/g,
+      'import type { User } from "@/types/auth"'
+    )
+    return content
+  })
+
+  // Delete test files that depend on Supabase infrastructure
+  const testFilesToDelete = [
+    "apps/app/app/__tests__/integration/notificationFlow.test.tsx",
+  ]
+  for (const filePath of testFilesToDelete) {
+    const fullPath = path.join(__dirname, filePath)
+    if (fs.existsSync(fullPath)) {
+      fs.rmSync(fullPath, { force: true })
+      console.log(chalk.dim(`   • Removed ${filePath} (Supabase-dependent test)`))
+    }
+  }
+
+  // Update EpisodeContext which imports from @/services/api
+  updateFileContent("apps/app/app/context/EpisodeContext.tsx", (content) => {
+    // Remove the api import and use Convex queries instead
+    content = content.replace(
+      /import \{ [^}]+ \} from ["']@\/services\/api["']\n?/g,
+      "// Note: Data fetching is handled via Convex queries - use useQuery() from @/hooks/convex\n"
+    )
+    // Mock the functions if they're called
+    content = content.replace(
+      /fetchEpisodes\([^)]*\)/g,
+      "Promise.resolve([])"
     )
     return content
   })

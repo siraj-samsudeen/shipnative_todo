@@ -1,29 +1,52 @@
 # Shipnative Starter Kit
 
-Docs are the source of truth: https://docs.shipnative.app  
+Docs are the source of truth: https://docs.shipnative.app
 This README is a practical quickstart + conventions index.
 
-## Quickstart
-1) Install Node 20 LTS (recommended: Volta)
-2) `corepack enable`
-3) `yarn install`
-4) `yarn setup` (recommended to wire API keys before coding)
-5) `yarn app:start`
+## Prerequisites
 
-Node version: 20.x (see `.nvmrc`). Volta users get it automatically.
-
-### Node Version (Required)
-We pin Node 20 LTS because some native deps (e.g., `esbuild`) fail on newer Node versions.
-
-**Fastest setup (Volta):**
+**New to JavaScript?** Just install Volta and you're set:
 ```bash
-curl https://get.volta.sh | bash
+curl https://get.volta.sh | bash   # macOS/Linux
 volta install node@20.19.0 yarn@4.9.1
 ```
 
-**nvm alternative:**
+**Full requirements:**
+| Tool | Required | Install |
+|------|----------|---------|
+| Node.js 20 | Yes | Volta (above) or [nodejs.org](https://nodejs.org) |
+| Yarn | Yes | Included with Volta, or `corepack enable` |
+| Git | Yes | macOS: `xcode-select --install` |
+| Xcode | iOS only | [Mac App Store](https://apps.apple.com/app/xcode/id497799835) |
+| Android Studio | Android only | [developer.android.com/studio](https://developer.android.com/studio) |
+
+**Verify your setup:**
 ```bash
-nvm install
+node -v   # Should show v20.x.x (NOT v22+)
+yarn -v   # Should show 4.x.x
+git --version
+```
+
+> **Why Node 20?** Some native dependencies fail on Node 22+. We pin to Node 20 LTS for stability.
+
+## Quickstart
+
+```bash
+git clone <your-repo-url>
+cd shipnative
+yarn install
+yarn setup        # Configure app name and services
+yarn app:start    # Start the dev server
+```
+
+Then in a new terminal:
+```bash
+yarn app:ios      # or: yarn app:android
+```
+
+### Alternative: nvm users
+```bash
+nvm install       # Reads .nvmrc
 nvm use
 ```
 
