@@ -87,18 +87,17 @@ export function ConvexAuthSync({ children }: { children: React.ReactNode }) {
         const minimalUser = {
           id: "pending",
           email: undefined,
-          created_at: new Date().toISOString(),
-          aud: "authenticated",
-          app_metadata: { provider: "convex" },
-          user_metadata: {},
-          email_confirmed_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          emailConfirmedAt: new Date().toISOString(),
+          appMetadata: { provider: "convex" },
+          userMetadata: {},
         } as User
 
         const session = {
-          access_token: "convex-managed",
-          refresh_token: "convex-managed",
-          expires_in: 3600,
-          token_type: "bearer",
+          accessToken: "convex-managed",
+          refreshToken: "convex-managed",
+          expiresIn: 3600,
+          tokenType: "bearer",
           user: minimalUser,
         } as Session
 
@@ -113,26 +112,25 @@ export function ConvexAuthSync({ children }: { children: React.ReactNode }) {
       const user = {
         id: convexUser._id,
         email: convexUser.email,
-        created_at: new Date(convexUser._creationTime).toISOString(),
-        aud: "authenticated",
-        app_metadata: {
+        createdAt: new Date(convexUser._creationTime).toISOString(),
+        appMetadata: {
           provider: "convex",
         },
-        user_metadata: {
+        userMetadata: {
           name: convexUser.name,
           avatarUrl: convexUser.avatarUrl,
         },
-        email_confirmed_at: convexUser.emailVerificationTime
+        emailConfirmedAt: convexUser.emailVerificationTime
           ? new Date(convexUser.emailVerificationTime).toISOString()
           : new Date().toISOString(), // Default to confirmed for Convex users
       } as User
 
       // Create session-like object for compatibility
       const session = {
-        access_token: "convex-managed",
-        refresh_token: "convex-managed",
-        expires_in: 3600,
-        token_type: "bearer",
+        accessToken: "convex-managed",
+        refreshToken: "convex-managed",
+        expiresIn: 3600,
+        tokenType: "bearer",
         user,
       } as Session
 

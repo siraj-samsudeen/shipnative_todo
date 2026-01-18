@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => {
         set({
           user,
-          isEmailConfirmed: !!user?.email_confirmed_at || !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime,
+          isEmailConfirmed: !!user?.emailConfirmedAt || !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime,
         })
       },
 
@@ -169,7 +169,7 @@ export async function fetchOnboardingFromDatabase(_userId: string): Promise<bool
 }
 
 export function updateUserState(user: AuthState["user"], session: AuthState["session"]) {
-  const emailConfirmed = !!user?.email_confirmed_at ||
+  const emailConfirmed = !!user?.emailConfirmedAt ||
     !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime
   return {
     user,

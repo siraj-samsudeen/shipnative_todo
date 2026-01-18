@@ -663,11 +663,17 @@ const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promi
       "apps/app/app/services/mocks/supabase",
       // Test files
       "apps/app/app/services/__tests__/supabase.test.ts",
+      "apps/app/app/services/__tests__/api.test.ts", // Depends on api which is Supabase-specific
       // Note: stores/auth/__tests__ directory is deleted in pathsToRemove
       // Supabase-specific context (uses supabase imports directly)
       "apps/app/app/context/AuthContext.tsx",
-      // Integration test that depends on Supabase
+      // EpisodeContext depends on api which depends on supabase - demo file
+      "apps/app/app/context/EpisodeContext.tsx",
+      // Integration tests that depend on Supabase services
       "apps/app/app/__tests__/integration/authFlow.test.tsx",
+      "apps/app/app/__tests__/integration/notificationFlow.test.tsx",
+      // Entire api directory (depends on supabase)
+      "apps/app/app/services/api",
     )
   }
 
@@ -708,9 +714,9 @@ const removeUnusedBackendCode = async (selectedProvider: BackendProvider): Promi
       fs.rmSync(fullPath, { recursive: true, force: true })
     }
 
-    // Remove individual files
+    // Remove individual files (some entries may be directories, so use recursive)
     for (const fullPath of existingFiles) {
-      fs.rmSync(fullPath, { force: true })
+      fs.rmSync(fullPath, { recursive: true, force: true })
     }
 
     // Update source files to remove unused backend references
@@ -1124,12 +1130,26 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
 
   // DeleteAccountModal.tsx - replace conditional with nulls since we're supabase only
   updateFileContent("apps/app/app/components/DeleteAccountModal.tsx", (content) => {
+    // Remove the isConvex import line
     content = content.replace(
-      /const \{ useMutation, api \} = isConvex[\s\S]*?\{ useMutation: null, api: null \}/,
-      "const { useMutation, api } = { useMutation: null, api: null }"
+      /import \{ isConvex \} from "@\/config\/env"\n/,
+      ""
     )
-    // Remove isConvex from imports
-    content = content.replace(/, isConvex/g, "")
+    // Replace conditional require block with static nulls
+    content = content.replace(
+      /\/\/ Conditionally import Convex hooks\s*\n\/\/ eslint-disable-next-line.*\nconst \{ useMutation, api \} = isConvex[\s\S]*?\{ useMutation: null, api: null \}/,
+      "// Convex removed - using Supabase only\nconst useMutation = null\nconst api = null"
+    )
+    // Also update the line that uses isConvex && useMutation
+    content = content.replace(
+      /const convexDeleteAccount = isConvex && useMutation \? useMutation\(api\.users\.deleteAccount\) : null/,
+      "const convexDeleteAccount = null // Convex removed"
+    )
+    // Remove the isConvex check in handleDelete - just use Supabase path directly
+    content = content.replace(
+      /if \(isConvex && convexDeleteAccount\) \{\s*\/\/ Convex backend: Use mutation[\s\S]*?resetAuthState\(userId\)\s*\} else \{/,
+      "// Supabase only - use deleteSupabaseAccount\n      {"
+    )
     return content
   })
 
@@ -1191,9 +1211,10 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
 
   // accountDeletion.ts - remove convex conditional
   updateFileContent("apps/app/app/services/accountDeletion.ts", (content) => {
+    // Remove the entire Convex conditional block (lines 23-27)
     content = content.replace(
-      /const convexClient = isConvex\s*\n?\s*\? require\("\.\/backend\/convex\/client"\)\s*\n?\s*: null/,
-      "const convexClient = null // Convex removed"
+      /\/\/ Conditionally import Convex client.*\n\/\/ eslint-disable-next-line.*\nconst \{ convexClient: _convexClient \} = isConvex\s*\n\s*\? require\("\.\/backend\/convex\/client"\)\s*\n\s*: \{ convexClient: null \}/,
+      "// Convex removed - using Supabase only\nconst _convexClient = null"
     )
     // Remove isConvex from imports
     content = content.replace(/, isConvex/g, "")
@@ -1202,9 +1223,20 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
 
   // preferencesSync.ts - remove convex conditional
   updateFileContent("apps/app/app/services/preferencesSync.ts", (content) => {
+    // Remove the Convex conditional block (lines 29-31)
     content = content.replace(
-      /const convexPushTokens = isConvex \? require\("\.\/backend\/convex\/pushTokens"\) : null/,
-      "const convexPushTokens = null"
+      /\/\/ Conditionally import Convex push token service\s*\n\/\/ eslint-disable-next-line.*\nconst convexPushTokens = isConvex \? require\("\.\/backend\/convex\/pushTokens"\) : null/,
+      "// Convex removed - using Supabase only\nconst convexPushTokens = null"
+    )
+    // Update shouldSkipPreferenceSync to not reference isConvex
+    content = content.replace(
+      /const shouldSkipPreferenceSync = isConvex \|\| isUsingMockSupabase/,
+      "const shouldSkipPreferenceSync = isUsingMockSupabase // Convex removed"
+    )
+    // Remove all `if (isConvex && convexPushTokens)` blocks
+    content = content.replace(
+      /if \(isConvex && convexPushTokens\) \{[\s\S]*?return\s*\n\s*\}/g,
+      "// Convex push tokens removed"
     )
     // Remove isConvex from imports
     content = content.replace(/, isConvex/g, "")
@@ -1244,41 +1276,30 @@ const updateInlineConditionalRequires = (selectedProvider: BackendProvider): voi
   // useAuth.ts - replace useConvexAuthImpl with stub (different function name than I expected)
   updateFileContent("apps/app/app/hooks/useAuth.ts", (content) => {
     // Replace the entire useConvexAuthImpl function with a stub
+    // Note: Only include properties that exist in UseAuthReturn interface
     const stubFunction = `function useConvexAuthImpl(): UseAuthReturn {
   // Convex removed - returning no-op stub to satisfy React hooks rules
   return {
     user: null,
     session: null,
     loading: false,
+    isAuthenticated: false,
+    provider: "supabase",
     signUp: async () => ({ error: new Error("Convex not configured") }),
     signIn: async () => ({ error: new Error("Convex not configured") }),
-    signOut: async () => {},
-    refreshSession: async () => ({ error: new Error("Convex not configured") }),
-    sendOtp: async () => ({ error: new Error("Convex not configured") }),
+    signOut: async () => ({ error: null }),
     verifyOtp: async () => ({ error: new Error("Convex not configured") }),
-    sendResetPasswordEmail: async () => ({ error: new Error("Convex not configured") }),
     resetPassword: async () => ({ error: new Error("Convex not configured") }),
-    sendMagicLink: async () => ({ error: new Error("Convex not configured") }),
-    verifyMagicLink: async () => ({ error: new Error("Convex not configured") }),
+    signInWithMagicLink: async () => ({ error: new Error("Convex not configured") }),
     signInWithGoogle: async () => ({ error: new Error("Convex not configured") }),
     signInWithApple: async () => ({ error: new Error("Convex not configured") }),
     updateUser: async () => ({ error: new Error("Convex not configured") }),
-    deleteAccount: async () => ({ error: new Error("Convex not configured") }),
   }
 }`
     // Match from function declaration to the closing brace at column 0
     content = content.replace(
       /function useConvexAuthImpl\(\): UseAuthReturn \{[\s\S]*?^}/m,
       stubFunction
-    )
-    return content
-  })
-
-  // accountDeletion.ts - fix the multiline pattern
-  updateFileContent("apps/app/app/services/accountDeletion.ts", (content) => {
-    content = content.replace(
-      /const convexClient = isConvex[\s\S]*?require\("\.\/backend\/convex\/client"\)[\s\S]*?: null/,
-      "const convexClient = null // Convex removed"
     )
     return content
   })
@@ -1367,6 +1388,75 @@ const updateInlineConditionalRequiresForConvex = (selectedProvider: BackendProvi
   // Convex handles account deletion via mutations in the profile screen
   // Convex handles preferences via mutations directly in components
 
+  // DeleteAccountModal.tsx - remove accountDeletion import and usage (it's deleted)
+  updateFileContent("apps/app/app/components/DeleteAccountModal.tsx", (content) => {
+    // Remove the import for deleteSupabaseAccount - Convex uses mutations instead
+    content = content.replace(
+      /import \{ deleteAccount as deleteSupabaseAccount \} from "@\/services\/accountDeletion"\n/,
+      ""
+    )
+    // Remove the else branch that calls deleteSupabaseAccount (Supabase backend)
+    // The Convex branch handles account deletion via convexDeleteAccount mutation
+    content = content.replace(
+      /} else \{\s*\/\/ Supabase backend: Use service\s*const result = await deleteSupabaseAccount\(\)[\s\S]*?if \(result\.error\) \{\s*throw result\.error\s*\}\s*\}/,
+      `} else {
+        // Supabase removed - Convex handles account deletion
+        throw new Error("Backend not configured")
+      }`
+    )
+    return content
+  })
+
+  // AuthCallbackScreen.tsx - remove Supabase import and simplify callback handling
+  updateFileContent("apps/app/app/screens/AuthCallbackScreen.tsx", (content) => {
+    // Remove isSupabase import since we only have Convex
+    content = content.replace(
+      /import \{ isConvex, isSupabase \} from "@\/config\/env"/,
+      'import { isConvex } from "@/config/env"'
+    )
+    // Remove the entire Supabase callback handling block
+    content = content.replace(
+      /\/\/ ================================================================\s*\/\/ Supabase OAuth Callback Handling[\s\S]*?throw new Error\(t\("authCallbackScreen:invalidParams"\)\)/,
+      `// Supabase removed - only Convex is configured
+        throw new Error(t("authCallbackScreen:invalidParams"))`
+    )
+    return content
+  })
+
+  // notificationStore.ts - remove preferencesSync imports (Convex handles via mutations)
+  updateFileContent("apps/app/app/stores/notificationStore.ts", (content) => {
+    // Remove the preferencesSync import
+    content = content.replace(
+      /import \{ syncPushNotificationsPreference, syncPushToken \} from "@\/services\/preferencesSync"\n/,
+      ""
+    )
+    // Replace usage of syncPushNotificationsPreference with a no-op comment
+    content = content.replace(
+      /syncPushNotificationsPreference\([^)]*\)/g,
+      "/* syncPushNotificationsPreference removed - use Convex mutations */"
+    )
+    content = content.replace(
+      /syncPushToken\([^)]*\)/g,
+      "/* syncPushToken removed - use Convex mutations */"
+    )
+    return content
+  })
+
+  // theme/context.tsx - remove preferencesSync import (Convex handles via mutations)
+  updateFileContent("apps/app/app/theme/context.tsx", (content) => {
+    // Remove the preferencesSync import
+    content = content.replace(
+      /import \{ syncDarkModePreference \} from "@\/services\/preferencesSync"\n/,
+      ""
+    )
+    // Replace usage with no-op
+    content = content.replace(
+      /syncDarkModePreference\([^)]*\)/g,
+      "/* syncDarkModePreference removed - use Convex mutations */"
+    )
+    return content
+  })
+
   // hooks/index.ts - update comment about useAuth (keep Convex exports)
   updateFileContent("apps/app/app/hooks/index.ts", (content) => {
     // Update the comment about useAuth supporting both backends
@@ -1374,6 +1464,24 @@ const updateInlineConditionalRequiresForConvex = (selectedProvider: BackendProvi
       /`useAuth\(\)` is the ONLY auth hook you need\. It works with both Supabase and Convex backends\./,
       "`useAuth()` is the ONLY auth hook you need."
     )
+    return content
+  })
+
+  // WelcomeScreen.tsx - update useAuth import and use isLoading instead of loading
+  updateFileContent("apps/app/app/screens/WelcomeScreen.tsx", (content) => {
+    // Update import to use the hooks index (which exports useAuth from useAppAuth)
+    content = content.replace(
+      /import \{ useAuth \} from "@\/hooks\/useAuth"/,
+      'import { useAuth } from "@/hooks"'
+    )
+    // Update from 'loading' to 'isLoading' (useAppAuth uses isLoading)
+    content = content.replace(
+      /const \{ signInWithGoogle, signInWithApple, loading \} = useAuth\(\)/,
+      "const { signInWithGoogle, signInWithApple, isLoading } = useAuth()"
+    )
+    // Replace all occurrences of loading with isLoading
+    content = content.replace(/\{ loading \}/g, "{ isLoading }")
+    content = content.replace(/disabled=\{loading\}/g, "disabled={isLoading}")
     return content
   })
 
@@ -1387,7 +1495,7 @@ const updateInlineConditionalRequiresForConvex = (selectedProvider: BackendProvi
     loading: false,
     signUp: async () => ({ error: new Error("Supabase not configured") }),
     signIn: async () => ({ error: new Error("Supabase not configured") }),
-    signOut: async () => {},
+    signOut: async () => ({ error: null }),
     refreshSession: async () => ({ error: new Error("Supabase not configured") }),
     sendOtp: async () => ({ error: new Error("Supabase not configured") }),
     verifyOtp: async () => ({ error: new Error("Supabase not configured") }),
