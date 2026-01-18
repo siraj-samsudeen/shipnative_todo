@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Removed private keys from client-side environment variables**: `EXPO_PUBLIC_*` variables are bundled into the app and visible to users
+  - Removed `EXPO_PUBLIC_APPLE_PRIVATE_KEY` and `EXPO_PUBLIC_APPLE_KEY_ID` - configure in Supabase Dashboard (Auth → Providers → Apple) or Convex environment variables
+  - Removed `EXPO_PUBLIC_FCM_SERVER_KEY` - deprecated by Firebase; use FCM HTTP v1 API with service account authentication server-side
+  - Updated setup wizard to no longer prompt for these sensitive values
+  - Fixed `writeEnvFileWithComments` to properly quote multi-line values in `.env` files
+
 ### Changed - Simplified Backend DX
 
 - **Renamed `useAppAuth()` to `useAuth()`**: Clearer naming for the unified auth hook
