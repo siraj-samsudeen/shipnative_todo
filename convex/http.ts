@@ -16,31 +16,11 @@ import { httpRouter } from "convex/server"
 import { httpAction } from "./_generated/server"
 import { api, internal } from "./_generated/api"
 import { auth } from "./auth"
-import { revenueCatWebhookHandler } from "./webhooks"
 
 const http = httpRouter()
 
 // Add authentication HTTP routes (OAuth callbacks, JWKS, etc.)
 auth.addHttpRoutes(http)
-
-// ============================================================================
-// Webhook Endpoints
-// External services (RevenueCat, etc.) send events here
-// ============================================================================
-
-/**
- * RevenueCat webhook endpoint
- * POST /api/webhooks/revenuecat
- *
- * Configure in RevenueCat Dashboard:
- * Project Settings → Integrations → Webhooks
- * URL: https://your-project.convex.site/api/webhooks/revenuecat
- */
-http.route({
-  path: "/api/webhooks/revenuecat",
-  method: "POST",
-  handler: revenueCatWebhookHandler,
-})
 
 // ============================================================================
 // Widget HTTP Endpoints

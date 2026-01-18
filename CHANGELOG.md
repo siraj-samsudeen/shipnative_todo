@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added - Purchase Notifications
-
-- **Discord Purchase Notifications**: Get instant DM notifications when someone purchases your app
-  - New Supabase Edge Function: `supabase/functions/revenuecat-webhook/index.ts`
-  - Receives RevenueCat webhook events (INITIAL_PURCHASE, RENEWAL, NON_RENEWING_PURCHASE)
-  - Sends Discord DM with purchase details (product, price, store, country, user ID)
-  - HMAC signature verification for webhook security
-  - Supports sandbox vs production environment labels
-
 ### Security
 
 - **Removed private keys from client-side environment variables**: `EXPO_PUBLIC_*` variables are bundled into the app and visible to users

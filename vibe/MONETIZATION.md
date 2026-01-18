@@ -168,97 +168,12 @@ function FeatureGate({ children }) {
 
 ## Webhooks
 
-RevenueCat has built-in webhook support for all platforms. The boilerplate includes a ready-to-use webhook handler with Discord notifications.
+RevenueCat has built-in webhook support for all platforms:
 
-**Location:** `convex/webhooks.ts`
-
-### Features
-
-- Receives RevenueCat purchase events
-- Verifies webhook signatures (HMAC-SHA1) for security
-- Sends Discord DMs and channel notifications for new purchases
-- Rich embeds with purchase details, country flags, and store icons
-- Sandbox vs Production environment badges
-
-### 1. Create a Discord Bot
-
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Click "New Application" and give it a name
-3. Go to "Bot" → "Add Bot"
-4. Copy the **Bot Token** (keep this secret!)
-5. Enable "Message Content Intent" under Privileged Gateway Intents
-6. Go to "OAuth2" → "URL Generator"
-7. Select scopes: `bot`
-8. Select permissions: `Send Messages`
-9. Copy the generated URL and open it to invite the bot to your server
-
-> **Important:** For DMs to work, you must share at least one server with the bot.
-
-### 2. Get Your Discord User ID
-
-1. Enable Developer Mode in Discord: User Settings → App Settings → Advanced → Developer Mode
-2. Right-click on your username in any chat
-3. Click "Copy User ID"
-
-### 3. Configure Convex Environment Variables
-
-In the Convex Dashboard (Settings → Environment Variables), add:
-
-```bash
-# Required for webhook signature verification
-REVENUECAT_WEBHOOK_SECRET=your-webhook-signing-secret
-
-# Required for Discord notifications
-DISCORD_BOT_TOKEN=your-bot-token-here
-DISCORD_OWNER_ID=your-user-id-here
-
-# Optional: Also post to a channel
-DISCORD_NOTIFICATION_CHANNEL_ID=your-channel-id
-```
-
-### 4. Configure RevenueCat Webhook
-
-1. Go to RevenueCat Dashboard → Project Settings → Integrations → Webhooks
-2. Click "Add Webhook"
-3. Set the URL to: `https://your-project.convex.site/api/webhooks/revenuecat`
-4. Copy the Authorization Header value - this is your `REVENUECAT_WEBHOOK_SECRET`
-5. Save and test the webhook
-
-### What You'll Receive
-
-For every purchase, you'll receive:
-- A **DM** to your Discord account (tagged with @mention)
-- Optionally, a **channel message** if `DISCORD_NOTIFICATION_CHANNEL_ID` is set
-
-The notification includes:
-- Product ID and formatted price with currency
-- Store icon (Apple, Android, Stripe)
-- Country flag
-- Event type (Initial Purchase, Renewal, etc.)
-- Transaction ID (truncated)
-- Environment badge (SANDBOX in orange, PRODUCTION in green)
-
-### Webhook Events Handled
-
-- `INITIAL_PURCHASE` - New subscription or one-time purchase
-- `RENEWAL` - Subscription renewal
-- `NON_RENEWING_PURCHASE` - One-time purchase
-
-Other events (cancellations, billing issues, etc.) are acknowledged but not notified.
-
-### Security
-
-- **Signature Verification:** All webhooks are verified using HMAC-SHA1 signatures
-- **Constant-time Comparison:** Prevents timing attacks
-- **Secrets in Environment:** No hardcoded credentials
-
-### Customization
-
-Edit `convex/webhooks.ts` to:
-- Add more event handlers (cancellations, billing issues, expirations)
-- Customize notification format
-- Add additional notification channels (Slack, email, etc.)
-- Store purchase data in your database
+1. Go to Project Settings → Integrations → Webhooks
+2. Add your webhook URL
+3. RevenueCat will automatically send events
+4. Update user's subscription status in your database
 
 ## Best Practices
 
