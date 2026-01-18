@@ -48,14 +48,8 @@ const questions = [
     key: "EXPO_PUBLIC_APPLE_TEAM_ID",
     question: "Enter your Apple Team ID (optional, for social login): ",
   },
-  {
-    key: "EXPO_PUBLIC_APPLE_PRIVATE_KEY",
-    question: "Enter your Apple Private Key (optional, for social login): ",
-  },
-  {
-    key: "EXPO_PUBLIC_APPLE_KEY_ID",
-    question: "Enter your Apple Key ID (optional, for social login): ",
-  },
+  // NOTE: Apple Private Key and Key ID are configured in backend dashboard (Supabase/Convex),
+  // not in client-side environment variables for security reasons.
   { key: "EXPO_PUBLIC_POSTHOG_API_KEY", question: "Enter your Posthog API Key (optional): " },
   {
     key: "EXPO_PUBLIC_POSTHOG_HOST",
@@ -75,10 +69,8 @@ const questions = [
     key: "EXPO_PUBLIC_SENTRY_DSN",
     question: "Enter your Sentry DSN (optional, for error tracking): ",
   },
-  {
-    key: "EXPO_PUBLIC_FCM_SERVER_KEY",
-    question: "Enter your Firebase Cloud Messaging Server Key (optional, for push notifications): ",
-  },
+  // NOTE: FCM Server Key is deprecated. Push notifications are sent server-side
+  // using the FCM HTTP v1 API from Supabase Edge Functions or Convex actions.
 ]
 
 const envFile = path.join(__dirname, "../.env")

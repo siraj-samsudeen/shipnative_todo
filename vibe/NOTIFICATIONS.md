@@ -103,15 +103,7 @@ expo prebuild --clean
    - Place in `apps/app/`
    - EAS Build will use it automatically
 
-3. **Get Server Key**:
-   - Firebase Console → Project Settings → Cloud Messaging
-   - Copy "Server key"
-   - Add to `.env`:
-     ```bash
-     EXPO_PUBLIC_FCM_SERVER_KEY=your-fcm-server-key
-     ```
-
-4. **Update app.json**:
+3. **Update app.json**:
    ```json
    {
      "android": {
@@ -123,6 +115,23 @@ expo prebuild --clean
      }
    }
    ```
+
+4. **Server-side Setup** (for sending push notifications):
+
+   > **Note**: The legacy FCM "Server Key" is deprecated by Firebase. Push notifications should be sent from your backend using the FCM HTTP v1 API with OAuth 2.0 authentication.
+
+   **For Supabase users:**
+   - Create a Firebase service account and download the JSON key file
+   - Store the service account credentials in Supabase secrets
+   - Use Supabase Edge Functions to send notifications via the FCM HTTP v1 API
+   - See `supabase/functions/` for example implementation
+
+   **For Convex users:**
+   - Create a Firebase service account and download the JSON key file
+   - Store credentials in Convex environment variables
+   - Use Convex actions to send notifications via the FCM HTTP v1 API
+
+   🔒 **Security**: Firebase credentials are stored server-side only, never in client-side environment variables.
 
 ---
 

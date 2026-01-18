@@ -72,11 +72,9 @@ const EnvSchema = z
     googleClientId: z.string().optional(),
     googleIosClientId: z.string().optional(),
 
-    // Apple Sign-In
+    // Apple Sign-In (public identifiers only - private key goes in backend dashboard)
     appleServicesId: z.string().optional(),
     appleTeamId: z.string().optional(),
-    applePrivateKey: z.string().optional(),
-    appleKeyId: z.string().optional(),
 
     // Optional flags
     enableWidgets: z.boolean().default(false),
@@ -142,8 +140,6 @@ const envInput: Partial<EnvConfig> = {
   googleIosClientId: readStringEnv("google_ios_client_id"),
   appleServicesId: readStringEnv("apple_services_id"),
   appleTeamId: readStringEnv("apple_team_id"),
-  applePrivateKey: readStringEnv("apple_private_key"),
-  appleKeyId: readStringEnv("apple_key_id"),
   enableWidgets: readBooleanEnv("enable_widgets"),
   useMockNotifications: readBooleanEnv("use_mock_notifications"),
   emailRedirectUrl: readStringEnv("email_redirect_url"),

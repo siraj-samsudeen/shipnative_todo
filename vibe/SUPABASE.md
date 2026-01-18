@@ -266,16 +266,24 @@ https://supabase.com/docs/guides/auth/social-login/auth-google
 3. **Apple Developer Console**: Configure Sign In with Apple:
    - Go to [Apple Developer Console](https://developer.apple.com/account/resources/identifiers/list)
    - Enable Sign In with Apple capability on your App ID
-   - Create Services ID for OAuth
-   - Generate private key and key ID
-4. **Supabase Configuration**: Enter credentials in Supabase Auth → Providers → Apple
-5. **Environment Variables**: Setup wizard adds to `.env`:
+   - Create a Services ID for OAuth (e.g., `com.example.app.web`)
+   - Create a signing Key and download the `.p8` file
+4. **Supabase Configuration** (Important - private key goes here, not in the app):
+   - Go to Supabase Dashboard → Auth → Providers → Apple
+   - Enter your Services ID
+   - Enter your Team ID
+   - Enter your Key ID
+   - Paste the contents of your `.p8` private key file
+   - Save the configuration
+5. **Environment Variables**: Setup wizard adds public identifiers to `.env`:
    ```bash
    EXPO_PUBLIC_APPLE_SERVICES_ID=com.example.app
    EXPO_PUBLIC_APPLE_TEAM_ID=ABC123DEF4
-   EXPO_PUBLIC_APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...
-   EXPO_PUBLIC_APPLE_KEY_ID=ABC123DEF4
    ```
+
+> **Security Note**: The Apple Private Key and Key ID are stored in the Supabase Dashboard, NOT in client-side environment variables. This is intentional - `EXPO_PUBLIC_*` variables are bundled into your app and visible to users. Private keys must remain server-side.
+
+> **Secret Rotation**: Apple requires you to regenerate the client secret every 6 months if using OAuth flow. Set a calendar reminder to rotate your secret in the Supabase dashboard.
 
 ### Manual Setup
 

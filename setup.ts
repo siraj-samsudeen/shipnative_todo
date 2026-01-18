@@ -266,6 +266,20 @@ const loadEnvFileWithComments = (filePath: string): EnvFileData => {
   return { vars, comments, lines, originalContent: content }
 }
 
+// Helper to format env value - quotes multi-line values properly
+const formatEnvValue = (value: string): string => {
+  // If value contains newlines, wrap in double quotes and escape internal quotes
+  if (value.includes("\n")) {
+    const escaped = value.replace(/"/g, '\\"')
+    return `"${escaped}"`
+  }
+  // If value contains special characters that might cause issues, quote it
+  if (value.includes(" ") || value.includes("#") || value.includes("'")) {
+    return `"${value.replace(/"/g, '\\"')}"`
+  }
+  return value
+}
+
 const writeEnvFileWithComments = (filePath: string, values: EnvVars, originalData: EnvFileData | null = null) => {
   const lines = originalData?.lines || []
   const newLines = []
@@ -285,8 +299,8 @@ const writeEnvFileWithComments = (filePath: string, values: EnvVars, originalDat
       } else if (trimmed.includes("=")) {
         const key = trimmed.slice(0, trimmed.indexOf("=")).trim()
         if (values[key] !== undefined) {
-          // Update existing value
-          newLines.push(`${key}=${values[key]}`)
+          // Update existing value with proper formatting
+          newLines.push(`${key}=${formatEnvValue(values[key])}`)
           writtenKeys.add(key)
         } else {
           // Keep existing line if not in new values
@@ -302,7 +316,7 @@ const writeEnvFileWithComments = (filePath: string, values: EnvVars, originalDat
   // Add new keys that weren't in the original file
   for (const [key, value] of Object.entries(values)) {
     if (!writtenKeys.has(key)) {
-      newLines.push(`${key}=${value}`)
+      newLines.push(`${key}=${formatEnvValue(value)}`)
     }
   }
 
@@ -1207,9 +1221,7 @@ const getServiceStatus = (services: EnvVars): ServiceStatus => {
     google: Boolean(services.EXPO_PUBLIC_GOOGLE_CLIENT_ID || services.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID),
     apple: Boolean(
       services.EXPO_PUBLIC_APPLE_SERVICES_ID ||
-        services.EXPO_PUBLIC_APPLE_TEAM_ID ||
-        services.EXPO_PUBLIC_APPLE_PRIVATE_KEY ||
-        services.EXPO_PUBLIC_APPLE_KEY_ID
+        services.EXPO_PUBLIC_APPLE_TEAM_ID
     ),
     posthog: Boolean(services.EXPO_PUBLIC_POSTHOG_API_KEY),
     revenuecat: Boolean(
@@ -1218,7 +1230,9 @@ const getServiceStatus = (services: EnvVars): ServiceStatus => {
         services.EXPO_PUBLIC_REVENUECAT_WEB_KEY
     ),
     sentry: Boolean(services.EXPO_PUBLIC_SENTRY_DSN),
-    fcm: Boolean(services.EXPO_PUBLIC_FCM_SERVER_KEY),
+    // FCM is configured via google-services.json, not env vars
+    // Server-side push credentials are stored in backend (Supabase/Convex)
+    fcm: false,
     widgets: Boolean(services.EXPO_PUBLIC_ENABLE_WIDGETS === "true"),
   }
 }
@@ -1578,20 +1592,21 @@ const configureAppleSignIn = async (
     if (!id) return false
     return /^[A-Z0-9]{10}$/.test(id.toUpperCase())
   }, defaults.EXPO_PUBLIC_APPLE_TEAM_ID)
-  
-  console.log(chalk.cyan("\n🔑 Apple Private Key"))
-  console.log(chalk.dim("   Download this from Apple Developer: Keys > Create a new key"))
-  console.log(chalk.dim("   Download the .p8 file and copy its contents"))
-  console.log(chalk.dim("   Should start with: -----BEGIN PRIVATE KEY-----"))
-  services.EXPO_PUBLIC_APPLE_PRIVATE_KEY = await askQuestion("Enter your Apple Private Key (paste the full key)", (key) => key.startsWith("-----BEGIN PRIVATE KEY-----"), defaults.EXPO_PUBLIC_APPLE_PRIVATE_KEY, true)
-  
-  console.log(chalk.cyan("\n🆔 Apple Key ID"))
-  console.log(chalk.dim("   Found in the same place as your Private Key"))
-  console.log(chalk.dim("   Format: 10 uppercase letters/numbers"))
-  services.EXPO_PUBLIC_APPLE_KEY_ID = await askQuestion("Enter your Apple Key ID (10 characters)", (id) => {
-    if (!id) return false
-    return /^[A-Z0-9]{10}$/.test(id.toUpperCase())
-  }, defaults.EXPO_PUBLIC_APPLE_KEY_ID)
+
+  // Show instructions for configuring the private key in the backend dashboard
+  console.log(chalk.yellow("\n📋 Important: Apple Private Key Configuration"))
+  console.log(chalk.dim("   The Apple Private Key (.p8 file) must be configured in your backend dashboard:"))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   For Supabase users:"))
+  console.log(chalk.dim("     1. Go to Supabase Dashboard → Auth → Providers → Apple"))
+  console.log(chalk.dim("     2. Enter your Services ID, Team ID, Key ID, and Private Key there"))
+  console.log(chalk.dim("     3. The private key stays server-side and is never exposed to the app"))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   For Convex users:"))
+  console.log(chalk.dim("     1. Go to Convex Dashboard → Settings → Environment Variables"))
+  console.log(chalk.dim("     2. Set AUTH_APPLE_ID and AUTH_APPLE_SECRET"))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   🔒 Security: Private keys should NEVER be stored in client-side environment variables."))
 
   return true
 }
@@ -1695,8 +1710,12 @@ const configureFCM = async (
     "💡 Setup guide:",
     "   1. Go to https://console.firebase.google.com/",
     "   2. Create a project or use existing one",
-    "   3. Go to Project Settings > Cloud Messaging",
-    "   4. Copy the Server Key",
+    "   3. Download google-services.json for your Android app",
+    "   4. Place it in: apps/app/android/app/google-services.json",
+    "",
+    "⚠️  Note: The legacy 'Server Key' is deprecated by Firebase.",
+    "   Push notifications are sent server-side using the FCM HTTP v1 API.",
+    "   Your Supabase Edge Functions or Convex functions handle this automatically.",
     "",
     "⏭️  You can skip this - notifications will still work on iOS.",
     "⏭️  Only needed if you're releasing on Android.",
@@ -1708,14 +1727,26 @@ const configureFCM = async (
     return false
   }
 
-  console.log(chalk.cyan("\n🔑 Firebase Cloud Messaging Server Key"))
-  console.log(chalk.dim("   Find this in Firebase: Project Settings > Cloud Messaging > Server Key"))
-  services.EXPO_PUBLIC_FCM_SERVER_KEY = await askQuestion("Enter your Firebase Cloud Messaging Server Key", (key) => key.length > 20, defaults.EXPO_PUBLIC_FCM_SERVER_KEY, true)
-  
-  console.log(chalk.yellow("\n📥 Important Next Step:"))
-  console.log(chalk.dim("   After setup, download google-services.json from Firebase"))
-  console.log(chalk.dim("   Place it in: apps/app/android/app/google-services.json"))
-  console.log(chalk.dim("   (We'll remind you about this at the end!)"))
+  console.log(chalk.yellow("\n📥 Firebase Configuration for Android"))
+  console.log(chalk.dim("   1. Go to Firebase Console: https://console.firebase.google.com/"))
+  console.log(chalk.dim("   2. Select your project (or create one)"))
+  console.log(chalk.dim("   3. Add an Android app with your package name"))
+  console.log(chalk.dim("   4. Download google-services.json"))
+  console.log(chalk.dim("   5. Place it in: apps/app/android/app/google-services.json"))
+  console.log(chalk.dim(""))
+  console.log(chalk.yellow("📋 Server-side Push Notification Setup"))
+  console.log(chalk.dim("   Push notifications are sent from your backend, not the app."))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   For Supabase users:"))
+  console.log(chalk.dim("     • Use Supabase Edge Functions to send notifications"))
+  console.log(chalk.dim("     • Store Firebase service account JSON in Supabase secrets"))
+  console.log(chalk.dim("     • See: supabase/functions/push-notification/"))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   For Convex users:"))
+  console.log(chalk.dim("     • Use Convex actions to send notifications"))
+  console.log(chalk.dim("     • Store Firebase credentials in Convex environment variables"))
+  console.log(chalk.dim(""))
+  console.log(chalk.dim("   🔒 Security: Firebase credentials stay server-side only."))
 
   return true
 }

@@ -313,8 +313,9 @@ EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 # Sentry
 EXPO_PUBLIC_SENTRY_DSN=your-dsn
 
-# Push Notifications (if implemented)
-EXPO_PUBLIC_FCM_SERVER_KEY=your-fcm-key
+# Note: Push notification credentials (FCM service account, Apple private key)
+# should be stored server-side (Supabase secrets / Convex env vars), not here.
+# See vibe/NOTIFICATIONS.md for setup instructions.
 ```
 
 ### EAS Secrets Management

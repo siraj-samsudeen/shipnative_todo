@@ -74,7 +74,9 @@ If the CLI doesn't work (e.g., uncommitted changes), see the manual setup in the
 
 #### 5. Configure OAuth Providers (Optional)
 
-In the Convex dashboard (Settings → Environment Variables), set up your auth providers:
+In the Convex dashboard (Settings → Environment Variables), set up your auth providers.
+
+> **Security Note**: All OAuth secrets and private keys are stored in the Convex Dashboard, NOT in client-side `.env` files. This is intentional - `EXPO_PUBLIC_*` variables are bundled into your app and visible to users. Keep secrets server-side only.
 
 **For Google OAuth:**
 ```bash
@@ -84,8 +86,10 @@ AUTH_GOOGLE_SECRET=your-google-client-secret
 
 **For Apple Sign-In:**
 ```bash
-AUTH_APPLE_ID=your-apple-client-id
+AUTH_APPLE_ID=your-apple-services-id
 AUTH_APPLE_SECRET=your-apple-client-secret
+# Generate the client secret from your Apple .p8 private key
+# See: https://developer.apple.com/documentation/sign_in_with_apple
 ```
 
 **For GitHub OAuth:**
