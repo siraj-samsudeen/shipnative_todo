@@ -36,6 +36,7 @@ Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`
 - Expo Router (use React Navigation)
 - Redux/MobX/Context API (use Zustand)
 - Inline styles or hardcoded values (use theme)
+- Hardcoded user-facing strings (use translation keys - see i18n section below)
 - useEffect for data fetching (use React Query)
 
 ## Directory Map
@@ -44,6 +45,7 @@ Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`
 |------|----------|
 | Screens | `apps/app/app/screens/` |
 | Components | `apps/app/app/components/` |
+| Translations (i18n) | `apps/app/app/i18n/` (add keys to `en.ts`) |
 | Charts | `apps/app/app/components/Charts/` |
 | **Hooks (import from here)** | `apps/app/app/hooks/index.ts` |
 | Convex Native Hooks | `apps/app/app/hooks/convex/` |
@@ -80,6 +82,63 @@ Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`
 ### Business Components
 - `PricingCard` - Subscription pricing display with features list (uses Ionicons for checkmarks)
 - `SubscriptionStatus` - User subscription status display (uses Ionicons for plan icons)
+
+## i18n / Translations
+
+**ALWAYS use translation keys (`tx` props) instead of hardcoded strings for user-facing text.**
+
+### Component Props Pattern
+Most components support both direct text and translation keys:
+
+```typescript
+// ❌ WRONG - hardcoded strings
+<EmptyState
+  heading="No todos yet"
+  content="Add your first todo to get started"
+/>
+
+// ✅ CORRECT - translation keys
+<EmptyState
+  headingTx="todoScreen.emptyHeading"
+  contentTx="todoScreen.emptyContent"
+/>
+
+// ✅ With interpolation
+<Text tx="welcomeScreen.greeting" txOptions={{ name: user.name }} />
+```
+
+### Props Available
+| Component | Translation Props |
+|-----------|-------------------|
+| `Text` | `tx`, `txOptions` |
+| `Button` | `tx`, `txOptions` |
+| `EmptyState` | `headingTx`, `contentTx`, `buttonTx` (+ `*TxOptions`) |
+| `Card` | `headingTx`, `contentTx`, `footerTx` (+ `*TxOptions`) |
+| `TextField` | `labelTx`, `placeholderTx`, `errorTx`, `helperTx` |
+
+### Adding New Translation Keys
+1. Add keys to `apps/app/app/i18n/en.ts` (source of truth)
+2. Use nested structure: `screenName: { keyName: "value" }`
+3. Key path syntax: `"screenName.keyName"` or `"screenName:keyName"`
+
+```typescript
+// In en.ts
+const en = {
+  todoScreen: {
+    emptyHeading: "No todos yet",
+    emptyContent: "Add your first todo to get started",
+    addButton: "Add Todo",
+  },
+}
+```
+
+### Programmatic Access
+```typescript
+import { useTranslation } from "react-i18next"
+
+const { t } = useTranslation()
+const message = t("todoScreen.emptyHeading")
+```
 
 ## Authentication
 
