@@ -37,7 +37,7 @@ jest.mock("../../services/preferencesSync", () => ({
 }))
 
 // Mock auth store
-jest.mock("../../stores/auth/authStore", () => ({
+jest.mock("@/stores/auth", () => ({
   useAuthStore: {
     getState: jest.fn(() => ({
       user: { id: "test-user-123" },
