@@ -22,9 +22,7 @@ export type { AuthState, PersistedAuthState } from "./authTypes"
 // will be simplified to a direct export.
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const backendModule = isConvex
-  ? require("./convex")
-  : require("./supabase")
+const backendModule = isConvex ? require("./convex") : require("./supabase")
 
 export const useAuthStore = backendModule.useAuthStore
 export const syncOnboardingToDatabase = backendModule.syncOnboardingToDatabase

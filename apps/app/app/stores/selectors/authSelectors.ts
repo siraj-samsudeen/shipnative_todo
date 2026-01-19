@@ -5,34 +5,39 @@
  */
 
 import { useAuthStore } from "../auth"
+import type { AuthState } from "../auth/authTypes"
 
 /**
  * Check if user is authenticated
  * Note: This is a hook but uses "select" prefix for consistency with selector pattern
  */
-// eslint-disable-next-line react-hooks/rules-of-hooks
-export const selectIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated)
+export const selectIsAuthenticated = () =>
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAuthStore((state: AuthState) => state.isAuthenticated)
 
 /**
  * Get current user
  * Note: This is a hook but uses "select" prefix for consistency with selector pattern
  */
-// eslint-disable-next-line react-hooks/rules-of-hooks
-export const selectUser = () => useAuthStore((state) => state.user)
+export const selectUser = () =>
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAuthStore((state: AuthState) => state.user)
 
 /**
  * Get user email
  * Note: This is a hook but uses "select" prefix for consistency with selector pattern
  */
-// eslint-disable-next-line react-hooks/rules-of-hooks
-export const selectUserEmail = () => useAuthStore((state) => state.user?.email)
+export const selectUserEmail = () =>
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAuthStore((state: AuthState) => state.user?.email)
 
 /**
  * Get user ID
  * Note: This is a hook but uses "select" prefix for consistency with selector pattern
  */
-// eslint-disable-next-line react-hooks/rules-of-hooks
-export const selectUserId = () => useAuthStore((state) => state.user?.id)
+export const selectUserId = () =>
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAuthStore((state: AuthState) => state.user?.id)
 
 /**
  * Check if onboarding is completed
@@ -40,14 +45,15 @@ export const selectUserId = () => useAuthStore((state) => state.user?.id)
  */
 export const selectHasCompletedOnboarding = () =>
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  useAuthStore((state) => state.hasCompletedOnboarding)
+  useAuthStore((state: AuthState) => state.hasCompletedOnboarding)
 
 /**
  * Check if auth is loading
  * Note: This is a hook but uses "select" prefix for consistency with selector pattern
  */
-// eslint-disable-next-line react-hooks/rules-of-hooks
-export const selectAuthLoading = () => useAuthStore((state) => state.loading)
+export const selectAuthLoading = () =>
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useAuthStore((state: AuthState) => state.loading)
 
 /**
  * Get full auth state
@@ -55,7 +61,7 @@ export const selectAuthLoading = () => useAuthStore((state) => state.loading)
  */
 export const selectAuthState = () =>
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  useAuthStore((state) => ({
+  useAuthStore((state: AuthState) => ({
     user: state.user,
     session: state.session,
     isAuthenticated: state.isAuthenticated,

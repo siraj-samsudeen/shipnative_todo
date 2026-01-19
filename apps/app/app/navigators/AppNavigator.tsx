@@ -15,6 +15,7 @@ import Config from "@/config"
 import * as Screens from "@/screens"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { useAuthStore } from "@/stores"
+import type { AuthState } from "@/stores/auth/authTypes"
 import { webDimension } from "@/types/webStyles"
 import { logger } from "@/utils/Logger"
 
@@ -32,11 +33,11 @@ const exitRoutes = Config.exitRoutes
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const user = useAuthStore((state) => state.user)
-  const loading = useAuthStore((state) => state.loading)
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const isEmailConfirmed = useAuthStore((state) => state.isEmailConfirmed)
-  const hasCompletedOnboarding = useAuthStore((state) => state.hasCompletedOnboarding)
+  const user = useAuthStore((state: AuthState) => state.user)
+  const loading = useAuthStore((state: AuthState) => state.loading)
+  const isAuthenticated = useAuthStore((state: AuthState) => state.isAuthenticated)
+  const isEmailConfirmed = useAuthStore((state: AuthState) => state.isEmailConfirmed)
+  const hasCompletedOnboarding = useAuthStore((state: AuthState) => state.hasCompletedOnboarding)
   const shouldShowOnboarding = !!user && isAuthenticated && !hasCompletedOnboarding
   const needsEmailVerification = !!user && !isEmailConfirmed
   const isWeb = Platform.OS === "web"

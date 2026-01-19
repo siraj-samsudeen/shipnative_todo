@@ -9,6 +9,21 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
+import { env } from "../../../config/env"
+import { fetchAndApplyUserPreferences } from "../../../services/preferencesSync"
+import { supabase, isUsingMockSupabase } from "../../../services/supabase"
+import { isEmailConfirmed } from "../../../types/auth"
+import { isNetworkError, getNetworkErrorMessage } from "../../../types/supabaseErrors"
+import { logger } from "../../../utils/Logger"
+import { loadString, saveString } from "../../../utils/storage"
+import {
+  AUTH_STORAGE_KEY,
+  GUEST_USER_KEY,
+  getUserKey,
+  mmkvStorage,
+  sanitizePersistedAuthState,
+} from "../authConstants"
+import type { AuthState } from "../authTypes"
 import {
   resendConfirmationEmailAction,
   resetPasswordAction,
@@ -17,22 +32,7 @@ import {
   signUpAction,
   verifyEmailAction,
 } from "./authActions"
-import {
-  AUTH_STORAGE_KEY,
-  GUEST_USER_KEY,
-  getUserKey,
-  mmkvStorage,
-  sanitizePersistedAuthState,
-} from "../authConstants"
 import { syncOnboardingStatus, syncOnboardingToDatabase, updateUserState } from "./authHelpers"
-import type { AuthState } from "../authTypes"
-import { env } from "../../../config/env"
-import { fetchAndApplyUserPreferences } from "../../../services/preferencesSync"
-import { supabase, isUsingMockSupabase } from "../../../services/supabase"
-import { isEmailConfirmed } from "../../../types/auth"
-import { isNetworkError, getNetworkErrorMessage } from "../../../types/supabaseErrors"
-import { logger } from "../../../utils/Logger"
-import { loadString, saveString } from "../../../utils/storage"
 
 // Track auth state change subscription to prevent duplicate listeners
 let authStateSubscription: { unsubscribe: () => void } | null = null

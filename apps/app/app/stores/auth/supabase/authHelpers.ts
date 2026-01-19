@@ -5,12 +5,12 @@
  */
 
 import { env } from "../../../config/env"
+import { supabase, isUsingMockSupabase } from "../../../services/supabase"
 import type { User, Session } from "../../../types/auth"
 import { isEmailConfirmed } from "../../../types/auth"
 import type { SupabaseDatabase } from "../../../types/supabase"
 import { extractSupabaseError } from "../../../types/supabaseErrors"
 import { logger } from "../../../utils/Logger"
-import { supabase, isUsingMockSupabase } from "../../../services/supabase"
 
 // Track if we've shown the Supabase setup message
 let hasShownSupabaseSetupMessage = false

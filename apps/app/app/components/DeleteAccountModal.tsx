@@ -16,6 +16,7 @@ import { isConvex } from "@/config/env"
 import { deleteAccount as deleteSupabaseAccount } from "@/services/accountDeletion"
 import { useAuthStore, useSubscriptionStore } from "@/stores"
 import { GUEST_USER_KEY } from "@/stores/auth"
+import type { AuthState } from "@/stores/auth/authTypes"
 import { haptics } from "@/utils/haptics"
 import { logger } from "@/utils/Logger"
 
@@ -57,7 +58,7 @@ async function clearSubscriptionState() {
  * Helper to reset auth state after account deletion
  */
 function resetAuthState(userId: string) {
-  useAuthStore.setState((state) => {
+  useAuthStore.setState((state: AuthState) => {
     // Remove onboarding entry for the deleted user while preserving guest state
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [userId]: _removed, ...onboardingStatusByUserId } = state.onboardingStatusByUserId

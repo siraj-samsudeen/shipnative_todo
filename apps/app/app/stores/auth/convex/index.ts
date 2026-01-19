@@ -14,11 +14,17 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
-import { AUTH_STORAGE_KEY, GUEST_USER_KEY, getUserKey, mmkvStorage, sanitizePersistedAuthState } from "../authConstants"
-import type { AuthState } from "../authTypes"
-import { logger } from "../../../utils/Logger"
 import { queryClient } from "../../../hooks/queries"
+import { logger } from "../../../utils/Logger"
 import { useSubscriptionStore } from "../../subscriptionStore"
+import {
+  AUTH_STORAGE_KEY,
+  GUEST_USER_KEY,
+  getUserKey,
+  mmkvStorage,
+  sanitizePersistedAuthState,
+} from "../authConstants"
+import type { AuthState } from "../authTypes"
 
 /**
  * Convex Auth Store
@@ -49,7 +55,9 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => {
         set({
           user,
-          isEmailConfirmed: !!user?.emailConfirmedAt || !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime,
+          isEmailConfirmed:
+            !!user?.email_confirmed_at ||
+            !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime,
         })
       },
 
@@ -124,7 +132,9 @@ export const useAuthStore = create<AuthState>()(
        */
       initialize: async () => {
         if (__DEV__) {
-          logger.debug("[ConvexAuthStore] initialize called - Convex handles auth via ConvexAuthProvider")
+          logger.debug(
+            "[ConvexAuthStore] initialize called - Convex handles auth via ConvexAuthProvider",
+          )
         }
         set({ loading: false })
       },
@@ -152,12 +162,18 @@ export const useAuthStore = create<AuthState>()(
  * These are no-ops or simple implementations since Convex handles sync differently.
  */
 
-export async function syncOnboardingToDatabase(_userId: string, _completed: boolean): Promise<void> {
+export async function syncOnboardingToDatabase(
+  _userId: string,
+  _completed: boolean,
+): Promise<void> {
   // For Convex, onboarding is synced via mutations in useAuth().completeOnboarding()
   // This is a no-op for backwards compatibility
 }
 
-export async function syncOnboardingStatus(_userId: string, localStatus: boolean): Promise<boolean> {
+export async function syncOnboardingStatus(
+  _userId: string,
+  localStatus: boolean,
+): Promise<boolean> {
   // For Convex, onboarding status comes from the user object via useQuery(api.users.me)
   // Just return local status for backwards compatibility
   return localStatus
@@ -169,7 +185,8 @@ export async function fetchOnboardingFromDatabase(_userId: string): Promise<bool
 }
 
 export function updateUserState(user: AuthState["user"], session: AuthState["session"]) {
-  const emailConfirmed = !!user?.emailConfirmedAt ||
+  const emailConfirmed =
+    !!user?.email_confirmed_at ||
     !!(user as unknown as { emailVerificationTime?: unknown })?.emailVerificationTime
   return {
     user,

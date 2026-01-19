@@ -12,6 +12,7 @@ import { UnistylesRuntime } from "react-native-unistyles"
 
 import { syncDarkModePreference } from "@/services/preferencesSync"
 import { useAuthStore } from "@/stores/auth"
+import type { AuthState } from "@/stores/auth/authTypes"
 import { storage, useMMKVString } from "@/utils/storage"
 
 const THEME_STORAGE_KEY = "shipnative.themeScheme"
@@ -42,7 +43,7 @@ export const ThemeProvider: FC<PropsWithChildren<ThemeProviderProps>> = ({
   const [themeScheme, setThemeScheme] = useMMKVString(THEME_STORAGE_KEY, storage)
 
   // Get user ID for syncing preferences to database
-  const userId = useAuthStore((state) => state.user?.id)
+  const userId = useAuthStore((state: AuthState) => state.user?.id)
 
   // Initialize Unistyles theme on mount
   useEffect(() => {

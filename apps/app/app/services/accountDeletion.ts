@@ -9,6 +9,7 @@
 import { isSupabase, isConvex } from "@/config/env"
 import { useAuthStore, useSubscriptionStore } from "@/stores"
 import { GUEST_USER_KEY } from "@/stores/auth"
+import type { AuthState } from "@/stores/auth/authTypes"
 import type { Session } from "@/types/auth"
 
 import { mockSupabaseHelpers } from "./mocks/supabase"
@@ -151,7 +152,7 @@ async function clearSubscriptionState() {
 }
 
 function resetAuthState(userId: string) {
-  useAuthStore.setState((state) => {
+  useAuthStore.setState((state: AuthState) => {
     // Remove onboarding entry for the deleted user while preserving guest state
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [userId]: _removed, ...onboardingStatusByUserId } = state.onboardingStatusByUserId

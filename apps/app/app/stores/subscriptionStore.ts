@@ -13,6 +13,7 @@ import type {
 import { logger } from "../utils/Logger"
 import * as storage from "../utils/storage"
 import { detectLifecycleEvent, getLifecycleEventDescription } from "../utils/subscriptionHelpers"
+import type { AuthState } from "./auth/authTypes"
 
 const getAuthStore = () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -345,7 +346,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 const subscribeToAuthChanges = () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const useAuthStore = getAuthStore()
-  useAuthStore.subscribe((state, prevState) => {
+  useAuthStore.subscribe((state: AuthState, prevState: AuthState) => {
     if (state.user?.id !== prevState.user?.id) {
       useSubscriptionStore
         .getState()

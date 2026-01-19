@@ -24,8 +24,8 @@ import {
   signUpRateLimiter,
 } from "../../../utils/rateLimiter"
 import { useSubscriptionStore } from "../../subscriptionStore"
-import { getEmailRedirectUrl, getPasswordResetRedirectUrl, updateUserState } from "./authHelpers"
 import type { AuthState } from "../authTypes"
+import { getEmailRedirectUrl, getPasswordResetRedirectUrl, updateUserState } from "./authHelpers"
 
 type SetState = (partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState>)) => void
 type GetState = () => AuthState
