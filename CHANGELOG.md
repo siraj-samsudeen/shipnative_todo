@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **Added Upgrading Guide**: New documentation explaining how to pull updates from the Shipnative repository
+  - Customer-facing guide at `docs/getting-started/upgrading.mdx`
+  - Technical reference at `vibe/UPGRADING.md`
+  - Covers git merge, cherry-pick, and manual copy methods
+  - Includes conflict resolution strategies and post-upgrade checklist
+
 ### Security
 
 - **Removed private keys from client-side environment variables**: `EXPO_PUBLIC_*` variables are bundled into the app and visible to users

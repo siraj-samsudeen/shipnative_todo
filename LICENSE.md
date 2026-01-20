@@ -113,11 +113,23 @@ Ignite is licensed under the MIT License. The Ignite foundation components retai
 
 This license shall be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to its conflict of law provisions.
 
-### 12. Entire Agreement
+### 12. Community Contributions
+
+Shipnative may accept voluntary contributions from licensed users via pull requests. By submitting a contribution (code, documentation, or other materials) to Shipnative:
+
+- You grant Shipnative.app a perpetual, worldwide, royalty-free, irrevocable license to use, modify, distribute, and incorporate your contribution into the boilerplate
+- You represent that you have the right to grant this license and that your contribution does not infringe any third-party rights
+- You acknowledge that contributions are voluntary and do not entitle you to compensation, equity, revenue share, or any ownership interest in Shipnative
+- You understand that Shipnative may modify, reject, or remove your contribution at any time
+- Accepted contributions may be credited in the changelog or documentation at Shipnative's discretion
+
+Contributions do not grant you any additional rights beyond your existing license.
+
+### 13. Entire Agreement
 
 This license constitutes the entire agreement between you and Shipnative.app regarding the use of this boilerplate and supersedes all prior agreements and understandings.
 
-### 13. Contact
+### 14. Contact
 
 For questions about this license or to report violations, please contact:
 
@@ -138,5 +150,5 @@ If you have any questions about what you can or cannot do with your license, ple
 
 ---
 
-**Last updated**: November 27, 2024
-**Version**: 1.0.0
+**Last updated**: January 20, 2026
+**Version**: 1.1.0
