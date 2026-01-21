@@ -20,8 +20,10 @@ import "./utils/gestureHandler"
 
 import "./styles"
 
-import { useCallback, useEffect, useRef, useState, type ReactElement } from "react"
-import { InteractionManager, Platform, ViewStyle } from "react-native"
+import type { ReactElement } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { ViewStyle } from "react-native"
+import { InteractionManager, Platform } from "react-native"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { GestureHandlerRootView } from "react-native-gesture-handler"

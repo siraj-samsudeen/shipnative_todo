@@ -1,11 +1,6 @@
-import { ReactNode } from "react"
-import {
-  Platform,
-  ScrollView as RNScrollView,
-  ScrollViewProps,
-  StyleProp,
-  ViewStyle,
-} from "react-native"
+import type { ReactNode } from "react"
+import type { ScrollViewProps, StyleProp, ViewStyle } from "react-native"
+import { Platform, ScrollView as RNScrollView } from "react-native"
 import { StyleSheet } from "react-native-unistyles"
 
 // =============================================================================

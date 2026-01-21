@@ -1,22 +1,26 @@
-import { ComponentType, FC, useMemo } from "react"
-import {
+import type { ComponentType, FC } from "react"
+import { useMemo } from "react"
+import type {
   GestureResponderEvent,
   ImageStyle,
   StyleProp,
   SwitchProps,
   TextInputProps,
   TextStyle,
-  TouchableOpacity,
   TouchableOpacityProps,
-  View,
   ViewProps,
   ViewStyle,
+} from "react-native"
+import {
+  TouchableOpacity,
+  View,
 } from "react-native"
 import { useUnistyles } from "react-native-unistyles"
 
 import { $styles } from "@/theme/styles"
 
-import { Text, TextProps } from "../Text"
+import type { TextProps } from "../Text"
+import { Text } from "../Text"
 
 export interface ToggleProps<T> extends Omit<TouchableOpacityProps, "style"> {
   /**

@@ -1,4 +1,5 @@
-import { FC, useState } from "react"
+import type { FC } from "react"
+import { useState } from "react"
 import { Modal, Pressable, View, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"

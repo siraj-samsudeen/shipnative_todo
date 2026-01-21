@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from "react"
-import { Image, ImageProps, ImageURISource, Platform, PixelRatio } from "react-native"
+import type { ImageProps, ImageURISource } from "react-native"
+import { Image, Platform, PixelRatio } from "react-native"
 
 export interface AutoImageProps extends ImageProps {
   /**

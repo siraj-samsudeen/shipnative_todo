@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react"
-import { View, LayoutChangeEvent } from "react-native"
+import type { LayoutChangeEvent } from "react-native"
+import { View } from "react-native"
 import Animated, {
   useAnimatedProps,
   useSharedValue,

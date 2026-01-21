@@ -1,12 +1,6 @@
-import { ReactElement } from "react"
-import {
-  StyleProp,
-  TextStyle,
-  TouchableOpacity,
-  TouchableOpacityProps,
-  View,
-  ViewStyle,
-} from "react-native"
+import type { ReactElement } from "react"
+import type { StyleProp, TextStyle, TouchableOpacityProps, ViewStyle } from "react-native"
+import { TouchableOpacity, View } from "react-native"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 

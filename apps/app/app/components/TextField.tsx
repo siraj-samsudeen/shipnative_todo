@@ -1,13 +1,8 @@
-import { ComponentType, forwardRef, Ref, useImperativeHandle, useRef, useState } from "react"
+import type { ComponentType, Ref } from "react"
+import { forwardRef, useImperativeHandle, useRef, useState } from "react"
 /* eslint-disable no-restricted-imports -- This is the wrapper component that needs the underlying RN TextInput */
-import {
-  TextInput as RNTextInput,
-  type TextInputProps,
-  TouchableOpacity,
-  Pressable,
-  View,
-  type ViewStyle,
-} from "react-native"
+import type { TextInputProps, ViewStyle } from "react-native"
+import { TextInput as RNTextInput, TouchableOpacity, Pressable, View } from "react-native"
 /* eslint-enable no-restricted-imports */
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { useTranslation } from "react-i18next"

@@ -5,7 +5,8 @@
  * Uses Convex mutations - changes sync in real-time across all devices!
  */
 
-import { FC, useState, useEffect } from "react"
+import type { FC } from "react"
+import { useState, useEffect } from "react"
 import { Modal, View, Pressable, KeyboardAvoidingView, Platform, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"

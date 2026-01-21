@@ -1,13 +1,6 @@
-import { ReactNode } from "react"
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ScrollViewProps,
-  View,
-  ViewStyle,
-  useWindowDimensions,
-} from "react-native"
+import type { ReactNode } from "react"
+import type { ScrollViewProps, ViewStyle } from "react-native"
+import { KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet } from "react-native-unistyles"
 
