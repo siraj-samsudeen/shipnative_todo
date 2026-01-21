@@ -1,16 +1,13 @@
-import { ReactNode, useRef, useState } from "react"
-import {
-  KeyboardAvoidingView,
+import type { ReactNode } from "react"
+import { useRef, useState } from "react"
+import type {
   KeyboardAvoidingViewProps,
   LayoutChangeEvent,
-  Platform,
-  RefreshControl,
-  ScrollView,
   ScrollViewProps,
   StyleProp,
-  View,
   ViewStyle,
 } from "react-native"
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from "react-native"
 import { useScrollToTop } from "@react-navigation/native"
 import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"

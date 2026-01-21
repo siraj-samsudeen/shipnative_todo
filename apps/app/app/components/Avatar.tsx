@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { Image, ImageProps, View, ViewStyle } from "react-native"
+import type { ImageProps, ViewStyle } from "react-native"
+import { Image, View } from "react-native"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,

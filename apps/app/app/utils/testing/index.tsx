@@ -4,9 +4,10 @@
  * Helpers for testing components and hooks
  */
 
-import { ReactElement } from "react"
+import type { ReactElement } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, RenderOptions } from "@testing-library/react-native"
+import type { RenderOptions } from "@testing-library/react-native"
+import { render } from "@testing-library/react-native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 
 import { ThemeProvider } from "../../theme/context"

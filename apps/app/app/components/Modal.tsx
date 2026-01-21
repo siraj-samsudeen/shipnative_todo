@@ -1,14 +1,6 @@
-import { ReactNode } from "react"
-import {
-  Modal as RNModal,
-  Pressable,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ViewStyle,
-  StyleProp,
-} from "react-native"
+import type { ReactNode } from "react"
+import type { ViewStyle, StyleProp } from "react-native"
+import { Modal as RNModal, Pressable, View, KeyboardAvoidingView, Platform, ScrollView } from "react-native"
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 

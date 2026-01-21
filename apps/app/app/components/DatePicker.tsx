@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react"
-import { View, ViewStyle, Pressable, Platform } from "react-native"
+import type { ViewStyle } from "react-native"
+import { View, Pressable, Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import { format } from "date-fns"

@@ -1,4 +1,5 @@
-import { memo, ReactNode } from "react"
+import type { ReactNode } from "react"
+import { memo } from "react"
 import { Pressable, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated"

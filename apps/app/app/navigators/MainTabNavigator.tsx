@@ -1,5 +1,6 @@
 import { useEffect } from "react"
-import { View, Pressable, Platform, ViewStyle, TextStyle, useWindowDimensions } from "react-native"
+import type { ViewStyle, TextStyle } from "react-native"
+import { View, Pressable, Platform, useWindowDimensions } from "react-native"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { createBottomTabNavigator, BottomTabBarProps } from "@react-navigation/bottom-tabs"

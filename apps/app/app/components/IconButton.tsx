@@ -1,4 +1,4 @@
-import { ViewStyle } from "react-native"
+import type { ViewStyle } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { GestureDetector } from "react-native-gesture-handler"
 import Animated from "react-native-reanimated"

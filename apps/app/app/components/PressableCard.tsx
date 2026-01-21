@@ -1,6 +1,7 @@
-import { memo, ReactNode } from "react"
-import { Pressable, ViewStyle } from "react-native"
-import type { StyleProp } from "react-native"
+import type { ReactNode } from "react"
+import { memo } from "react"
+import type { StyleProp, ViewStyle } from "react-native"
+import { Pressable } from "react-native"
 import Animated, {
   useAnimatedStyle,
   useSharedValue,

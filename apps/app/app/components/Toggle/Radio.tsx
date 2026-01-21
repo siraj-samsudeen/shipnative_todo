@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
-import { StyleProp, View, ViewStyle, Animated, Platform } from "react-native"
+import type { StyleProp, ViewStyle } from "react-native"
+import { View, Animated, Platform } from "react-native"
 import { useUnistyles } from "react-native-unistyles"
 
 import { $styles } from "@/theme/styles"

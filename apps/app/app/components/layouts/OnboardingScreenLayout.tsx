@@ -27,7 +27,7 @@
  * ```
  */
 
-import { ReactNode } from "react"
+import type { ReactNode } from "react"
 import { View, Platform, useWindowDimensions } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import type { TOptions } from "i18next"

@@ -1,5 +1,6 @@
 import { useEffect } from "react"
-import { View, ViewStyle } from "react-native"
+import type { ViewStyle } from "react-native"
+import { View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import Animated, {
   useAnimatedStyle,

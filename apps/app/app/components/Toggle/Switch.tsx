@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react"
-import { Animated, Image, ImageStyle, Platform, StyleProp, View, ViewStyle } from "react-native"
+import type { ImageStyle, StyleProp, ViewStyle } from "react-native"
+import { Animated, Image, Platform, View } from "react-native"
 import { useTranslation } from "react-i18next"
 import { useUnistyles } from "react-native-unistyles"
 

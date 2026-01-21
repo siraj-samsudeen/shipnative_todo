@@ -27,15 +27,10 @@
  * ```
  */
 
-import { Children, ReactNode } from "react"
-import {
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  useWindowDimensions,
-  ViewStyle,
-  TouchableOpacity,
-} from "react-native"
+import type { ReactNode } from "react"
+import { Children } from "react"
+import type { ViewStyle } from "react-native"
+import { View, KeyboardAvoidingView, Platform, useWindowDimensions, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import type { TOptions } from "i18next"

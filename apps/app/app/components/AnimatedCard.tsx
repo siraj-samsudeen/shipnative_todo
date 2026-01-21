@@ -1,5 +1,5 @@
-import { ReactNode } from "react"
-import { ViewStyle } from "react-native"
+import type { ReactNode } from "react"
+import type { ViewStyle } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Animated, {
   runOnJS,
