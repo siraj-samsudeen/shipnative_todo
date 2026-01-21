@@ -33,6 +33,10 @@ import {
   // Form inputs
   DatePicker,
   FilePicker,
+  // Toggle controls
+  Checkbox,
+  Radio,
+  Switch,
   // Modals
   Modal,
   AlertModal,
@@ -40,10 +44,6 @@ import {
   PricingCard,
   SubscriptionStatus,
 } from "@/components"
-// Toggle controls (not exported from main index)
-import { Checkbox } from "@/components/Toggle/Checkbox"
-import { Radio } from "@/components/Toggle/Radio"
-import { Switch } from "@/components/Toggle/Switch"
 import { ANIMATION } from "@/config/constants"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 import { webDimension } from "@/types/webStyles"
