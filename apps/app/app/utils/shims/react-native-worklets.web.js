@@ -5,8 +5,8 @@
  * On web, we provide mock implementations since worklets/native threads don't exist.
  */
 
-// Version that satisfies reanimated's version check (0.5.x or 0.6.x)
-export const version = "0.6.0"
+// Version that satisfies reanimated's version check (0.7.x+)
+export const version = "0.7.1"
 
 // Runtime kinds
 export const RuntimeKind = {
@@ -100,9 +100,9 @@ export function isWorkletFunction() {
 
 // WorkletsModule
 export const WorkletsModule = {
-  version: "0.6.0",
+  version: "0.7.1",
 }
 
 export default {
-  version: "0.6.0",
+  version: "0.7.1",
 }
