@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Setup Script Compatibility**: Added symlink for `tsconfig.setup.json` in `apps/app` directory to fix setup script execution errors
 - **Web Platform Compatibility**: Updated react-native-worklets web shim from version 0.6.0 to 0.7.1 to resolve Reanimated 4.2.1 compatibility issues on web platform
+- **Auth Hook Provider Error**: Fixed `useAuth()` hook crashing when using Supabase backend due to missing Convex provider. Both providers are now always present to satisfy React's rules of hooks
 
 ### Documentation
 

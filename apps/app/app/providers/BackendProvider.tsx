@@ -200,17 +200,14 @@ export function BackendProvider({
     <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>
   )
 
-  // Return the appropriate provider based on backend type
-  if (isSupabase) {
-    return <SupabaseProvider>{providerContent}</SupabaseProvider>
-  }
-
-  if (isConvex) {
-    return <ConvexProviderWrapper>{providerContent}</ConvexProviderWrapper>
-  }
-
-  // Fallback (shouldn't happen)
-  return providerContent
+  // Always wrap with both providers to support useAuth() calling both hooks unconditionally
+  // React's rules of hooks require hooks to be called in the same order every render
+  // The unused provider will be a no-op if its backend isn't configured
+  return (
+    <ConvexProviderWrapper>
+      <SupabaseProvider>{providerContent}</SupabaseProvider>
+    </ConvexProviderWrapper>
+  )
 }
 
 // ============================================================================
