@@ -14,7 +14,7 @@ Implement a minimal todo application with Supabase backend, React Query for data
   - Set up database indexes and triggers
   - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1_
 
-- [ ] 2. Add translation keys for todo screen
+- [x] 2. Add translation keys for todo screen
   - Add all todo screen translation keys to `apps/app/app/i18n/en.ts`
   - Include keys for: title, input placeholder, buttons, empty state, errors, offline indicator
   - _Requirements: All (i18n support)_

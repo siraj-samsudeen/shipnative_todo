@@ -416,6 +416,42 @@ const en = {
         "No favorites have been added yet. Tap the heart on an episode to add it to your favorites!",
     },
   },
+  todoScreen: {
+    // Screen title
+    title: "My Todos",
+    
+    // Input field
+    inputPlaceholder: "What needs to be done?",
+    addButton: "Add",
+    
+    // Empty state
+    emptyHeading: "No todos yet",
+    emptyContent: "Add your first todo to get started",
+    
+    // Todo item actions
+    editButton: "Edit",
+    deleteButton: "Delete",
+    saveButton: "Save",
+    cancelButton: "Cancel",
+    
+    // Error messages
+    errorEmptyTask: "Task description cannot be empty",
+    errorTaskTooLong: "Task description is too long (max 500 characters)",
+    errorNetwork: "Network error. Please check your connection.",
+    errorServer: "Server error. Please try again later.",
+    errorAuth: "Please sign in to manage your todos",
+    errorRetry: "Retry",
+    
+    // Loading states
+    loading: "Loading todos...",
+    
+    // Offline indicator
+    offline: "You're offline. Changes will sync when you're back online.",
+    
+    // Accessibility labels
+    toggleComplete: "Toggle completion status",
+    todoItem: "Todo item",
+  },
   // @demo remove-block-start
   ...demoEn,
   // @demo remove-block-end
