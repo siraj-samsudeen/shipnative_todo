@@ -43,6 +43,7 @@ export type AppStackParamList = {
   Welcome: undefined
   ComponentShowcase: undefined
   DataDemo: undefined
+  Todo: undefined
   Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // SHIPNATIVE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

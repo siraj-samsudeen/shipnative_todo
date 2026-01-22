@@ -98,14 +98,18 @@ const AppStack = () => {
   }
 
   // Determine initial route
-  let initialRouteName: keyof AppStackParamList = "Welcome"
-  if (user) {
-    if (needsEmailVerification) {
-      initialRouteName = "EmailVerification"
-    } else if (isAuthenticated) {
-      initialRouteName = hasCompletedOnboarding ? "Main" : "Onboarding"
-    }
-  }
+  // TEMPORARY: Set TodoScreen as initial route for testing
+  let initialRouteName: keyof AppStackParamList = "Todo"
+  
+  // Original logic (commented out for testing):
+  // let initialRouteName: keyof AppStackParamList = "Welcome"
+  // if (user) {
+  //   if (needsEmailVerification) {
+  //     initialRouteName = "EmailVerification"
+  //   } else if (isAuthenticated) {
+  //     initialRouteName = hasCompletedOnboarding ? "Main" : "Onboarding"
+  //   }
+  // }
 
   return (
     <Stack.Navigator
@@ -188,12 +192,26 @@ const AppStack = () => {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="Todo"
+            component={Screens.TodoScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         // ------------------------------------------------------------------
         // UNAUTHENTICATED STACK (Welcome, Login, Register)
         // ------------------------------------------------------------------
         <>
+          <Stack.Screen
+            name="Todo"
+            component={Screens.TodoScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
           <Stack.Screen
             name="Welcome"
             component={Screens.WelcomeScreen}

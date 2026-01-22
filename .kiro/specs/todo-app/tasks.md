@@ -17,14 +17,16 @@ Implement a minimal todo application with Supabase backend, React Query for data
 - [x] 2. Add translation keys for todo screen
   - Add all todo screen translation keys to `apps/app/app/i18n/en.ts`
   - Include keys for: title, input placeholder, buttons, empty state, errors, offline indicator
+  - **Note**: Use colon notation (`:`) for translation keys (e.g., `todoScreen:title`)
   - _Requirements: All (i18n support)_
 
-- [ ] 3. Create basic TodoScreen with empty state
+- [x] 3. Create basic TodoScreen with empty state
   - Implement TodoScreen layout and structure
   - Use `Screen` component wrapper
-  - Add header with title using translation keys
-  - Show `EmptyState` component with translation keys
+  - Add header with title using translation keys (colon notation: `todoScreen:title`)
+  - Show `EmptyState` component with translation keys (colon notation)
   - Use Unistyles for styling
+  - Set as initial route for testing in `AppNavigator.tsx`
   - _Requirements: 2.2_
 
 ### Vertical Slice 2: Add Todo Items (First Working Feature)

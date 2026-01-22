@@ -31,55 +31,6 @@ The boilerplate supports two backends with native-level integration:
 
 Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex` in `.env`.
 
-### Supabase Database Migrations
-
-**ALWAYS use migrations when modifying the Supabase database schema.** Never edit `supabase/schema.sql` directly for changes.
-
-#### Creating a New Migration
-
-```bash
-# Create a new migration file
-supabase migration new add_todos_table
-
-# This creates: supabase/migrations/YYYYMMDDHHMMSS_add_todos_table.sql
-```
-
-#### Migration Best Practices
-
-1. **Use migrations for all schema changes** - Never edit `schema.sql` directly
-2. **Always use `IF NOT EXISTS`** - Makes migrations idempotent (safe to run multiple times)
-3. **Drop policies before recreating** - Prevents "already exists" errors
-4. **Enable RLS on all user tables** - Security best practice
-5. **Add indexes for foreign keys** - Performance optimization
-6. **One migration per feature** - Easier to understand and rollback
-7. **Never modify applied migrations** - Create new migrations for changes
-
-Example migration:
-```sql
--- Create table
-CREATE TABLE IF NOT EXISTS public.todos (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    title TEXT NOT NULL,
-    completed BOOLEAN DEFAULT false,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
-
--- Add policies
-DROP POLICY IF EXISTS "Users can view own todos" ON public.todos;
-CREATE POLICY "Users can view own todos"
-    ON public.todos FOR SELECT
-    USING (auth.uid() = user_id);
-
--- Add indexes
-CREATE INDEX IF NOT EXISTS todos_user_id_idx ON public.todos(user_id);
-```
-
-See [supabase/migrations/README.md](../supabase/migrations/README.md) for detailed guide.
-
 ### NEVER USE
 - NativeWind/Tailwind (use Unistyles)
 - Expo Router (use React Navigation)
@@ -146,7 +97,7 @@ Most components support both direct text and translation keys:
   content="Add your first todo to get started"
 />
 
-// ✅ CORRECT - translation keys (MUST use colon notation)
+// ✅ CORRECT - translation keys (use colon notation)
 <EmptyState
   headingTx="todoScreen:emptyHeading"
   contentTx="todoScreen:emptyContent"
@@ -168,7 +119,8 @@ Most components support both direct text and translation keys:
 ### Adding New Translation Keys
 1. Add keys to `apps/app/app/i18n/en.ts` (source of truth)
 2. Use nested structure: `screenName: { keyName: "value" }`
-3. **Key path syntax: MUST use colon notation `"screenName:keyName"`** (NOT dot notation)
+3. **Key path syntax: Use colon notation `"screenName:keyName"`** (preferred in this codebase)
+   - Note: While i18next supports both `.` and `:` separators, this codebase uses `:` exclusively
 
 ```typescript
 // In en.ts
@@ -179,6 +131,10 @@ const en = {
     addButton: "Add Todo",
   },
 }
+
+// Usage in components (use colon notation)
+<Text tx="todoScreen:emptyHeading" />
+<EmptyState headingTx="todoScreen:emptyHeading" contentTx="todoScreen:emptyContent" />
 ```
 
 ### Programmatic Access
@@ -306,39 +262,8 @@ All packages include promotional pricing when configured in RevenueCat:
 
 > Note: Root-level `.env.local` exists for scripts/tooling but is NOT automatically loaded by the apps. Each app reads its own `.env` file.
 
-## Screen Creation
-
-**ALWAYS use the correct layout component for consistency.** See `vibe/SCREEN_TEMPLATES.md` for detailed patterns and examples.
-
-### Quick Guide
-
-| Screen Type | Component |
-|------------|-----------|
-| Auth (Login, Register) | `<AuthScreenLayout>` |
-| Onboarding | `<OnboardingScreenLayout>` |
-| Standard app screen | `<Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>` |
-| Form screen | `<Container keyboardAvoiding safeAreaEdges={["top", "bottom"]}>` |
-
-**Example patterns:**
-```typescript
-// Auth screens
-<AuthScreenLayout titleTx="..." showCloseButton>
-
-// App screens
-<Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>
-
-// Forms
-<Container preset="scroll" keyboardAvoiding safeAreaEdges={["top", "bottom"]}>
-```
-
-**DO NOT:**
-- Mix layout patterns (some screens using `Screen`, others using manual `View`+`ScrollView`)
-- Manually handle safe areas when component does it automatically
-- Copy HomeScreen's manual layout pattern - use `Screen` or `Container` instead
-
 ## Rules
 - Check `apps/app/app/components/` before creating new components
 - Use theme values (`theme.colors.*`, `theme.spacing.*`) - never hardcode
 - All components must support dark mode via semantic theme colors
 - New feature docs go in `vibe/` or `docs/`, NOT root directory
-- **ALWAYS follow screen creation guidelines above for consistency**
