@@ -19,6 +19,7 @@ import { ComponentShowcaseScreen } from "@/screens/ComponentShowcaseScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
 import { PaywallScreen } from "@/screens/PaywallScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
+import { TodoScreen } from "@/screens/TodoScreen"
 import { designTokens } from "@/theme/designTokens"
 import { haptics } from "@/utils/haptics"
 
@@ -39,6 +40,7 @@ const TAB_CONFIG: Record<
   }
 > = {
   Home: { icon: "home", iconOutline: "home-outline", labelTx: "tabs:home" },
+  Todo: { icon: "checkbox", iconOutline: "checkbox-outline", labelTx: "tabs:todo" },
   Components: { icon: "cube", iconOutline: "cube-outline", labelTx: "tabs:components" },
   Paywall: { icon: "diamond", iconOutline: "diamond-outline", labelTx: "tabs:pro" },
   Profile: { icon: "person", iconOutline: "person-outline", labelTx: "tabs:profile" },
@@ -489,6 +491,7 @@ export function MainTabNavigator() {
           }}
         >
           <Tab.Screen name="Home" component={HomeScreen} />
+          <Tab.Screen name="Todo" component={TodoScreen} />
           <Tab.Screen name="Components" component={ComponentShowcaseScreen} />
           <Tab.Screen name="Paywall" component={PaywallScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />

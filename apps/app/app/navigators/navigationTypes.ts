@@ -14,6 +14,7 @@ export type PaywallParams = {
 
 export type MainTabParamList = {
   Home: undefined
+  Todo: undefined
   Components: undefined
   Profile: undefined
   Paywall: PaywallParams | undefined
@@ -43,7 +44,6 @@ export type AppStackParamList = {
   Welcome: undefined
   ComponentShowcase: undefined
   DataDemo: undefined
-  Todo: undefined
   Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // SHIPNATIVE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

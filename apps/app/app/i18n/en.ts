@@ -118,6 +118,7 @@ const en = {
   },
   tabs: {
     home: "Home",
+    todo: "Todo",
     components: "Components",
     pro: "Pro",
     profile: "Profile",
