@@ -18,10 +18,8 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 
-import { env, isSupabase, isConvex } from "../config/env"
+import { env, isConvex } from "../config/env"
 import { queryClient } from "../hooks/queries"
-import { ConvexAuthSync } from "../providers/ConvexAuthSync"
-import { ConvexProvider } from "../providers/ConvexProvider"
 import { getBackendAsync, isBackendInitialized } from "../services/backend"
 import type { Backend, BackendProvider as BackendProviderType } from "../services/backend/types"
 import { logger } from "../utils/Logger"
@@ -106,14 +104,40 @@ function SupabaseProvider({ children }: { children: ReactNode }) {
 // ============================================================================
 
 function ConvexProviderWrapper({ children }: { children: ReactNode }) {
-  // ConvexProvider is imported at top of file to avoid dynamic import race conditions
-  // This ensures the provider is always available when children render
-  // ConvexAuthSync syncs Convex auth state to the Zustand auth store for AppNavigator
-  return (
-    <ConvexProvider>
-      <ConvexAuthSync>{children}</ConvexAuthSync>
-    </ConvexProvider>
-  )
+  // Only load Convex providers when using Convex backend
+  // This prevents requiring Convex packages when using Supabase
+  if (!isConvex) {
+    return <>{children}</>
+  }
+
+  // Dynamically import Convex providers only when needed
+  // This is safe because isConvex is determined at build time from env vars
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { ConvexProvider } = require("../providers/ConvexProvider")
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { ConvexAuthSync } = require("../providers/ConvexAuthSync")
+
+    return (
+      <ConvexProvider>
+        <ConvexAuthSync>{children}</ConvexAuthSync>
+      </ConvexProvider>
+    )
+  } catch (error) {
+    // If Convex packages are missing, show helpful error
+    const errorMessage = [
+      "Convex packages not found.",
+      "",
+      "You've set EXPO_PUBLIC_BACKEND_PROVIDER=convex but Convex packages are not installed.",
+      "",
+      "To fix this:",
+      "1. Install packages: yarn add convex @convex-dev/auth",
+      "2. Or switch to Supabase: EXPO_PUBLIC_BACKEND_PROVIDER=supabase",
+    ].join("\n")
+
+    logger.error(errorMessage, {}, error as Error)
+    throw new Error(errorMessage)
+  }
 }
 
 // ============================================================================

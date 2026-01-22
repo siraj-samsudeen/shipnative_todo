@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Setup Script Compatibility**: Added symlink for `tsconfig.setup.json` in `apps/app` directory to fix setup script execution errors
 - **Web Platform Compatibility**: Updated react-native-worklets web shim from version 0.6.0 to 0.7.1 to resolve Reanimated 4.2.1 compatibility issues on web platform
 - **Auth Hook Provider Error**: Fixed `useAuth()` hook crashing when using Supabase backend due to missing Convex provider. Both providers are now always present to satisfy React's rules of hooks
+- **Convex Package Dependencies**: Made Convex provider imports conditional to allow Supabase-only users to build without installing Convex packages (`convex`, `@convex-dev/auth`)
+  - `BackendProvider` now uses dynamic `require()` for Convex providers only when `EXPO_PUBLIC_BACKEND_PROVIDER=convex`
+  - Removed Convex exports from `providers/index.ts` to prevent eager loading
+  - Users can now run the app with Supabase without having Convex packages installed
 
 ### Documentation
 

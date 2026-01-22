@@ -9,6 +9,23 @@ Shipnative supports two backend options: **Supabase** and **Convex**. Choose bas
 
 Configure via `yarn setup` or set `EXPO_PUBLIC_BACKEND_PROVIDER=supabase|convex`.
 
+## Optional Dependencies
+
+**Note**: As of the latest update, Convex packages (`convex`, `@convex-dev/auth`) are included in `package.json` by default but are **only loaded when needed**. The `BackendProvider` uses conditional imports to prevent requiring these packages when using Supabase.
+
+If you want to remove Convex packages entirely (after running `yarn setup` and choosing Supabase):
+
+```bash
+# Remove Convex dependencies
+yarn remove convex @convex-dev/auth
+
+# Remove Convex provider files
+rm -rf apps/app/app/providers/Convex*.tsx
+rm -rf convex/
+```
+
+This is safe to do if you're only using Supabase. The app will work without any Convex packages installed.
+
 ---
 
 ## Supabase Backend

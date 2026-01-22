@@ -1,6 +1,8 @@
 export { QueryProvider } from "./QueryProvider"
 export { BackendProvider, useBackend, useBackendContext, withBackend } from "./BackendProvider"
 
-// Native providers for direct use
-export { ConvexProvider, getConvexClient, destroyConvexClient } from "./ConvexProvider"
-export { ConvexAuthSync } from "./ConvexAuthSync"
+// Note: ConvexProvider, ConvexAuthSync, and related exports are not re-exported here
+// to prevent eager loading of Convex packages when using Supabase backend.
+// If you need to use them directly, import from the specific files:
+// import { ConvexProvider } from "@/providers/ConvexProvider"
+// import { ConvexAuthSync } from "@/providers/ConvexAuthSync"
