@@ -8,7 +8,7 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 1: Display Empty State (Foundation)
 
-- [ ] 1. Set up database schema and types
+- [x] 1. Set up database schema and types
   - Create Supabase migration for `todos` table with RLS policies
   - Define TypeScript types in `apps/app/app/types/todo.ts`
   - Set up database indexes and triggers
