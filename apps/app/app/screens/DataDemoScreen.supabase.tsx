@@ -11,13 +11,12 @@
  */
 
 import { FC, useState } from "react"
-import { View, FlatList, Platform, RefreshControl } from "react-native"
+import { View, FlatList } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Text, Button, Card, TextField, Spinner, EmptyState } from "@/components"
+import { Text, Button, Card, TextField, Spinner, EmptyState, Screen } from "@/components"
 import { useAuth } from "@/hooks"
 import { supabase } from "@/services/supabase"
 
@@ -138,8 +137,6 @@ const useDeletePost = () => {
 // COMPONENT
 // =============================================================================
 
-const isWeb = Platform.OS === "web"
-
 export const DataDemoScreen: FC = () => {
   const { theme } = useUnistyles()
   const { user } = useAuth()
@@ -196,29 +193,33 @@ export const DataDemoScreen: FC = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <Spinner size="lg" />
-        <Text style={styles.loadingText}>Loading posts...</Text>
-      </View>
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <View style={styles.centered}>
+          <Spinner size="lg" />
+          <Text style={styles.loadingText}>Loading posts...</Text>
+        </View>
+      </Screen>
     )
   }
 
   if (error) {
     return (
-      <View style={styles.centered}>
-        <EmptyState
-          preset="error"
-          heading="Failed to load posts"
-          content={error.message}
-          button="Retry"
-          buttonOnPress={() => refetch()}
-        />
-      </View>
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <View style={styles.centered}>
+          <EmptyState
+            preset="error"
+            heading="Failed to load posts"
+            content={error.message}
+            button="Retry"
+            buttonOnPress={() => refetch()}
+          />
+        </View>
+      </Screen>
     )
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -267,7 +268,8 @@ export const DataDemoScreen: FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderPost}
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
+          onRefresh={() => refetch()}
+          refreshing={isRefetching}
           ListEmptyComponent={
             <EmptyState
               icon="components"
@@ -277,7 +279,7 @@ export const DataDemoScreen: FC = () => {
           }
         />
       </View>
-    </SafeAreaView>
+    </Screen>
   )
 }
 
@@ -286,11 +288,6 @@ export const DataDemoScreen: FC = () => {
 // =============================================================================
 
 const styles = StyleSheet.create((theme) => ({
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    ...(isWeb && { minHeight: "100vh" as unknown as number }),
-  },
   container: {
     flex: 1,
     padding: theme.spacing.md,

@@ -15,14 +15,13 @@
  */
 
 import { FC, useState } from "react"
-import { View, FlatList, Platform } from "react-native"
+import { View, FlatList } from "react-native"
 import { api } from "@convex/_generated/api"
 import type { Id } from "@convex/_generated/dataModel"
 import { Ionicons } from "@expo/vector-icons"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Text, Button, Card, TextField, Spinner, EmptyState } from "@/components"
+import { Text, Button, Card, TextField, Spinner, EmptyState, Screen } from "@/components"
 import { useAuth } from "@/hooks"
 import { useQuery, useMutation } from "@/hooks/convex"
 
@@ -43,8 +42,6 @@ type Post = {
 // =============================================================================
 // COMPONENT
 // =============================================================================
-
-const isWeb = Platform.OS === "web"
 
 export const DataDemoScreen: FC = () => {
   const { theme } = useUnistyles()
@@ -129,15 +126,17 @@ export const DataDemoScreen: FC = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <Spinner size="lg" />
-        <Text style={styles.loadingText}>Loading posts...</Text>
-      </View>
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <View style={styles.centered}>
+          <Spinner size="lg" />
+          <Text style={styles.loadingText}>Loading posts...</Text>
+        </View>
+      </Screen>
     )
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -207,7 +206,7 @@ export const DataDemoScreen: FC = () => {
           }
         />
       </View>
-    </SafeAreaView>
+    </Screen>
   )
 }
 
@@ -216,11 +215,6 @@ export const DataDemoScreen: FC = () => {
 // =============================================================================
 
 const styles = StyleSheet.create((theme) => ({
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    ...(isWeb && { minHeight: "100vh" as unknown as number }),
-  },
   container: {
     flex: 1,
     padding: theme.spacing.md,

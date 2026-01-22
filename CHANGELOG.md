@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Screen Creation Guidelines**: Added comprehensive screen layout patterns
+  - `AGENTS.md` - Quick reference and patterns for choosing layout components
+  - `vibe/SCREEN_TEMPLATES.md` - Detailed documentation with component APIs, patterns, and decision tree
+  - Documented `Screen` and `Container` components with full prop tables and examples
+  - Clear guidance on when to use `AuthScreenLayout`, `OnboardingScreenLayout`, `Screen`, or `Container`
+
 - **Supabase Migrations Support**: Added proper migration infrastructure for version-controlled database schema changes
   - Created `supabase/migrations/` directory with initial schema migration (`20260122101738_initial_schema.sql`)
   - Added comprehensive migration guide at `supabase/migrations/README.md` with:
@@ -29,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `docs/troubleshooting.mdx` - Supabase-specific troubleshooting section
 
 ### Fixed
+
+- **Screen Layout Inconsistencies**: Standardized DataDemoScreen to use `Screen` component
+  - `DataDemoScreen.supabase.tsx` - Replaced manual `SafeAreaView` + `View` with `Screen` component
+  - `DataDemoScreen.convex.tsx` - Replaced manual `SafeAreaView` + `View` with `Screen` component
+  - Both versions now use consistent layout pattern with proper safe area handling
+  - Simplified code by removing manual safe area calculations and web-specific styles
 
 - **TypeScript Configuration for React Native**: Fixed conflicts between DOM/Node types and React Native's type definitions
   - Removed `"dom"` from `lib` array in `tsconfig.json` (React Native provides its own web-like APIs)

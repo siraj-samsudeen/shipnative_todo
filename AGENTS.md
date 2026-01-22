@@ -306,8 +306,39 @@ All packages include promotional pricing when configured in RevenueCat:
 
 > Note: Root-level `.env.local` exists for scripts/tooling but is NOT automatically loaded by the apps. Each app reads its own `.env` file.
 
+## Screen Creation
+
+**ALWAYS use the correct layout component for consistency.** See `vibe/SCREEN_TEMPLATES.md` for detailed patterns and examples.
+
+### Quick Guide
+
+| Screen Type | Component |
+|------------|-----------|
+| Auth (Login, Register) | `<AuthScreenLayout>` |
+| Onboarding | `<OnboardingScreenLayout>` |
+| Standard app screen | `<Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>` |
+| Form screen | `<Container keyboardAvoiding safeAreaEdges={["top", "bottom"]}>` |
+
+**Example patterns:**
+```typescript
+// Auth screens
+<AuthScreenLayout titleTx="..." showCloseButton>
+
+// App screens
+<Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>
+
+// Forms
+<Container preset="scroll" keyboardAvoiding safeAreaEdges={["top", "bottom"]}>
+```
+
+**DO NOT:**
+- Mix layout patterns (some screens using `Screen`, others using manual `View`+`ScrollView`)
+- Manually handle safe areas when component does it automatically
+- Copy HomeScreen's manual layout pattern - use `Screen` or `Container` instead
+
 ## Rules
 - Check `apps/app/app/components/` before creating new components
 - Use theme values (`theme.colors.*`, `theme.spacing.*`) - never hardcode
 - All components must support dark mode via semantic theme colors
 - New feature docs go in `vibe/` or `docs/`, NOT root directory
+- **ALWAYS follow screen creation guidelines above for consistency**
