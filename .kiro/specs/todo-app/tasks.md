@@ -31,19 +31,19 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 2: Add Todo Items (First Working Feature)
 
-- [ ] 4. Implement add todo functionality (end-to-end)
-  - [ ] 4.1 Create `useAddTodo()` mutation hook
+- [x] 4. Implement add todo functionality (end-to-end)
+  - [x] 4.1 Create `useAddTodo()` mutation hook
     - Validate description (trim, check non-empty)
     - Insert todo into Supabase
     - Invalidate queries on success
     - _Requirements: 1.1, 1.2_
   
-  - [ ] 4.2 Create `useTodos()` hook to fetch todos
+  - [x] 4.2 Create `useTodos()` hook to fetch todos
     - Query todos from Supabase ordered by completion and creation date
     - Handle loading and error states
     - _Requirements: 2.1_
   
-  - [ ] 4.3 Add input field and add button to TodoScreen
+  - [x] 4.3 Add input field and add button to TodoScreen
     - Use `TextField` component with translation keys
     - Handle text input state
     - Add "Add" button
@@ -51,7 +51,7 @@ Implement a minimal todo application with Supabase backend, React Query for data
     - Wire up `useAddTodo()` hook
     - _Requirements: 1.1, 1.3_
   
-  - [ ] 4.4 Display todos in a FlatList
+  - [x] 4.4 Display todos in a FlatList
     - Set up FlatList for todo items
     - Create minimal TodoItem component (just display description)
     - Handle loading states with Spinner

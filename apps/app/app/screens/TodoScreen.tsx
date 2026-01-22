@@ -1,9 +1,11 @@
-import { FC } from "react"
-import { View } from "react-native"
+import { FC, useState } from "react"
+import { FlatList, View } from "react-native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { EmptyState, Screen, Text } from "@/components"
+import { Button, EmptyState, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
+import { useAddTodo, useTodos } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import type { Todo } from "@/types/todo"
 
 // =============================================================================
 // TYPES
@@ -17,10 +19,62 @@ interface TodoScreenProps extends AppStackScreenProps<"Main"> {}
 
 export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   const { theme } = useUnistyles()
+  const [inputText, setInputText] = useState("")
+  
+  // Fetch todos
+  const { data: todos = [], isLoading, error } = useTodos()
+  
+  // Add todo mutation
+  const addTodo = useAddTodo()
+
+  const handleAddTodo = async () => {
+    if (!inputText.trim()) return
+    
+    try {
+      await addTodo.mutateAsync(inputText)
+      setInputText("") // Clear input after successful add
+    } catch (err) {
+      // Error is already logged by the hook
+      console.error("Failed to add todo:", err)
+    }
+  }
+
+  const hasTodos = todos.length > 0
+
+  const renderTodoItem = ({ item }: { item: Todo }) => <TodoItem todo={item} />
+
+  const renderEmptyState = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.centerContent}>
+          <Spinner size="lg" />
+          <Text tx="todoScreen:loading" style={styles.loadingText} />
+        </View>
+      )
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centerContent}>
+          <Text tx="todoScreen:errorNetwork" color="error" style={styles.errorText} />
+        </View>
+      )
+    }
+
+    return (
+      <View style={styles.centerContent}>
+        <EmptyState
+          headingTx="todoScreen:emptyHeading"
+          contentTx="todoScreen:emptyContent"
+          icon="components"
+        />
+      </View>
+    )
+  }
 
   return (
     <Screen
-      preset="scroll"
+      preset="fixed"
       contentContainerStyle={styles.container}
       safeAreaEdges={["top"]}
       backgroundColor={theme.colors.background}
@@ -30,14 +84,40 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
         <Text preset="heading" tx="todoScreen:title" style={styles.title} />
       </View>
 
-      {/* Empty State */}
-      <View style={styles.content}>
-        <EmptyState
-          headingTx="todoScreen:emptyHeading"
-          contentTx="todoScreen:emptyContent"
-          icon="components"
+      {/* Input Section */}
+      <View style={styles.inputSection}>
+        <TextField
+          value={inputText}
+          onChangeText={setInputText}
+          placeholderTx="todoScreen:inputPlaceholder"
+          containerStyle={styles.inputContainer}
+          clearable
+          onClear={() => setInputText("")}
+          onSubmitEditing={handleAddTodo}
+          returnKeyType="done"
+          editable={!addTodo.isPending}
+        />
+        <Button
+          tx="todoScreen:addButton"
+          onPress={handleAddTodo}
+          disabled={!inputText.trim() || addTodo.isPending}
+          loading={addTodo.isPending}
+          style={styles.addButton}
         />
       </View>
+
+      {/* Todo List */}
+      {hasTodos ? (
+        <FlatList
+          data={todos}
+          renderItem={renderTodoItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        renderEmptyState()
+      )}
     </Screen>
   )
 }
@@ -58,9 +138,34 @@ const styles = StyleSheet.create((theme) => ({
   title: {
     letterSpacing: -0.5,
   },
-  content: {
+  inputSection: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  addButton: {
+    marginTop: 0,
+    minWidth: 80,
+  },
+  listContent: {
+    paddingBottom: theme.spacing.xl,
+  },
+  centerContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: theme.spacing["2xl"],
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    color: theme.colors.foregroundSecondary,
+  },
+  errorText: {
+    textAlign: "center",
+    paddingHorizontal: theme.spacing.xl,
   },
 }))
