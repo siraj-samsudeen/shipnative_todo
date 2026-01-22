@@ -63,6 +63,22 @@ supabase db push
 npx convex dev
 ```
 
+**Note on Backend Packages**: As of the latest update, Convex packages (`convex`, `@convex-dev/auth`) are only loaded when `EXPO_PUBLIC_BACKEND_PROVIDER=convex`. If you're using Supabase exclusively and want to remove Convex packages to reduce dependencies:
+
+```bash
+# Remove Convex packages (optional)
+yarn remove convex @convex-dev/auth
+
+# Remove Convex provider files (optional)
+rm -rf apps/app/app/providers/Convex*.tsx
+rm -rf convex/
+
+# Or re-run setup to clean up unused backend
+yarn setup
+```
+
+The app will work fine with Supabase whether or not Convex packages are installed.
+
 ### 5. Test and Commit
 
 ```bash
