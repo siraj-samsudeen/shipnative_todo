@@ -670,6 +670,27 @@ function useSupabaseAuth(): UseAuthReturn {
  * - useConvexAuth() - for unified auth state and actions
  */
 function useConvexAuthImpl(): UseAuthReturn {
+  // If Convex is not the selected backend, return stub implementation
+  // This prevents trying to call Convex hooks when ConvexProvider isn't in the tree
+  if (!isConvex) {
+    return {
+      user: null,
+      session: null,
+      loading: false,
+      signUp: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signIn: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithGoogle: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithApple: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithMagicLink: async () => ({ error: new Error("Convex is not the selected backend") }),
+      verifyOtp: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signOut: async () => ({ error: new Error("Convex is not the selected backend") }),
+      resetPassword: async () => ({ error: new Error("Convex is not the selected backend") }),
+      updateUser: async () => ({ error: new Error("Convex is not the selected backend") }),
+      isAuthenticated: false,
+      provider: "convex",
+    }
+  }
+
   // Import the modular Convex auth hooks
   // Using require to avoid hook rules violation (conditional hook calls)
   // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -305,6 +305,25 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
 // ============================================================================
 
 function useConvexAppAuth(): AppAuthState & AppAuthActions {
+  // If Convex is not the selected backend, return stub implementation
+  // This prevents trying to call Convex hooks when ConvexProvider isn't in the tree
+  if (!isConvex) {
+    return {
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      signIn: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signOut: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithGoogle: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithApple: async () => ({ error: new Error("Convex is not the selected backend") }),
+      signInWithMagicLink: async () => ({ error: new Error("Convex is not the selected backend") }),
+      verifyOtp: async () => ({ error: new Error("Convex is not the selected backend") }),
+      resetPassword: async () => ({ error: new Error("Convex is not the selected backend") }),
+      updateProfile: async () => ({ error: new Error("Convex is not the selected backend") }),
+      refreshProfile: async () => {},
+    }
+  }
+
   // Lazy import to enable code splitting
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { useConvexAuth, useConvexMagicLink } = require("./convex")

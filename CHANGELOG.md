@@ -7,7 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Supabase Migrations Support**: Added proper migration infrastructure for version-controlled database schema changes
+  - Created `supabase/migrations/` directory with initial schema migration (`20260122101738_initial_schema.sql`)
+  - Added comprehensive migration guide at `supabase/migrations/README.md` with:
+    - How to create and apply migrations (CLI and manual methods)
+    - Migration best practices (idempotency, RLS, indexes, rollback strategies)
+    - Common migration patterns and troubleshooting
+  - Added troubleshooting guide at `supabase/TROUBLESHOOTING.md` covering:
+    - Profile 404 errors after signup (expected behavior and solutions)
+    - Wrong localhost port configuration (redirect URLs)
+    - TypeScript configuration issues
+    - Migration conflicts and RLS policy debugging
+  - Updated internal developer docs:
+    - `AGENTS.md` - Migration best practices and examples for AI-assisted development
+    - `vibe/SUPABASE.md` - Migration setup instructions and troubleshooting section
+  - Updated user-facing docs (mintlify):
+    - `docs/core-features/backend.mdx` - Migration workflow and best practices
+    - `docs/getting-started/marketing-page.mdx` - Migration option for waitlist table setup
+    - `docs/troubleshooting.mdx` - Supabase-specific troubleshooting section
+
 ### Fixed
+
+- **TypeScript Configuration for React Native**: Fixed conflicts between DOM/Node types and React Native's type definitions
+  - Removed `"dom"` from `lib` array in `tsconfig.json` (React Native provides its own web-like APIs)
+  - Removed `"node"` from `types` array to prevent `require` type conflicts
+  - Removed `typeRoots` configuration (TypeScript discovers types automatically)
+  - Fixes errors: `TS6200: Definitions conflict` and `TS2403: require must be Require`
+
+- **i18n Translation Key Format**: Clarified in AGENTS.md that colon notation (`screenName:keyName`) is required for translation keys, not dot notation. Updated all documentation examples to use colon notation consistently to prevent confusion
 
 - **Setup Script Compatibility**: Added symlink for `tsconfig.setup.json` in `apps/app` directory to fix setup script execution errors
 - **Web Platform Compatibility**: Updated react-native-worklets web shim from version 0.6.0 to 0.7.1 to resolve Reanimated 4.2.1 compatibility issues on web platform

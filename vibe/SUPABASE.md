@@ -47,11 +47,23 @@ EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key-here
 
 #### 4. Set Up Database Schema
 
-Shipnative includes a production-ready database schema. To set it up:
+Shipnative includes a production-ready database schema with migrations support. Migrations provide version control and prevent "already exists" errors—the industry standard for managing database schemas.
+
+**Option 1: Using Migrations (Recommended)**
+
+```bash
+# Link your Supabase project (one-time setup)
+supabase link --project-ref your-project-ref
+
+# Apply all migrations
+supabase db push
+```
+
+**Option 2: Using SQL Editor (Manual)**
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
-3. Open the `supabase/schema.sql` file from the repository
+3. Open `supabase/migrations/20260122101738_initial_schema.sql`
 4. Copy and paste the entire file into the SQL Editor
 5. Click **Run** to execute
 
@@ -64,7 +76,7 @@ The schema includes:
 - Row Level Security (RLS) policies
 - Helper functions for common operations
 
-See [BACKEND.md](./BACKEND.md) for detailed database documentation.
+See [BACKEND.md](./BACKEND.md) for detailed database documentation and [supabase/migrations/README.md](../supabase/migrations/README.md) for migration guide.
 
 ## Usage
 
@@ -977,11 +989,42 @@ channel.unsubscribe()
 ## Next Steps
 
 - [ ] Set up Supabase project
-- [ ] Create database schema
+- [ ] Create database schema (using migrations)
 - [ ] Configure Row Level Security
 - [ ] Add API keys to `.env`
+- [ ] Configure redirect URLs (set to correct localhost port)
 - [ ] Test authentication flow
 - [ ] Test database operations
 - [ ] Set up real-time subscriptions (if needed)
 - [ ] Configure email templates
 - [ ] Set up storage buckets (if needed)
+
+## Troubleshooting
+
+### Profile 404 Errors After Signup
+
+If you see 404 errors when fetching profile data after signup, this is usually normal and handled gracefully by the app. However, if it persists:
+
+1. **Verify database schema is applied** - Run migrations or manually apply the schema
+2. **Check RLS policies** - Ensure users can read their own profiles
+3. **Verify the trigger is working** - The `handle_new_user()` function should auto-create profiles
+4. **Configure redirect URLs** - Make sure Supabase redirects to the correct port (8081 for Expo, not 3000)
+
+See [supabase/TROUBLESHOOTING.md](../supabase/TROUBLESHOOTING.md) for detailed solutions.
+
+### TypeScript Errors
+
+If you encounter TypeScript errors related to conflicting type definitions, ensure your `tsconfig.json`:
+- Uses `lib: ["esnext"]` (no "dom")
+- Uses `types: ["jest"]` (no "node")
+- Does not include `typeRoots`
+
+This is already configured correctly in the boilerplate.
+
+### Migration Errors
+
+If migrations fail with "already exists" errors:
+- Use `IF NOT EXISTS` clauses in your migrations
+- Or mark migrations as applied if the schema already matches: `supabase migration repair --status applied MIGRATION_ID`
+
+For more troubleshooting help, see [supabase/TROUBLESHOOTING.md](../supabase/TROUBLESHOOTING.md).

@@ -1,16 +1,8 @@
 -- =====================================================================
--- Shipnative Default Database Schema
+-- Initial Database Schema Migration
 -- =====================================================================
--- ⚠️ IMPORTANT: This file is kept for backwards compatibility only.
---
--- For new projects, use migrations instead:
--- 1. See supabase/migrations/README.md for migration guide
--- 2. Apply migrations using: supabase db push
--- 3. Or use Supabase SQL Editor to run migration files individually
---
--- This SQL file contains the default tables needed for the Shipnative
--- boilerplate. It can be used to manually set up your database if you
--- prefer not to use migrations.
+-- This is the initial migration that sets up the core database schema
+-- for the Shipnative boilerplate.
 --
 -- Features included:
 -- - User profiles with preferences
@@ -373,37 +365,3 @@ CREATE POLICY "Only authorized users can view waitlist"
 -- Create indexes
 CREATE INDEX IF NOT EXISTS waitlist_email_idx ON public.waitlist(email);
 CREATE INDEX IF NOT EXISTS waitlist_created_at_idx ON public.waitlist(created_at DESC);
-
--- =====================================================================
--- INITIAL DATA (OPTIONAL)
--- =====================================================================
-
--- You can add seed data here if needed
--- Example:
--- INSERT INTO public.user_preferences (id) VALUES (...);
-
--- =====================================================================
--- GRANTS (if using service role)
--- =====================================================================
-
--- Grant necessary permissions (adjust as needed)
--- GRANT USAGE ON SCHEMA public TO anon, authenticated;
--- GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
--- GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-
--- =====================================================================
--- NOTES
--- =====================================================================
--- 1. This schema works with both real Supabase and Shipnative's mock mode
--- 2. All tables have Row Level Security (RLS) enabled
--- 3. Triggers automatically create profiles when users sign up
--- 4. The profiles table stores user preferences like dark mode and notifications
--- 5. Push tokens table supports multiple devices per user
--- 6. User preferences table can be extended with app-specific settings
---
--- To use this schema:
--- 1. Go to your Supabase project dashboard
--- 2. Navigate to the SQL Editor
--- 3. Copy and paste this entire file
--- 4. Click "Run" to execute
--- =====================================================================

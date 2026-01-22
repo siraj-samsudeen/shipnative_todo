@@ -17,8 +17,7 @@
     "sourceMap": true,
     "target": "esnext",
     "lib": [
-      "esnext",
-      "dom"
+      "esnext"
     ],
     "skipLibCheck": true,
     "resolveJsonModule": true,
@@ -34,14 +33,8 @@
         "../../convex/*"
       ]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "../../node_modules/@types",
-      "./types"
-    ],
     "types": [
-      "jest",
-      "node"
+      "jest"
     ]
   },
   "ts-node": {
