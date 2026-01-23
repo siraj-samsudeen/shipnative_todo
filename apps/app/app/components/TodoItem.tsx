@@ -37,6 +37,10 @@ export interface TodoItemProps {
    * Callback when todo is deleted
    */
   onDelete: (id: string) => void
+  /**
+   * Whether the todo item is disabled (read-only mode)
+   */
+  disabled?: boolean
 }
 
 // =============================================================================
@@ -54,25 +58,29 @@ export interface TodoItemProps {
  *   onDelete={handleDelete}
  * />
  */
-export const TodoItem: FC<TodoItemProps> = function TodoItem({ 
-  todo, 
-  onToggle, 
-  onUpdate, 
-  onDelete 
+export const TodoItem: FC<TodoItemProps> = function TodoItem({
+  todo,
+  onToggle,
+  onUpdate,
+  onDelete,
+  disabled = false,
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(todo.description)
 
   const handleToggle = () => {
+    if (disabled) return
     onToggle(todo.id, todo.completed)
   }
 
   const handleEditPress = () => {
+    if (disabled) return
     setIsEditing(true)
     setEditText(todo.description)
   }
 
   const handleSave = () => {
+    if (disabled) return
     const trimmed = editText.trim()
     if (trimmed && trimmed !== todo.description) {
       onUpdate(todo.id, trimmed)
@@ -86,6 +94,7 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
   }
 
   const handleDelete = () => {
+    if (disabled) return
     onDelete(todo.id)
   }
 
@@ -99,10 +108,11 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
         {/* Checkbox */}
         <Pressable
           onPress={handleToggle}
-          style={styles.checkboxContainer}
+          style={[styles.checkboxContainer, disabled && styles.disabledContainer]}
           accessibilityRole="checkbox"
-          accessibilityState={{ checked: todo.completed }}
+          accessibilityState={{ checked: todo.completed, disabled }}
           accessibilityLabel="Toggle completion status"
+          disabled={disabled}
         >
           <Checkbox
             value={todo.completed}
@@ -110,6 +120,7 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
             inputOuterStyle={styles.checkboxOuter}
             inputInnerStyle={styles.checkboxInner}
             inputDetailStyle={styles.checkboxDetail}
+            disabled={disabled}
           />
         </Pressable>
 
@@ -126,13 +137,19 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
               onSubmitEditing={handleSave}
               returnKeyType="done"
               blurOnSubmit
+              editable={!disabled}
             />
           ) : (
-            <Pressable onPress={handleEditPress} style={styles.descriptionPressable}>
+            <Pressable
+              onPress={handleEditPress}
+              style={styles.descriptionPressable}
+              disabled={disabled}
+            >
               <Text
                 style={[
                   styles.description,
                   todo.completed && styles.descriptionCompleted,
+                  disabled && styles.disabledText,
                 ]}
               >
                 {todo.description}
@@ -150,6 +167,7 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
                 variant="ghost"
                 size="sm"
                 onPress={handleSave}
+                disabled={disabled}
               />
               <IconButton
                 icon="close"
@@ -165,13 +183,15 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
                 variant="ghost"
                 size="sm"
                 onPress={handleEditPress}
+                disabled={disabled}
               />
               <IconButton
                 icon="trash"
                 variant="ghost"
                 size="sm"
                 onPress={handleDelete}
-                iconColor={styles.deleteIcon.color}
+                iconColor={disabled ? styles.disabledIcon.color : styles.deleteIcon.color}
+                disabled={disabled}
               />
             </>
           )}
@@ -239,5 +259,14 @@ const styles = StyleSheet.create((theme) => ({
   },
   deleteIcon: {
     color: theme.colors.error,
+  },
+  disabledContainer: {
+    opacity: 0.6,
+  },
+  disabledText: {
+    opacity: 0.6,
+  },
+  disabledIcon: {
+    color: theme.colors.foregroundSecondary,
   },
 }))

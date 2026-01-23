@@ -2,8 +2,8 @@ import { FC, useState } from "react"
 import { FlatList, View } from "react-native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Button, EmptyState, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
-import { useAddTodo, useTodos, useToggleTodo, useUpdateTodo, useDeleteTodo, useTodosRealtime } from "@/hooks"
+import { Button, EmptyState, OfflineBanner, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
+import { useAddTodo, useTodos, useToggleTodo, useUpdateTodo, useDeleteTodo, useTodosRealtime, useNetworkStatus } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import type { Todo } from "@/types/todo"
 
@@ -20,6 +20,9 @@ interface TodoScreenProps extends AppStackScreenProps<"Main"> {}
 export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   const { theme } = useUnistyles()
   const [inputText, setInputText] = useState("")
+  
+  // Network status
+  const { isConnected, isOffline } = useNetworkStatus()
   
   // Fetch todos
   const { data: todos = [], isLoading, error } = useTodos()
@@ -41,6 +44,7 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
 
   const handleAddTodo = async () => {
     if (!inputText.trim()) return
+    if (isOffline) return // Prevent action when offline
     
     try {
       await addTodo.mutateAsync(inputText)
@@ -52,6 +56,8 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   }
 
   const handleToggleTodo = async (id: string, completed: boolean) => {
+    if (isOffline) return // Prevent action when offline
+    
     try {
       await toggleTodo.mutateAsync({ id, completed })
     } catch (err) {
@@ -61,6 +67,8 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   }
 
   const handleUpdateTodo = async (id: string, description: string) => {
+    if (isOffline) return // Prevent action when offline
+    
     try {
       await updateTodo.mutateAsync({ id, description })
     } catch (err) {
@@ -70,6 +78,8 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   }
 
   const handleDeleteTodo = async (id: string) => {
+    if (isOffline) return // Prevent action when offline
+    
     try {
       await deleteTodo.mutateAsync(id)
     } catch (err) {
@@ -86,6 +96,7 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
       onToggle={handleToggleTodo}
       onUpdate={handleUpdateTodo}
       onDelete={handleDeleteTodo}
+      disabled={isOffline} // Disable interactions when offline
     />
   )
 
@@ -126,6 +137,9 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
       safeAreaEdges={["top"]}
       backgroundColor={theme.colors.background}
     >
+      {/* Offline Banner */}
+      <OfflineBanner visible={isOffline} />
+
       {/* Header */}
       <View style={styles.header}>
         <Text preset="heading" tx="todoScreen:title" style={styles.title} />
@@ -142,12 +156,12 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
           onClear={() => setInputText("")}
           onSubmitEditing={handleAddTodo}
           returnKeyType="done"
-          editable={!addTodo.isPending}
+          editable={!addTodo.isPending && isConnected} // Disable when offline
         />
         <Button
           tx="todoScreen:addButton"
           onPress={handleAddTodo}
-          disabled={!inputText.trim() || addTodo.isPending}
+          disabled={!inputText.trim() || addTodo.isPending || isOffline} // Disable when offline
           loading={addTodo.isPending}
           style={styles.addButton}
         />

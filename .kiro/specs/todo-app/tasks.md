@@ -138,7 +138,7 @@ Implement a minimal todo application with Supabase backend, React Query for data
   - Create Supabase migration to enable realtime for todos table
   - _Requirements: 2.1_
 
-- [ ] 13. Add offline detection and handling
+- [x] 13. Add offline detection and handling
   - Use `@react-native-community/netinfo` to detect connectivity
   - Show offline banner when disconnected
   - Disable add/edit/delete buttons when offline

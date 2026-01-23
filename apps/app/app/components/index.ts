@@ -45,6 +45,7 @@ export * from "./EmptyState"
 export * from "./Progress"
 export * from "./Skeleton"
 export * from "./Toast"
+export * from "./OfflineBanner"
 
 // Animation
 export * from "./AnimatedCard"
