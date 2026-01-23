@@ -24,5 +24,6 @@ export interface Todo {
 export interface TodoTable {
   Row: Todo
   Insert: Omit<Todo, 'id' | 'created_at' | 'updated_at'>
+  // TODO: update_at should also be included - as it will eventually be overridden by the database trigger.
   Update: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at'>>
 }

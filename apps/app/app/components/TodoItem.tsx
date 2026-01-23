@@ -11,6 +11,7 @@ import { StyleSheet } from "react-native-unistyles"
 
 import type { Todo } from "@/types/todo"
 
+// TODO need to import them by using the @/components folder
 import { Checkbox } from "./Toggle"
 import { Text } from "./Text"
 import { TextField } from "./TextField"
@@ -106,6 +107,7 @@ export const TodoItem: FC<TodoItemProps> = function TodoItem({
     >
       <View style={styles.content}>
         {/* Checkbox */}
+        {/* TODO: Should use the Checkbox component instead of wrapping it in a Pressable component. */}
         <Pressable
           onPress={handleToggle}
           style={[styles.checkboxContainer, disabled && styles.disabledContainer]}

@@ -16,6 +16,7 @@ import { useAuth } from "./useAppAuth"
 /**
  * Query key factory for todo-related queries
  */
+// TODO: This should be under the queryKeys.ts file.
 export const todoKeys = {
   all: ["todos"] as const,
   lists: () => [...todoKeys.all, "list"] as const,
@@ -209,9 +210,10 @@ export function useTodosRealtime() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
+  // TODO: Use the useRealtimeSubscription hook instead of the supabase channel.
   useEffect(() => {
     if (!user) return
-
+    // TODO: The delete event is not being triggered. Need to investigate why.
     const channel = supabase
       .channel("todos-changes")
       .on(

@@ -168,6 +168,7 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
       </View>
 
       {/* Todo List */}
+      {/* TODO: pass the `ListEmptyComponent={renderEmptyState}` prop instead of the if/else block. */}
       {hasTodos ? (
         <FlatList
           data={todos}
