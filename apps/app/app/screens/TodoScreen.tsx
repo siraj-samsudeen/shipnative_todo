@@ -44,6 +44,7 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   const renderTodoItem = ({ item }: { item: Todo }) => <TodoItem todo={item} />
 
   const renderEmptyState = () => {
+    // TODO this should NOT be happening only for Empty State 
     if (isLoading) {
       return (
         <View style={styles.centerContent}>
