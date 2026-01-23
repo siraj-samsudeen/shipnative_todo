@@ -3,7 +3,7 @@ import { FlatList, View } from "react-native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { Button, EmptyState, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
-import { useAddTodo, useTodos, useToggleTodo } from "@/hooks"
+import { useAddTodo, useTodos, useToggleTodo, useUpdateTodo, useDeleteTodo } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import type { Todo } from "@/types/todo"
 
@@ -29,6 +29,12 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   
   // Toggle todo mutation
   const toggleTodo = useToggleTodo()
+  
+  // Update todo mutation
+  const updateTodo = useUpdateTodo()
+  
+  // Delete todo mutation
+  const deleteTodo = useDeleteTodo()
 
   const handleAddTodo = async () => {
     if (!inputText.trim()) return
@@ -51,10 +57,33 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
     }
   }
 
+  const handleUpdateTodo = async (id: string, description: string) => {
+    try {
+      await updateTodo.mutateAsync({ id, description })
+    } catch (err) {
+      // Error is already logged by the hook
+      console.error("Failed to update todo:", err)
+    }
+  }
+
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      await deleteTodo.mutateAsync(id)
+    } catch (err) {
+      // Error is already logged by the hook
+      console.error("Failed to delete todo:", err)
+    }
+  }
+
   const hasTodos = todos.length > 0
 
   const renderTodoItem = ({ item }: { item: Todo }) => (
-    <TodoItem todo={item} onToggle={handleToggleTodo} />
+    <TodoItem 
+      todo={item} 
+      onToggle={handleToggleTodo}
+      onUpdate={handleUpdateTodo}
+      onDelete={handleDeleteTodo}
+    />
   )
 
   const renderEmptyState = () => {

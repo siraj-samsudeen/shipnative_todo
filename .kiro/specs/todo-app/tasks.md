@@ -89,14 +89,14 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 4: Edit Todo Items
 
-- [ ] 8. Implement edit functionality (end-to-end)
-  - [ ] 8.1 Create `useUpdateTodo()` mutation hook
+- [x] 8. Implement edit functionality (end-to-end)
+  - [x] 8.1 Create `useUpdateTodo()` mutation hook
     - Validate new description
     - Update todo in Supabase
     - Invalidate queries on success
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [ ] 8.2 Add inline edit mode to TodoItem
+  - [x] 8.2 Add inline edit mode to TodoItem
     - Toggle edit mode on edit button press
     - Show TextField when editing
     - Handle save and cancel actions
@@ -111,13 +111,13 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 5: Delete Todo Items
 
-- [ ] 10. Implement delete functionality (end-to-end)
-  - [ ] 10.1 Create `useDeleteTodo()` mutation hook
+- [x] 10. Implement delete functionality (end-to-end)
+  - [x] 10.1 Create `useDeleteTodo()` mutation hook
     - Delete todo from Supabase
     - Invalidate queries on success
     - _Requirements: 5.1_
   
-  - [ ] 10.2 Add delete button to TodoItem
+  - [x] 10.2 Add delete button to TodoItem
     - Show delete button
     - Wire up `onDelete` prop to `useDeleteTodo()` hook
     - _Requirements: 5.1_
