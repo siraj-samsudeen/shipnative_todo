@@ -3,7 +3,7 @@ import { FlatList, View } from "react-native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { Button, EmptyState, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
-import { useAddTodo, useTodos, useToggleTodo, useUpdateTodo, useDeleteTodo } from "@/hooks"
+import { useAddTodo, useTodos, useToggleTodo, useUpdateTodo, useDeleteTodo, useTodosRealtime } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import type { Todo } from "@/types/todo"
 
@@ -23,6 +23,9 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   
   // Fetch todos
   const { data: todos = [], isLoading, error } = useTodos()
+  
+  // Subscribe to realtime updates
+  useTodosRealtime()
   
   // Add todo mutation
   const addTodo = useAddTodo()

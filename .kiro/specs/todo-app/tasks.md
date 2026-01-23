@@ -129,11 +129,13 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 6: Realtime & Offline Support
 
-- [ ] 12. Add realtime synchronization
+- [x] 12. Add realtime synchronization
   - Implement `useTodosRealtime()` hook for live updates
   - Subscribe to Supabase realtime changes
   - Invalidate queries when data changes
   - Clean up subscription on unmount
+  - Integrate realtime hook in TodoScreen
+  - Create Supabase migration to enable realtime for todos table
   - _Requirements: 2.1_
 
 - [ ] 13. Add offline detection and handling
