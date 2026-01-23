@@ -68,13 +68,13 @@ Implement a minimal todo application with Supabase backend, React Query for data
 
 ### Vertical Slice 3: Complete Todo Items
 
-- [ ] 6. Implement complete/toggle functionality (end-to-end)
-  - [ ] 6.1 Create `useToggleTodo()` mutation hook
+- [x] 6. Implement complete/toggle functionality (end-to-end)
+  - [x] 6.1 Create `useToggleTodo()` mutation hook
     - Toggle completion status
     - Invalidate queries on success
     - _Requirements: 3.1_
   
-  - [ ] 6.2 Update TodoItem component with toggle
+  - [x] 6.2 Update TodoItem component with toggle
     - Add checkbox/tap to toggle
     - Visual feedback for completed state (strikethrough, dimmed)
     - Wire up `onToggle` prop to `useToggleTodo()` hook

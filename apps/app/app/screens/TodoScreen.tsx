@@ -3,7 +3,7 @@ import { FlatList, View } from "react-native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { Button, EmptyState, Screen, Spinner, Text, TextField, TodoItem } from "@/components"
-import { useAddTodo, useTodos } from "@/hooks"
+import { useAddTodo, useTodos, useToggleTodo } from "@/hooks"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import type { Todo } from "@/types/todo"
 
@@ -26,6 +26,9 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
   
   // Add todo mutation
   const addTodo = useAddTodo()
+  
+  // Toggle todo mutation
+  const toggleTodo = useToggleTodo()
 
   const handleAddTodo = async () => {
     if (!inputText.trim()) return
@@ -39,9 +42,20 @@ export const TodoScreen: FC<TodoScreenProps> = function TodoScreen(_props) {
     }
   }
 
+  const handleToggleTodo = async (id: string, completed: boolean) => {
+    try {
+      await toggleTodo.mutateAsync({ id, completed })
+    } catch (err) {
+      // Error is already logged by the hook
+      console.error("Failed to toggle todo:", err)
+    }
+  }
+
   const hasTodos = todos.length > 0
 
-  const renderTodoItem = ({ item }: { item: Todo }) => <TodoItem todo={item} />
+  const renderTodoItem = ({ item }: { item: Todo }) => (
+    <TodoItem todo={item} onToggle={handleToggleTodo} />
+  )
 
   const renderEmptyState = () => {
     // TODO this should NOT be happening only for Empty State 
