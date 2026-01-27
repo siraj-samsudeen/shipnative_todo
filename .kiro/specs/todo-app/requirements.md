@@ -20,9 +20,9 @@ A minimal todo application for managing personal tasks on mobile devices. The ap
 
 #### Acceptance Criteria
 
-1. WHEN a user types a task description and presses Enter or clicks an add button, THEN THE Todo_App SHALL create a new Todo_Item and add it to the Task_List
-2. WHEN a user attempts to add a task with only whitespace characters, THEN THE Todo_App SHALL prevent the addition and maintain the current state
-3. WHEN a new Todo_Item is added, THEN THE Todo_App SHALL clear the input field and focus it for the next entry
+- 1.1 WHEN a user types a task description and presses Enter or clicks an add button, THEN THE Todo_App SHALL create a new Todo_Item and add it to the Task_List
+- 1.2 WHEN a user attempts to add a task with only whitespace characters, THEN THE Todo_App SHALL prevent the addition and maintain the current state
+- 1.3 WHEN a new Todo_Item is added, THEN THE Todo_App SHALL clear the input field and focus it for the next entry
 
 ### Requirement 2: Display Todo Items
 
@@ -30,9 +30,9 @@ A minimal todo application for managing personal tasks on mobile devices. The ap
 
 #### Acceptance Criteria
 
-1. WHEN the application starts, THEN THE Todo_App SHALL display all Todo_Items
-2. WHEN the Task_List is empty, THEN THE Todo_App SHALL display an empty state message
-3. WHEN displaying Todo_Items, THEN THE Todo_App SHALL show the task description and completion status for each item
+- 2.1 WHEN the application starts, THEN THE Todo_App SHALL display all Todo_Items
+- 2.2 WHEN the Task_List is empty, THEN THE Todo_App SHALL display an empty state message
+- 2.3 WHEN displaying Todo_Items, THEN THE Todo_App SHALL show the task description and completion status for each item
 
 ### Requirement 3: Complete Todo Items
 
@@ -40,8 +40,8 @@ A minimal todo application for managing personal tasks on mobile devices. The ap
 
 #### Acceptance Criteria
 
-1. WHEN a user taps a Todo_Item, THEN THE Todo_App SHALL toggle its Completion_Status
-2. WHEN a Todo_Item is marked complete, THEN THE Todo_App SHALL update its visual appearance to indicate completion
+- 3.1 WHEN a user taps a Todo_Item, THEN THE Todo_App SHALL toggle its Completion_Status
+- 3.2 WHEN a Todo_Item is marked complete, THEN THE Todo_App SHALL update its visual appearance to indicate completion
 
 ### Requirement 4: Edit Todo Items
 
@@ -49,10 +49,10 @@ A minimal todo application for managing personal tasks on mobile devices. The ap
 
 #### Acceptance Criteria
 
-1. WHEN a user performs an edit action on a Todo_Item, THEN THE Todo_App SHALL allow the user to modify the task description
-2. WHEN a user saves an edited Todo_Item with valid text, THEN THE Todo_App SHALL update the Todo_Item with the new description
-3. WHEN a user attempts to save an edited Todo_Item with only whitespace characters, THEN THE Todo_App SHALL prevent the update and maintain the original description
-4. WHEN a user cancels an edit operation, THEN THE Todo_App SHALL discard changes and restore the original description
+- 4.1 WHEN a user performs an edit action on a Todo_Item, THEN THE Todo_App SHALL allow the user to modify the task description
+- 4.2 WHEN a user saves an edited Todo_Item with valid text, THEN THE Todo_App SHALL update the Todo_Item with the new description
+- 4.3 WHEN a user attempts to save an edited Todo_Item with only whitespace characters, THEN THE Todo_App SHALL prevent the update and maintain the original description
+- 4.4 WHEN a user cancels an edit operation, THEN THE Todo_App SHALL discard changes and restore the original description
 
 ### Requirement 5: Delete Todo Items
 
@@ -60,5 +60,5 @@ A minimal todo application for managing personal tasks on mobile devices. The ap
 
 #### Acceptance Criteria
 
-1. WHEN a user performs a delete action on a Todo_Item, THEN THE Todo_App SHALL remove it from the Task_List
-2. WHEN a Todo_Item is deleted, THEN THE Todo_App SHALL update the display to reflect the removal
+- 5.1 WHEN a user performs a delete action on a Todo_Item, THEN THE Todo_App SHALL remove it from the Task_List
+- 5.2 WHEN a Todo_Item is deleted, THEN THE Todo_App SHALL update the display to reflect the removal
