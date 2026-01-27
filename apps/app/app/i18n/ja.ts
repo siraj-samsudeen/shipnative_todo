@@ -73,6 +73,13 @@ const ja: Translations = {
     platformMock: "モック（開発）",
     platformUnknown: "不明",
   },
+  todoScreen: {
+    title: "タスク",
+    inputPlaceholder: "何をする必要がありますか？",
+    emptyHeading: "タスクはまだありません",
+    emptyContent: "最初のタスクを追加して始めましょう",
+    addButton: "追加",
+  },
   homeScreen: {
     goodMorning: "おはようございます、",
     dailyChallenge: "今日のチャレンジ",
@@ -299,6 +306,7 @@ const ja: Translations = {
   badge: {},
   tabs: {
     home: "ホーム",
+    todo: "タスク",
     components: "コンポーネント",
     pro: "Pro",
     profile: "プロフィール",

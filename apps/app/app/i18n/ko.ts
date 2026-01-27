@@ -72,6 +72,13 @@ const ko: Translations = {
     platformMock: "모의 (개발)",
     platformUnknown: "알 수 없음",
   },
+  todoScreen: {
+    title: "할 일",
+    inputPlaceholder: "무엇을 해야 하나요?",
+    emptyHeading: "아직 할 일이 없습니다",
+    emptyContent: "첫 번째 할 일을 추가하여 시작하세요",
+    addButton: "추가",
+  },
   homeScreen: {
     goodMorning: "좋은 아침이에요,",
     dailyChallenge: "오늘의 챌린지",
@@ -147,6 +154,7 @@ const ko: Translations = {
   badge: {},
   tabs: {
     home: "홈",
+    todo: "할 일",
     components: "컴포넌트",
     pro: "Pro",
     profile: "프로필",

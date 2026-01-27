@@ -72,6 +72,13 @@ const hi: Translations = {
     platformMock: "मॉक (विकास)",
     platformUnknown: "अज्ञात",
   },
+  todoScreen: {
+    title: "कार्य",
+    inputPlaceholder: "क्या करना है?",
+    emptyHeading: "अभी तक कोई कार्य नहीं",
+    emptyContent: "शुरू करने के लिए अपना पहला कार्य जोड़ें",
+    addButton: "जोड़ें",
+  },
   homeScreen: {
     goodMorning: "सुप्रभात,",
     dailyChallenge: "दैनिक चुनौती",
@@ -299,6 +306,7 @@ const hi: Translations = {
   badge: {},
   tabs: {
     home: "होम",
+    todo: "कार्य",
     components: "कंपोनेंट्स",
     pro: "Pro",
     profile: "प्रोफ़ाइल",

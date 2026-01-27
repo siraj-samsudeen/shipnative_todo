@@ -71,6 +71,13 @@ const en = {
     platformMock: "Mock (Development)",
     platformUnknown: "Unknown",
   },
+  todoScreen: {
+    title: "Todos",
+    inputPlaceholder: "What needs to be done?",
+    emptyHeading: "No todos yet",
+    emptyContent: "Add your first todo to get started",
+    addButton: "Add",
+  },
   homeScreen: {
     goodMorning: "Good morning,",
     dailyChallenge: "Daily Challenge",
@@ -118,6 +125,7 @@ const en = {
   },
   tabs: {
     home: "Home",
+    todo: "Todos",
     components: "Components",
     pro: "Pro",
     profile: "Profile",

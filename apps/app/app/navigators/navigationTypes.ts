@@ -14,6 +14,7 @@ export type PaywallParams = {
 
 export type MainTabParamList = {
   Home: undefined
+  Todo: undefined
   Components: undefined
   Profile: undefined
   Paywall: PaywallParams | undefined

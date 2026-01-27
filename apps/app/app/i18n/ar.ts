@@ -72,6 +72,13 @@ const ar: Translations = {
     platformMock: "وهمي (التطوير)",
     platformUnknown: "غير معروف",
   },
+  todoScreen: {
+    title: "المهام",
+    inputPlaceholder: "ما الذي يجب القيام به؟",
+    emptyHeading: "لا توجد مهام بعد",
+    emptyContent: "أضف مهمتك الأولى للبدء",
+    addButton: "إضافة",
+  },
   homeScreen: {
     goodMorning: "صباح الخير،",
     dailyChallenge: "تحدي اليوم",
@@ -294,6 +301,7 @@ const ar: Translations = {
   badge: {},
   tabs: {
     home: "الرئيسية",
+    todo: "المهام",
     components: "المكونات",
     pro: "Pro",
     profile: "الملف الشخصي",

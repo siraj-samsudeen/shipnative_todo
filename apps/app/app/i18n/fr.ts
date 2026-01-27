@@ -74,6 +74,13 @@ const fr: Translations = {
     platformMock: "Simulation (Développement)",
     platformUnknown: "Inconnu",
   },
+  todoScreen: {
+    title: "Tâches",
+    inputPlaceholder: "Que faut-il faire ?",
+    emptyHeading: "Pas encore de tâches",
+    emptyContent: "Ajoutez votre première tâche pour commencer",
+    addButton: "Ajouter",
+  },
   homeScreen: {
     goodMorning: "Bonjour,",
     dailyChallenge: "Défi du jour",
@@ -305,6 +312,7 @@ const fr: Translations = {
   badge: {},
   tabs: {
     home: "Accueil",
+    todo: "Tâches",
     components: "Composants",
     pro: "Pro",
     profile: "Profil",

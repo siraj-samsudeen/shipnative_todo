@@ -73,6 +73,13 @@ const es: Translations = {
     platformMock: "Simulación (Desarrollo)",
     platformUnknown: "Desconocido",
   },
+  todoScreen: {
+    title: "Tareas",
+    inputPlaceholder: "¿Qué hay que hacer?",
+    emptyHeading: "Aún no hay tareas",
+    emptyContent: "Añade tu primera tarea para empezar",
+    addButton: "Añadir",
+  },
   homeScreen: {
     goodMorning: "Buenos días,",
     dailyChallenge: "Desafío diario",
@@ -302,6 +309,7 @@ const es: Translations = {
   badge: {},
   tabs: {
     home: "Inicio",
+    todo: "Tareas",
     components: "Componentes",
     pro: "Pro",
     profile: "Perfil",

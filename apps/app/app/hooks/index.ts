@@ -80,6 +80,12 @@ export { queryClient } from "./queries/queryClient"
 export { queryKeys } from "./queries/queryKeys"
 
 // ============================================================================
+// Todo Hooks
+// ============================================================================
+
+export { useTodos, useTodoMutations, todoKeys } from "./useTodos"
+
+// ============================================================================
 // Convex Data Hooks (only needed if using Convex backend)
 // ============================================================================
 
